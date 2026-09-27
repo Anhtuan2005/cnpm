@@ -1,0 +1,139 @@
+@model ProductFormViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = Model.Id == 0 ? "Thêm sản phẩm" : "Sửa sản phẩm";
+    var previewImages = SplitImageUrls(Model.ImageUrls).ToList();
+    if (!previewImages.Any() && !string.IsNullOrWhiteSpace(Model.ImageUrl))
+    {
+        previewImages.Add(Model.ImageUrl.Trim());
+    }
+}
+
+<section class="admin-panel narrow">
+    <div class="panel-head"><h2>@ViewData["Title"]</h2></div>
+    <form method="post" enctype="multipart/form-data" class="stack-form">
+        <div asp-validation-summary="ModelOnly" role="alert"></div>
+        @if (Context.Response.StatusCode == StatusCodes.Status409Conflict)
+        {
+            <a class="admin-link" asp-action="Edit" asp-route-id="@Model.Id">Tải lại dữ liệu mới nhất</a>
+        }
+        <input asp-for="RowVersion" type="hidden" />
+        <label asp-for="Name">Tên sản phẩm</label>
+        <input asp-for="Name" />
+        <span asp-validation-for="Name"></span>
+
+        <label asp-for="Description">Mô tả</label>
+        <textarea asp-for="Description" rows="5"></textarea>
+        <span asp-validation-for="Description"></span>
+
+        <label asp-for="Price">Giá</label>
+        <input asp-for="Price" type="number" min="0" />
+        <span asp-validation-for="Price"></span>
+
+        <label asp-for="Stock">Tồn kho</label>
+        <input asp-for="Stock" type="number" min="0" readonly="@(Model.Id != 0)" />
+        @if (Model.Id != 0 && SprintFeatures.IsEnabled(2))
+        {
+            <small class="form-hint">Dùng mục Điều chỉnh tồn kho bên dưới để nhập hoặc xuất hàng.</small>
+        }
+        <span asp-validation-for="Stock"></span>
+
+        @if (SprintFeatures.IsEnabled(3))
+        {
+            <label asp-for="DiscountPercent">Giảm giá (%)</label>
+            <input asp-for="DiscountPercent" type="number" min="0" max="100" />
+            <span asp-validation-for="DiscountPercent"></span>
+        }
+        else
+        {
+            <input asp-for="DiscountPercent" type="hidden" />
+        }
+
+        <label asp-for="CategoryId">Danh mục</label>
+        <select asp-for="CategoryId">
+            @foreach (var category in Model.Categories)
+            {
+                <option value="@category.Id">@category.Name</option>
+            }
+        </select>
+        <span asp-validation-for="CategoryId"></span>
+
+        <label asp-for="ImageUrls">Thư viện ảnh</label>
+        <textarea asp-for="ImageUrls" rows="6" placeholder="Mỗi dòng một URL ảnh. Dòng đầu là ảnh chính."></textarea>
+        <span asp-validation-for="ImageUrls"></span>
+        <small class="form-hint">Có thể dùng URL ảnh ngoài hoặc upload ảnh mới bên dưới. Hệ thống tự bỏ URL trùng.</small>
+
+        @if (previewImages.Any())
+        {
+            <div class="admin-image-gallery" aria-label="Ảnh hiện tại của sản phẩm">
+                @foreach (var image in previewImages.Select((url, index) => new { url, index }))
+                {
+                    <figure>
+                        <img src="@image.url"
+                             alt="Ảnh @(image.index + 1) của @Model.Name"
+                             loading="lazy"
+                             decoding="async" />
+                        <figcaption>@(image.index == 0 ? "Ảnh chính" : $"Ảnh {image.index + 1}")</figcaption>
+                    </figure>
+                }
+            </div>
+        }
+
+        <label for="product-image-files">Tải ảnh mới</label>
+        <input id="product-image-files" type="file" name="imageFiles" accept=".jpg,.jpeg,.png,.webp" multiple />
+        @Html.ValidationMessage("imageFiles")
+        <small class="form-hint">Chọn tối đa 8 ảnh. Ảnh upload sẽ được nén WebP và nối vào cuối thư viện.</small>
+
+        <label class="check-row"><input asp-for="IsFeatured" /> Sản phẩm nổi bật</label>
+        <button class="admin-button" type="submit">Lưu sản phẩm</button>
+    </form>
+</section>
+
+@if (Model.Id != 0 && SprintFeatures.IsEnabled(2))
+{
+    <section class="admin-panel narrow">
+        <div class="panel-head"><h2>Điều chỉnh tồn kho</h2></div>
+        <form asp-action="AdjustStock" asp-route-id="@Model.Id" method="post" class="stack-form">
+            <label for="stock-change">Số lượng thay đổi</label>
+            <input id="stock-change" name="change" type="number" required step="1" placeholder="Ví dụ: 10 để nhập thêm, -2 để xuất bớt" />
+            <label for="stock-reason">Lý do</label>
+            <input id="stock-reason" name="reason" required maxlength="300" />
+            <button class="admin-button" type="submit">Điều chỉnh và lưu lịch sử</button>
+        </form>
+    </section>
+    <section class="admin-panel narrow">
+        <div class="panel-head"><h2>Lịch sử điều chỉnh kho thủ công</h2></div>
+        <table class="admin-table">
+            <thead><tr><th>Thời gian</th><th>Thay đổi</th><th>Lý do</th><th>Người cập nhật</th></tr></thead>
+            <tbody>
+                @foreach (var log in Model.StockLogs)
+                {
+                    <tr>
+                        <td>@log.ChangedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@(log.ChangeAmount > 0 ? "+" : "")@log.ChangeAmount</td>
+                        <td>@log.Reason</td>
+                        <td>@(log.ChangedByUser?.FullName ?? "Admin")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+}
+
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+}
+
+@functions {
+    private static IEnumerable<string> SplitImageUrls(string? imageUrls)
+    {
+        return string.IsNullOrWhiteSpace(imageUrls)
+            ? Enumerable.Empty<string>()
+            : imageUrls.Split(new[] { "\r\n", "\n", "\r", "," }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(url => url.Trim())
+                .Where(url => !string.IsNullOrWhiteSpace(url))
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+    }
+}

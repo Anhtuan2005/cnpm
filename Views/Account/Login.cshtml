@@ -1,0 +1,78 @@
+@model LoginViewModel
+@{
+    Layout = "_FocusLayout";
+    ViewData["Title"] = "Đăng nhập";
+    ViewData["BodyClass"] = "auth-focus";
+}
+
+<main class="auth-page auth-login" data-auth-page>
+    <div class="auth-bg-grid"></div>
+    <div class="auth-glow auth-glow-a"></div>
+    <div class="auth-glow auth-glow-b"></div>
+
+    <section class="auth-shell">
+        <aside class="auth-showcase">
+            <a class="auth-brand-logo auth-brand-home" asp-controller="Home" asp-action="Index" aria-label="Về trang chủ Techvora">
+                <partial name="_TechvoraLogo" />
+            </a>
+            <span class="eyebrow">Techvora Account</span>
+            <h1>Điện thoại phù hợp, chọn thật nhanh.</h1>
+            <p>Đăng nhập để đồng bộ giỏ hàng, danh sách yêu thích và địa chỉ giao hàng.</p>
+
+            <div class="auth-benefit-grid">
+                <div><i data-lucide="truck" aria-hidden="true"></i><span>Giao nhanh toàn quốc</span></div>
+                <div><i data-lucide="heart" aria-hidden="true"></i><span>Lưu sản phẩm yêu thích</span></div>
+                <div><i data-lucide="map-pin" aria-hidden="true"></i><span>Lưu địa chỉ giao hàng</span></div>
+            </div>
+        </aside>
+
+        <section class="auth-card">
+            <div class="auth-mode-switch" aria-label="Chuyển chế độ tài khoản">
+                <a class="active" asp-action="Login">Đăng nhập</a>
+                <a asp-action="Register" data-auth-switch>Đăng ký</a>
+            </div>
+
+            <form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" class="auth-form auth-form-animated">
+                @Html.AntiForgeryToken()
+                <h2>Chào mừng trở lại</h2>
+                <p class="auth-subtitle">Tiếp tục mua sắm tại Techvora.</p>
+                <div asp-validation-summary="ModelOnly" class="alert-error"></div>
+
+                <div class="field-group">
+                    <label asp-for="Email">Email</label>
+                    <div class="input-wrap">
+                        <i data-lucide="mail" class="input-icon" aria-hidden="true"></i>
+                        <input asp-for="Email" type="email" placeholder="ten@email.com" autocomplete="email" />
+                    </div>
+                    <span asp-validation-for="Email" class="field-error"></span>
+                </div>
+
+                <div class="field-group">
+                    <label asp-for="Password">Mật khẩu</label>
+                    <div class="input-wrap">
+                        <i data-lucide="lock-keyhole" class="input-icon" aria-hidden="true"></i>
+                        <input asp-for="Password" type="password" placeholder="••••••••" autocomplete="current-password" data-password-input />
+                        <button type="button" class="toggle-pw" data-toggle-password aria-label="Hiện mật khẩu">Hiện</button>
+                    </div>
+                    <span asp-validation-for="Password" class="field-error"></span>
+                </div>
+
+                <div class="auth-options">
+                    <label class="checkbox-label">
+                        <input asp-for="RememberMe" type="checkbox" />
+                        <span>Ghi nhớ đăng nhập</span>
+                    </label>
+                    <a asp-action="ForgotPassword" class="link-muted">Quên mật khẩu?</a>
+                </div>
+
+                <button type="submit" class="btn-auth-submit">Đăng nhập</button>
+                <p class="auth-switch">Chưa có tài khoản? <a asp-action="Register" data-auth-switch>Đăng ký ngay</a></p>
+            </form>
+        </section>
+    </section>
+</main>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/auth.js" asp-append-version="true"></script>
+}

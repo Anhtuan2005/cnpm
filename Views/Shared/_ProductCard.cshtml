@@ -1,0 +1,65 @@
+@model Product
+@{
+    var showPromotion = SprintFeatures.IsEnabled(3);
+    var displayPrice = showPromotion ? Model.SalePrice : Model.Price;
+    var displayBrand = PhoneBrandCatalog.Resolve(Model.Name)?.Name ?? Model.Category?.Name;
+    var badge = showPromotion && Model.DiscountPercent > 0 ? $"-{Model.DiscountPercent}%" : (Model.IsFeatured ? "Nổi bật" : (Model.CreatedAt > DateTime.UtcNow.AddDays(-21) ? "Mới" : ""));
+    var stockClass = Model.Stock == 0 ? "out" : (Model.Stock <= 5 ? "low" : "ok");
+    var stockText = Model.Stock == 0 ? "Hết hàng" : $"Còn {Model.Stock} cái";
+    var isAdminViewer = User.IsInRole("Admin");
+}
+<article class="product-card reveal">
+    <div class="card-media">
+        <a asp-controller="Product" asp-action="Detail" asp-route-id="@Model.Id" data-product-click="@(SprintFeatures.IsEnabled(3) ? Model.Id : null)">
+            <img src="@Model.PrimaryImageUrl" alt="@Model.Name" loading="lazy" decoding="async"
+                 onerror="this.onerror=null;this.src='/images/placeholder.svg';" />
+        </a>
+        <div class="card-badges">
+            @if (!string.IsNullOrWhiteSpace(badge))
+            {
+                <span class="badge @(showPromotion && Model.DiscountPercent > 0 ? "badge-sale" : Model.IsFeatured ? "badge-hot" : "badge-new")">@badge</span>
+            }
+            <span class="stock-badge @stockClass">@stockText</span>
+        </div>
+        <button class="btn-compare card-compare" type="button"
+                data-compare-product="@Model.Id"
+                data-compare-name="@Model.Name"
+                data-compare-image="@Model.PrimaryImageUrl"
+                data-compare-category-id="@Model.CategoryId"
+                data-compare-category-name="@Model.Category?.Name"
+                title="Thêm vào so sánh"
+                aria-label="Thêm @Model.Name vào so sánh"
+                aria-pressed="false">
+            <i data-lucide="git-compare-arrows" aria-hidden="true"></i>
+        </button>
+        <div class="card-actions">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <button class="btn-wishlist" type="button" data-product-id="@Model.Id" title="Yêu thích" aria-label="Yêu thích"><i data-lucide="heart" aria-hidden="true"></i></button>
+            }
+            else
+            {
+                <span class="btn-wishlist locked" title="Đăng nhập để yêu thích" aria-label="Đăng nhập để yêu thích"><i data-lucide="heart" aria-hidden="true"></i></span>
+            }
+            @if (isAdminViewer)
+            {
+                <span class="btn-card-cart btn-card-view-only">Chỉ xem</span>
+            }
+            else
+            {
+                <button class="btn-card-cart" type="button" data-cart-product="@Model.Id" @(Model.Stock == 0 ? "disabled" : "")>@(Model.Stock == 0 ? "Hết hàng" : "Thêm vào giỏ")</button>
+            }
+        </div>
+    </div>
+    <a class="card-body" asp-controller="Product" asp-action="Detail" asp-route-id="@Model.Id" data-product-click="@(SprintFeatures.IsEnabled(3) ? Model.Id : null)">
+        <span class="card-category">@displayBrand</span>
+        <h3>@Model.Name</h3>
+        <div class="card-price">
+            <span class="price-current">@displayPrice.ToString("N0") ₫</span>
+            @if (showPromotion && Model.DiscountPercent > 0)
+            {
+                <span class="price-old">@Model.Price.ToString("N0") ₫</span>
+            }
+        </div>
+    </a>
+</article>

@@ -1,0 +1,207 @@
+@using System.Security.Claims
+@inject EcommerceApp.Services.ICartService CartService
+@inject EcommerceApp.Services.IUserNotificationService NotificationService
+@inject EcommerceApp.Data.AppDbContext Db
+@inject EcommerceApp.Services.ICatalogScope CatalogScope
+@{
+    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var isAdminViewer = User.IsInRole("Admin");
+    var cartCount = isAdminViewer ? 0 : await CartService.GetCountAsync(userId, Context.Session.Id);
+    var wishlistCount = string.IsNullOrWhiteSpace(userId) ? 0 : await Db.WishlistItems.CountAsync(item => item.UserId == userId
+        && item.Product != null && item.Product.Category != null
+        && (item.Product.Category.Slug == PhoneCatalogScope.RootSlug || item.Product.Category.Slug.StartsWith("dien-thoai-")));
+    var notificationCount = SprintFeatures.IsEnabled(2) && isAuthenticated && !string.IsNullOrWhiteSpace(userId)
+        ? await NotificationService.GetUnreadCountAsync(userId)
+        : 0;
+    var notifications = SprintFeatures.IsEnabled(2) && isAuthenticated && !string.IsNullOrWhiteSpace(userId)
+        ? await NotificationService.GetRecentAsync(userId, 5)
+        : Array.Empty<UserNotification>();
+    var phoneProductNames = await CatalogScope.Products(Db.Products.AsNoTracking())
+        .Select(product => product.Name)
+        .ToListAsync();
+    var brands = PhoneBrandCatalog.Summarize(phoneProductNames);
+
+    string NotificationIcon(string type)
+    {
+        if (type == NotificationTypes.Order) return "package-check";
+        if (type == NotificationTypes.Support) return "shield-check";
+        if (type == NotificationTypes.Voucher) return "ticket-percent";
+        if (type == NotificationTypes.Wishlist) return "heart";
+        return "bell";
+    }
+}
+
+<nav class="site-nav">
+    <div class="nav-inner">
+        <a class="brand brand-logo" asp-controller="Home" asp-action="Index" aria-label="Techvora">
+            <partial name="_TechvoraLogo" />
+        </a>
+
+        <div class="nav-menu">
+            <a class="nav-link" asp-controller="Home" asp-action="Index">Trang chủ</a>
+            <a class="nav-link" asp-controller="Product" asp-action="Index">Sản phẩm</a>
+            <div class="nav-item">
+                <a class="nav-link nav-link-with-icon" asp-controller="Product" asp-action="Index">Thương hiệu <i data-lucide="chevron-down" aria-hidden="true"></i></a>
+                <div class="nav-dropdown nav-category-dropdown">
+                    <div class="nav-category-panel">
+                        <span class="nav-dropdown-label">Hãng điện thoại</span>
+                        @foreach (var brand in brands)
+                        {
+                            <a asp-controller="Product" asp-action="Index" asp-route-search="@brand.SearchTerm">
+                                <span class="nav-brand-mark" aria-hidden="true">@brand.Mark</span>
+                                <span>@brand.Name</span>
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+            @if (SprintFeatures.IsEnabled(3))
+            {
+                <a class="nav-link nav-flash nav-sale-pill nav-link-with-icon" asp-controller="Product" asp-action="Index" asp-route-sortBy="discount_desc"><i data-lucide="flame" aria-hidden="true"></i> Flash Sale</a>
+            }
+        </div>
+
+        <div class="nav-actions">
+            <form class="nav-search" asp-controller="Product" asp-action="Index" method="get" autocomplete="off">
+                <div class="nav-search-box">
+                    <input class="nav-search-input" id="navSearchInput" name="search" placeholder="Tìm sản phẩm" aria-label="Tìm sản phẩm" aria-controls="searchSuggestions" aria-autocomplete="list" data-search-autocomplete />
+                    <div class="search-suggestions" id="searchSuggestions" role="listbox" aria-label="Gợi ý tìm kiếm"></div>
+                </div>
+                <button class="nav-icon nav-search-btn" type="button" aria-label="Mở tìm kiếm" aria-expanded="false" aria-controls="navSearchInput"><i data-lucide="search" aria-hidden="true"></i></button>
+            </form>
+
+            @if (isAuthenticated && SprintFeatures.IsEnabled(2))
+            {
+                <div class="notification-menu">
+                    <button class="nav-icon nav-badge-link notification-toggle" type="button" aria-label="Thông báo" aria-expanded="false" aria-controls="notificationDropdown">
+                        <i data-lucide="bell" aria-hidden="true"></i>
+                        @if (notificationCount > 0)
+                        {
+                            <em>@notificationCount</em>
+                        }
+                    </button>
+                    <div class="notification-dropdown" id="notificationDropdown">
+                        <div class="notification-dropdown-head">
+                            <strong>Thông báo</strong>
+                            <a asp-controller="Notification" asp-action="Index">Xem tất cả</a>
+                        </div>
+                        @if (!notifications.Any())
+                        {
+                            <p class="notification-empty">Chưa có cập nhật mới.</p>
+                        }
+                        else
+                        {
+                            @foreach (var notification in notifications)
+                            {
+                                <a class="notification-mini @(notification.IsRead ? "is-read" : "is-unread")" asp-controller="Notification" asp-action="Go" asp-route-id="@notification.Id">
+                                    <span><i data-lucide="@NotificationIcon(notification.Type)" aria-hidden="true"></i></span>
+                                    <div>
+                                        <strong>@notification.Title</strong>
+                                        <small>@notification.Message</small>
+                                    </div>
+                                </a>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+
+            <a class="nav-icon nav-badge-link" asp-controller="Wishlist" asp-action="Index" aria-label="Yêu thích">
+                <i data-lucide="heart" aria-hidden="true"></i><em id="wishlist-count" aria-live="polite">@wishlistCount</em>
+            </a>
+            @if (!isAdminViewer)
+            {
+                <a class="nav-icon nav-badge-link" asp-controller="Cart" asp-action="Index" aria-label="Giỏ hàng">
+                    <i data-lucide="shopping-cart" aria-hidden="true"></i><em id="cart-count" aria-live="polite">@cartCount</em>
+                </a>
+            }
+            @if (isAuthenticated)
+            {
+                <div class="avatar-menu">
+                    <button class="avatar-btn" type="button" aria-label="Tài khoản" aria-expanded="false" aria-controls="accountDropdown"><i data-lucide="user-circle" aria-hidden="true"></i></button>
+                    <div class="avatar-dropdown" id="accountDropdown">
+                        <span>@User.Identity?.Name</span>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a class="avatar-admin-link" href="@(SprintFeatures.IsEnabled(2) ? "/Admin/Dashboard" : "/Admin/Product")"><i data-lucide="layout-dashboard" aria-hidden="true"></i> Trang quản trị</a>
+                        }
+                        <a asp-controller="Account" asp-action="Profile">Hồ sơ cá nhân</a>
+                        @if (SprintFeatures.IsEnabled(2))
+                        {
+                            <a asp-controller="Notification" asp-action="Index">Thông báo</a>
+                            @if (!User.IsInRole("Admin"))
+                            {
+                                <a asp-controller="Order" asp-action="History">Đơn hàng của tôi</a>
+                                <a asp-controller="ReturnWarranty" asp-action="Index">Đổi trả và bảo hành</a>
+                            }
+                        }
+                        <a asp-controller="Wishlist" asp-action="Index">Danh sách yêu thích</a>
+                        <form asp-controller="Account" asp-action="Logout" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit">Đăng xuất</button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <a class="nav-login" asp-controller="Account" asp-action="Login">Đăng nhập</a>
+            }
+            <button class="nav-hamburger" type="button" aria-label="Mở menu" aria-expanded="false" aria-controls="navDrawer"><i data-lucide="menu" aria-hidden="true"></i></button>
+        </div>
+    </div>
+</nav>
+
+<div class="nav-overlay" aria-hidden="true"></div>
+<aside class="nav-drawer" id="navDrawer" aria-label="Menu di động" aria-hidden="true" tabindex="-1" inert>
+    <div class="drawer-head">
+        <a class="brand brand-logo" asp-controller="Home" asp-action="Index" aria-label="Techvora">
+            <partial name="_TechvoraLogo" />
+        </a>
+        <button class="nav-drawer-close" type="button" aria-label="Đóng menu"><i data-lucide="x" aria-hidden="true"></i></button>
+    </div>
+    <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+    <a asp-controller="Product" asp-action="Index">Sản phẩm</a>
+    <span class="drawer-section-label">Hãng điện thoại</span>
+    @foreach (var brand in brands)
+    {
+        <a asp-controller="Product" asp-action="Index" asp-route-search="@brand.SearchTerm"><span class="nav-brand-mark" aria-hidden="true">@brand.Mark</span> @brand.Name</a>
+    }
+    @if (SprintFeatures.IsEnabled(3))
+    {
+        <span class="drawer-section-label">Ưu đãi</span>
+        <a class="nav-flash nav-sale-pill" asp-controller="Product" asp-action="Index" asp-route-sortBy="discount_desc"><i data-lucide="flame" aria-hidden="true"></i> Flash Sale</a>
+    }
+    <a asp-controller="Wishlist" asp-action="Index">Yêu thích</a>
+    @if (!isAdminViewer)
+    {
+        <a asp-controller="Cart" asp-action="Index">Giỏ hàng</a>
+    }
+    @if (isAuthenticated)
+    {
+        @if (User.IsInRole("Admin"))
+        {
+            <a href="@(SprintFeatures.IsEnabled(2) ? "/Admin/Dashboard" : "/Admin/Product")"><i data-lucide="layout-dashboard" aria-hidden="true"></i> Trang quản trị</a>
+        }
+        <a asp-controller="Account" asp-action="Profile">Hồ sơ cá nhân</a>
+        @if (SprintFeatures.IsEnabled(2))
+        {
+            <a asp-controller="Notification" asp-action="Index">Thông báo</a>
+            @if (!User.IsInRole("Admin"))
+            {
+                <a asp-controller="Order" asp-action="History">Đơn hàng</a>
+                <a asp-controller="ReturnWarranty" asp-action="Index">Đổi trả và bảo hành</a>
+            }
+        }
+        <form asp-controller="Account" asp-action="Logout" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit">Đăng xuất</button>
+        </form>
+    }
+    else
+    {
+        <a asp-controller="Account" asp-action="Login">Đăng nhập</a>
+        <a asp-controller="Account" asp-action="Register">Đăng ký</a>
+    }
+</aside>

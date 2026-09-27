@@ -1,0 +1,68 @@
+# Build
+bin/
+obj/
+App_Data/DataProtectionKeys/
+
+.vs/
+*.user
+*.suo
+
+# Logs
+logs/
+*.log
+TestResults/
+artifacts/
+node_modules/
+wwwroot/uploads/
+.env
+
+# ASP.NET secrets
+appsettings.Development.json
+
+# Browser data
+.edge-3d-test/
+
+# Rider / VSCode
+.idea/
+.vscode/
+
+# Local Codex work files
+.codex-*/
+outputs/
+
+# Internal development and QA tooling
+.github/
+ClientAssets/
+scripts/
+tests/
+docs/*.md
+docs/adr/
+
+# Public, reproducible backend test evidence
+!.github/
+.github/*
+!.github/workflows/
+.github/workflows/*
+!.github/workflows/portfolio-tests.yml
+!tests/
+tests/*
+!tests/EcommerceApp.Tests/
+
+# Optional container and frontend toolchain
+.dockerignore
+Dockerfile
+compose*.yml
+package.json
+package-lock.json
+playwright.config.*
+
+# Internal product notes
+PRODUCT.md
+
+# OS
+.DS_Store
+Thumbs.db
+output/
+tmp/
+*.mp4
+tmp/

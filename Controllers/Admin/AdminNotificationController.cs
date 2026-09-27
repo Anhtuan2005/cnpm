@@ -1,0 +1,59 @@
+using EcommerceApp.Models.ViewModels;
+using EcommerceApp.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+
+namespace EcommerceApp.Controllers.Admin;
+
+[MinimumSprint(2)]
+[Authorize(Roles = "Admin")]
+[Route("Admin/Notification")]
+public class AdminNotificationController : Controller
+{
+    private readonly IUserNotificationService _notificationService;
+
+    public AdminNotificationController(IUserNotificationService notificationService)
+    {
+        _notificationService = notificationService;
+    }
+
+    [HttpGet("")]
+    public async Task<IActionResult> Index()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        return View("~/Views/Admin/Notification/Index.cshtml", new NotificationIndexViewModel
+        {
+            Notifications = await _notificationService.GetAllAsync(userId),
+            UnreadCount = await _notificationService.GetUnreadCountAsync(userId)
+        });
+    }
+
+    [HttpGet("Go/{id:int}")]
+    public async Task<IActionResult> Go(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var notification = await _notificationService.GetAsync(id, userId);
+        if (notification is null)
+        {
+            return RedirectToAction(nameof(Index));
+        }
+
+        await _notificationService.MarkAsReadAsync(id, userId);
+        if (!string.IsNullOrWhiteSpace(notification.LinkUrl) && Url.IsLocalUrl(notification.LinkUrl))
+        {
+            return LocalRedirect(notification.LinkUrl);
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost("MarkAllRead")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MarkAllRead()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        await _notificationService.MarkAllAsReadAsync(userId);
+        return RedirectToAction(nameof(Index));
+    }
+}
