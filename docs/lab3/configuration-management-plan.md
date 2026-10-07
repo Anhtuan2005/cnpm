@@ -6,7 +6,7 @@ Phiên bản kế hoạch: `v1.0.0` · Ngày lập: 07/10/2026 · Phạm vi: rep
 
 | Mã | CI | Vị trí hiện tại | Vai trò phụ trách | Kiểm soát phiên bản |
 | --- | --- | --- | --- | --- |
-| CI-01 | Yêu cầu và mô tả sản phẩm | `README.md`, `PRODUCT.md`; tài liệu mới tại `docs/requirements/` | BA / chủ sản phẩm | Git; sửa qua PR; gắn tag phát hành |
+| CI-01 | Yêu cầu và mô tả sản phẩm | `README.md`; tài liệu mới tại `docs/requirements/` khi có | BA / chủ sản phẩm | Git; sửa qua PR; gắn tag phát hành |
 | CI-02 | Thiết kế giao diện và ảnh minh chứng | `Views/`, `wwwroot/`, `docs/screenshots/`; thiết kế mới tại `docs/design/` | UI/UX và frontend | Git; review ảnh và giao diện khi đổi |
 | CI-03 | Mã nguồn backend | `Controllers/`, `Services/`, `Models/` | Backend | Branch riêng, commit và PR |
 | CI-04 | Lược đồ và dữ liệu demo | `Data/AppDbContext.cs`, `Data/Migrations/`, `Data/SeedData.cs` | Backend / database | Migration bất biến sau khi đã chia sẻ; PR kèm kiểm thử |

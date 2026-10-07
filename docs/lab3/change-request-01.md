@@ -1,6 +1,6 @@
 # Change Request CR-01 – Dữ liệu kiểm thử đăng ký tài khoản
 
-Ngày lập: 07/10/2026 · Trạng thái: đã triển khai trên branch, chờ review và merge.
+Ngày lập: 07/10/2026 · Trạng thái: đã triển khai trên branch và mở [PR #1](https://github.com/Anhtuan2005/cnpm/pull/1), chờ review và merge.
 
 | Nội dung | Kết quả |
 | --- | --- |
@@ -27,4 +27,4 @@ Ngày lập: 07/10/2026 · Trạng thái: đã triển khai trên branch, chờ 
 - Dữ liệu: [`registration_test_data.json`](../../evidence/lab3/registration_test_data.json)
 - Mã test: [`RegistrationValidationDataTests.cs`](../../tests/EcommerceApp.Tests/RegistrationValidationDataTests.cs)
 - Kết quả local: `dotnet test tests/EcommerceApp.Tests/EcommerceApp.Tests.csproj --filter FullyQualifiedName~RegistrationValidationDataTests --no-restore --verbosity minimal` đạt **6/6** ngày 07/10/2026.
-- Commit bộ dữ liệu và bài test: `ae26805` (`test: cover registration validation with lab data`). Liên kết PR và review được bổ sung sau khi thực sự xuất hiện.
+- Commit bộ dữ liệu và bài test: `ae26805` (`test: cover registration validation with lab data`). PR: [#1](https://github.com/Anhtuan2005/cnpm/pull/1). Chưa có review hoặc merge tại thời điểm lập hồ sơ.
