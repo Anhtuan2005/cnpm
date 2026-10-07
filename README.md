@@ -29,8 +29,8 @@ Bản chạy mặc định hiển thị phạm vi **Sprint 2**; các route thu�
 Yêu cầu: **.NET SDK 8+** và **SQL Server** có quyền tạo database. Không cần cài Node.js hoặc Docker để chạy ứng dụng.
 
 ```powershell
-git clone https://github.com/Anhtuan2005/E-Lectrical--Commerce-.git
-cd E-Lectrical--Commerce-
+git clone https://github.com/Anhtuan2005/cnpm.git
+cd cnpm
 dotnet restore EcommerceApp.sln
 dotnet tool restore
 
