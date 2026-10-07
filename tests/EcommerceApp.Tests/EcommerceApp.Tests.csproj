@@ -14,4 +14,9 @@
     <ProjectReference Include="../../EcommerceApp.csproj" />
     <Using Include="Xunit" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="../../evidence/lab3/registration_test_data.json"
+          Link="registration_test_data.json"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

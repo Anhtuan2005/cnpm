@@ -1,0 +1,68 @@
+[
+  {
+    "id": "REG-01",
+    "fullName": "Nguyễn An",
+    "email": "an@example.com",
+    "phoneNumber": "0901234567",
+    "address": "Hà Nội",
+    "password": "StrongPass1!",
+    "confirmPassword": "StrongPass1!",
+    "expectedValid": true,
+    "expectedField": null
+  },
+  {
+    "id": "REG-02",
+    "fullName": "Trần Bình",
+    "email": "binh@example.com",
+    "phoneNumber": "0712345678",
+    "address": null,
+    "password": "Ab1234",
+    "confirmPassword": "Ab1234",
+    "expectedValid": true,
+    "expectedField": null
+  },
+  {
+    "id": "REG-03",
+    "fullName": "Lê Chi",
+    "email": "chi@example.com",
+    "phoneNumber": "0812345678",
+    "address": "Đà Nẵng",
+    "password": "ValidPassword9",
+    "confirmPassword": "ValidPassword9",
+    "expectedValid": true,
+    "expectedField": null
+  },
+  {
+    "id": "REG-04",
+    "fullName": "Phạm Dung",
+    "email": "not-an-email",
+    "phoneNumber": "0912345678",
+    "address": null,
+    "password": "StrongPass1!",
+    "confirmPassword": "StrongPass1!",
+    "expectedValid": false,
+    "expectedField": "Email"
+  },
+  {
+    "id": "REG-05",
+    "fullName": "Hoàng Hà",
+    "email": "ha@example.com",
+    "phoneNumber": "091234567",
+    "address": null,
+    "password": "StrongPass1!",
+    "confirmPassword": "StrongPass1!",
+    "expectedValid": false,
+    "expectedField": "PhoneNumber"
+  },
+  {
+    "id": "REG-06",
+    "fullName": "Vũ Lan",
+    "email": "lan@example.com",
+    "phoneNumber": "0312345678",
+    "address": null,
+    "password": "Ab123",
+    "confirmPassword": "Ab123",
+    "expectedValid": false,
+    "expectedField": "Password"
+  }
+]
