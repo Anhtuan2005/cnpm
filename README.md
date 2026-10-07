@@ -144,4 +144,3 @@ Dùng `dotnet user-secrets` khi phát triển và biến môi trường khi tri�
 Email được tắt khi chưa cung cấp thông tin xác thực, nên không bắt buộc để chạy bản demo cục bộ.
 
 Các route thuộc Sprint 3 trở lên trả `404`; menu và tiến trình nền tương ứng không hoạt động. Xác thực, phân quyền, chống CSRF và rate limit nền tảng vẫn được giữ để ứng dụng an toàn.
-# TechvoraLab
