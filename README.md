@@ -17,6 +17,17 @@ Website bán điện thoại được xây dựng bằng **ASP.NET Core 8 MVC, E
 
 Bản chạy mặc định hiển thị phạm vi **Sprint 2**; các route thuộc Sprint 3 trở lên vẫn bị chặn.
 
+## Thành viên và vai trò
+
+Vai trò dưới đây là trách nhiệm trong nhóm, theo [hồ sơ Lab 3](docs/lab3/README.md); quyền truy cập repository trên GitHub được quản lý riêng.
+
+| Thành viên | GitHub | Vai trò trong nhóm |
+| --- | --- | --- |
+| Nguyễn Trương Anh Tuấn | [@Anhtuan2005](https://github.com/Anhtuan2005) | Dev / Product Owner |
+| Trần Tấn Phát | [@Capta1nPhat](https://github.com/Capta1nPhat) | Dev / Scrum Master |
+| Trương Đức Phú | [@PhuTruong259](https://github.com/PhuTruong259) | Dev / Scrum Master |
+| Bùi Phạm Phong Phú | [@572bpphu](https://github.com/572bpphu) | Dev / Leader |
+
 ## Công nghệ
 
 - ASP.NET Core 8 MVC và Razor Views
@@ -55,19 +66,36 @@ Mở [http://localhost:5009](http://localhost:5009).
 
 Để xem luồng chính: so sánh hai điện thoại cùng danh mục, đăng nhập tài khoản khách, áp dụng voucher và đặt hàng COD/VNPAY; sau đó mở lịch sử để hủy/mua lại, theo dõi giao hàng, review hoặc gửi yêu cầu hỗ trợ. Đăng nhập admin để xem dashboard, xử lý đơn, tồn kho, GHN, hóa đơn, CSV và duyệt review. VNPAY/GHN cần thông tin sandbox thật để gọi dịch vụ ngoài; các tình huống callback lặp và tranh chấp tồn kho được kiểm tra bằng integration test.
 
-## Cấu trúc chính
+## Cấu trúc dự án
 
 ```text
+EcommerceApp.sln                 Solution .NET
+src/
+  backend/                       Ứng dụng ASP.NET Core MVC
+    Controllers/                 Xử lý HTTP và phân quyền
+    Services/                    Nghiệp vụ và tích hợp
+    Models/                      Mô hình dữ liệu
+    Data/                        EF Core và truy cập dữ liệu
+    Views/                       Giao diện Razor
+    wwwroot/                     Tài nguyên tĩnh phục vụ trình duyệt
+  frontend/
+    ClientAssets/                Nguồn CSS và JavaScript
+    scripts/                     Công cụ build tài nguyên giao diện
+database/
+  schema/                        EF Core migrations
+  seed/                          Dữ liệu demo
+test/
+  test-cases/EcommerceApp.Tests/  Unit và integration tests
+  test-cases/browser/             Browser smoke tests
+  test-data/                      Dữ liệu đầu vào cho test
+docs/
+  requirements/                  Yêu cầu dự án
+  design/                        Kiến trúc và ảnh minh chứng
+  user-guide/                    Hướng dẫn demo và kiểm thử
+  lab3/                          Hồ sơ quản lý cấu hình Lab 3
+.github/workflows/               Kiểm thử tự động trên GitHub Actions
+Dockerfile, compose.demo.yml     Cấu hình chạy bằng container
 README.md                        Giới thiệu và cách chạy dự án
-docs/requirements/               Tài liệu yêu cầu
-docs/design/                     Thiết kế và ảnh minh chứng
-docs/user-guide/                 Hướng dẫn và kết quả kiểm thử
-src/frontend/                   Nguồn CSS/JavaScript và công cụ build giao diện
-src/backend/                    Ứng dụng ASP.NET Core, Razor Views và wwwroot
-database/schema/                EF Core migrations
-database/seed/                  Dữ liệu demo
-test/test-cases/                Unit, integration và browser tests
-test/test-data/                 Dữ liệu đầu vào cho test
 ```
 
 Controller xử lý request và quyền truy cập; service giữ nghiệp vụ; EF Core ghi SQL Server. Tạo đơn COD, cập nhật tồn kho và xóa các sản phẩm đã mua khỏi giỏ được thực hiện trong transaction.
