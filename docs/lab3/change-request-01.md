@@ -1,6 +1,6 @@
 # Change Request CR-01 – Dữ liệu kiểm thử đăng ký tài khoản
 
-Ngày lập: 07/10/2026 · Trạng thái: đã triển khai trên branch và mở [PR #1](https://github.com/Anhtuan2005/cnpm/pull/1), chờ review và merge.
+Ngày lập: 07/10/2026 · Trạng thái: đã triển khai và merge qua [PR #1](https://github.com/Anhtuan2005/cnpm/pull/1); chưa có review được ghi nhận trên PR.
 
 | Nội dung | Kết quả |
 | --- | --- |
@@ -12,7 +12,7 @@ Ngày lập: 07/10/2026 · Trạng thái: đã triển khai trên branch và m�
 | Tiến độ | Thấp: dữ liệu và bài test độc lập, không cần sửa schema hoặc luồng mua hàng. |
 | Chi phí | Không phát sinh dịch vụ ngoài; chỉ cần thời gian review và chạy test. |
 | Chất lượng | Tăng khả năng phát hiện hồi quy ở các ranh giới email, số điện thoại và mật khẩu; bài test chỉ kiểm tra model validation, chưa kiểm thử đăng ký với database thật. |
-| Quyết định | Approve cho việc triển khai trên branch theo yêu cầu của chủ repository; việc merge vẫn chờ reviewer/nhóm chấp thuận. |
+| Quyết định | Approve cho việc triển khai trên branch theo yêu cầu của chủ repository. PR #1 đã merge, nhưng tiêu chí review bởi người khác tác giả chưa được đáp ứng. |
 | Branch | `codex/lab3-scm-registration-tests` |
 
 ## Tiêu chí chấp nhận
@@ -27,4 +27,4 @@ Ngày lập: 07/10/2026 · Trạng thái: đã triển khai trên branch và m�
 - Dữ liệu: [`registration_test_data.json`](../../test/test-data/registration_test_data.json)
 - Mã test: [`RegistrationValidationDataTests.cs`](../../test/test-cases/EcommerceApp.Tests/RegistrationValidationDataTests.cs)
 - Kết quả local: `dotnet test test/test-cases/EcommerceApp.Tests/EcommerceApp.Tests.csproj --filter FullyQualifiedName~RegistrationValidationDataTests --no-restore --verbosity minimal` đạt **6/6** ngày 07/10/2026.
-- Commit bộ dữ liệu và bài test: `ae26805` (`test: cover registration validation with lab data`). PR: [#1](https://github.com/Anhtuan2005/cnpm/pull/1). Chưa có review hoặc merge tại thời điểm lập hồ sơ.
+- Commit bộ dữ liệu và bài test: `ae26805` (`test: cover registration validation with lab data`). PR: [#1](https://github.com/Anhtuan2005/cnpm/pull/1), đã merge ngày 07/10/2026; chưa có review được ghi nhận.

@@ -17,6 +17,19 @@ Website bán điện thoại được xây dựng bằng **ASP.NET Core 8 MVC, E
 
 Bản chạy mặc định hiển thị phạm vi **Sprint 2**; các route thuộc Sprint 3 trở lên vẫn bị chặn.
 
+## Nhóm 3
+
+Theo danh sách trong `T4_B3_Nhom3.xlsx`:
+
+| Thành viên | Vai trò |
+| --- | --- |
+| Nguyễn Trương Anh Tuấn | Dev / Product Owner |
+| Trần Tấn Phát | Dev / Scrum Master |
+| Trương Đức Phú | Dev / Scrum Master |
+| Bùi Phạm Phong Phú | Dev / Leader |
+
+[Hồ sơ quản lý cấu hình Lab 3](docs/lab3/README.md) ghi danh sách CI, quy tắc thay đổi, CR-01 và dữ liệu kiểm thử.
+
 ## Công nghệ
 
 - ASP.NET Core 8 MVC và Razor Views
@@ -29,8 +42,8 @@ Bản chạy mặc định hiển thị phạm vi **Sprint 2**; các route thu�
 Yêu cầu: **.NET SDK 8+** và **SQL Server** có quyền tạo database. Không cần cài Node.js hoặc Docker để chạy ứng dụng.
 
 ```powershell
-git clone https://github.com/Anhtuan2005/E-Lectrical--Commerce-.git
-cd E-Lectrical--Commerce-
+git clone https://github.com/Anhtuan2005/cnpm.git
+cd cnpm
 dotnet restore EcommerceApp.sln
 dotnet tool restore
 
