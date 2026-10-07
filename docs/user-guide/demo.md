@@ -9,6 +9,4 @@
 3. **Xem chi tiết & tương tác sản phẩm:** Mở trang chi tiết sản phẩm để xem hình ảnh, thông số kỹ thuật, giá bán và lượng tồn kho; thực hiện thêm vào danh sách yêu thích, thêm vào giỏ hàng và thử tính năng **Mua ngay** (**US-09**, **US-11**, **US-14**).
 4. **Đăng nhập & quản lý giỏ hàng/Checkout:** Đăng nhập bằng tài khoản khách demo để minh họa tính năng ghép giỏ hàng, tiến hành checkout điền địa chỉ giao hàng, tính phí vận chuyển theo khu vực và chọn phương thức thanh toán nhận hàng (**COD**) (**US-02**, **US-12**, **US-14**).
 5. **Xác nhận & quản lý đơn hàng:** Sau khi đặt hàng thành công, mở trang xác nhận đơn hàng, xem lại lịch sử mua hàng và kiểm tra chi tiết tiến trình xử lý đơn (**US-03**).
-6. **Quản trị hệ thống (Admin):** Đăng nhập bằng tài khoản Admin để quản lý danh mục, danh sách sản phẩm, hình ảnh, thông số kỹ thuật và hệ thống banner trang chủ (**US-16**).
-
-*Lưu ý: Không demo các route hoặc tính năng ngoài phạm vi các User Story của Sprint 1. Hình ảnh minh họa trong thư mục `docs/design/screenshots/` được dùng làm dữ liệu demo; repository hiện chưa có video hoặc URL triển khai công khai.*
+6. **Quản trị hệ thống (Admin):** Đăng nhập bằng tài khoản Admin để quản lý danh mục, danh sách sản phẩm, hình ảnh, thông số kỹ thuật và hệ thống banner trang chủ (**US-16**
