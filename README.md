@@ -102,3 +102,5 @@ dotnet run --project EcommerceApp.csproj
 
 Ở chế độ Sprint 1, route Sprint 2–3 trả `404`; menu và tiến trình nền tương ứng cũng không hoạt động. Build PC không thuộc backlog của đề tài điện thoại nên luôn bị khóa. Xác thực, phân quyền, chống CSRF và rate limit nền tảng vẫn được giữ để ứng dụng an toàn.
 # TechvoraLab
+
+> *Đã cập nhật kiểm tra đồng bộ kho lưu trữ GitHub qua Pull Request.*
