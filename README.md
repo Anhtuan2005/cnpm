@@ -1,10 +1,14 @@
-# Techvora — Cửa hàng điện thoại ASP.NET Core
+# Techvora
 
-Website bán điện thoại được xây dựng bằng **ASP.NET Core 8 MVC, EF Core, SQL Server và ASP.NET Core Identity**. Giao diện tiếng Việt, hỗ trợ desktop và mobile.
+**Cửa hàng điện thoại từ lúc chọn máy đến khi theo dõi đơn hàng.** Khách có thể so sánh sản phẩm, đặt mua và gửi yêu cầu hậu mãi; nhân viên quản lý danh mục, tồn kho và đơn hàng trên cùng một hệ thống.
 
-![Trang chủ Techvora với dữ liệu demo](docs/design/screenshots/home.png)
+`ASP.NET Core 8 MVC` · `EF Core 8` · `SQL Server` · `Razor` · `JavaScript`
 
-Ảnh demo khác: [trang quản trị](docs/design/screenshots/admin.png). [Chạy demo local](#demo-local) · [xem bằng chứng kiểm thử](docs/user-guide/backend-tests.md). Repo chưa có video hoặc URL triển khai công khai.
+**Khám phá dự án:** [Chạy demo local](#demo-local) · [Kiến trúc](docs/design/architecture.md) · [Kịch bản demo](docs/user-guide/demo.md) · [Bằng chứng kiểm thử](docs/user-guide/backend-tests.md)
+
+| Trang chủ cửa hàng | Quản trị sản phẩm |
+| :---: | :---: |
+| ![Trang chủ Techvora với dữ liệu demo](docs/design/screenshots/home.png) | ![Trang quản trị sản phẩm Techvora với dữ liệu demo](docs/design/screenshots/admin.png) |
 
 ## Chức năng nổi bật
 
@@ -16,6 +20,17 @@ Website bán điện thoại được xây dựng bằng **ASP.NET Core 8 MVC, E
 | Quản trị | Dashboard, catalog, tồn kho, đơn hàng, hoàn tiền, hóa đơn/CSV, GHN và duyệt review |
 
 Bản chạy mặc định hiển thị phạm vi **Sprint 2**; các route thuộc Sprint 3 trở lên vẫn bị chặn.
+
+## Tài liệu dự án
+
+| Nội dung | Tài liệu hiện có |
+| --- | --- |
+| Yêu cầu | [Thư mục yêu cầu](docs/requirements/README.md) |
+| Thiết kế | [Sơ đồ kiến trúc](docs/design/architecture.md) và [ảnh giao diện](docs/design/screenshots/) |
+| Hướng dẫn | [Kịch bản demo](docs/user-guide/demo.md) và [bằng chứng kiểm thử](docs/user-guide/backend-tests.md) |
+| Quản lý cấu hình | [Hồ sơ Lab 3](docs/lab3/README.md) |
+
+**Tài liệu gốc Tuần 1–2 chưa có trong repository.** `docs/requirements/` hiện chỉ có trang hướng dẫn đặt tài liệu; `docs/design/` đã có sơ đồ kiến trúc và ảnh minh họa. Khi có bản gốc, đặt yêu cầu vào `docs/requirements/` và thiết kế vào `docs/design/`. Repo hiện chưa có video demo hoặc URL triển khai công khai.
 
 ## Thành viên và vai trò
 
