@@ -1,0 +1,2770 @@
+var lucideScript = document.getElementById("lucide-script");
+if (lucideScript) lucideScript.addEventListener("load", refreshIcons);
+
+document.addEventListener("DOMContentLoaded", function () {
+  initNavbar();
+  initCatalogFilters();
+  initHeroSlider();
+  initCountdown();
+  initReveal();
+  initCountUp();
+  initProductInteractionTracking();
+  initWishlist();
+  initProductCompare();
+  initCartOfferModal();
+  initCartButtons();
+  initCartPage();
+  initCartSelection();
+  initReviewForm();
+  initReviewImagePreview();
+  initVoucher();
+  initQuantitySteppers();
+  initAuthHelpers();
+  initPaymentChoice();
+  initSearchAutocomplete();
+  initReviewFilters();
+  initReviewPagination();
+  initProductGallery();
+  initProductTabs();
+  initProductSpecModal();
+  initDetailCoupon();
+  initPdpNotes();
+  initDetailAddToCart();
+  initNotificationMenu();
+  initOrderRouteMap();
+  initAddressDropdowns();
+  initProfileAddressFill();
+  initAiChatbot();
+  refreshIcons();
+});
+
+function refreshIcons() {
+  if (window.lucide && typeof window.lucide.createIcons === "function") {
+    window.lucide.createIcons({
+      attrs: {
+        "stroke-width": 1.5
+      }
+    });
+  }
+}
+
+function antiForgeryToken() {
+  var token = document.querySelector("[name=__RequestVerificationToken]");
+  return token ? token.value : "";
+}
+
+function trackProductInteraction(productId, eventType) {
+  if (!productId || !eventType) return;
+  var body = new URLSearchParams();
+  body.append("productId", productId);
+  body.append("eventType", eventType);
+
+  fetch("/Product/Track", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "RequestVerificationToken": antiForgeryToken()
+    },
+    body: body.toString(),
+    keepalive: true
+  }).catch(function () {});
+}
+
+function initProductInteractionTracking() {
+  document.addEventListener("click", function (event) {
+    var link = event.target.closest("[data-product-click]");
+    if (!link) return;
+    trackProductInteraction(link.dataset.productClick, "product_click");
+  });
+}
+
+function postCartAdd(productId, quantity) {
+  var body = new URLSearchParams();
+  body.append("productId", productId);
+  body.append("quantity", quantity || "1");
+  return fetch("/Cart/Add", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "RequestVerificationToken": antiForgeryToken()
+    },
+    body: body.toString()
+  }).then(function (response) {
+    if (!response.ok) throw new Error("Cart request failed");
+    return response.json();
+  });
+}
+
+function updateCartBadges(data) {
+  var count = data && data.itemCount;
+  if (count === undefined || count === null) return;
+  var cartCount = document.getElementById("cart-count");
+  if (cartCount) cartCount.textContent = count;
+  document.querySelectorAll(".cart-badge").forEach(function (badge) {
+    badge.textContent = count;
+  });
+}
+
+function getCartOfferSuggestions(data) {
+  return data && Array.isArray(data.crossSellSuggestions) ? data.crossSellSuggestions : [];
+}
+
+function initCartOfferModal() {
+  var modal = document.getElementById("cartOfferModal");
+  var list = document.getElementById("cartOfferList");
+  if (!modal || !list) return;
+
+  function close() {
+    modal.hidden = true;
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("cart-offer-open");
+  }
+
+  function escapeHtml(value) {
+    return String(value === null || value === undefined ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function render(suggestions) {
+    list.innerHTML = suggestions.map(function (suggestion) {
+      var hasDiscount = suggestion.hasDiscount === true;
+      var badge = suggestion.badgeText || (hasDiscount ? "-" + suggestion.discountPercent + "%" : "Gợi ý");
+      var price = hasDiscount
+        ? '<span><del>' + escapeHtml(suggestion.originalPrice) + '</del><b>' + escapeHtml(suggestion.offerPrice) + '</b></span>'
+        : '<span><b>' + escapeHtml(suggestion.originalPrice) + '</b></span>';
+      return [
+        '<article class="cart-offer-item">',
+        '  <div class="cart-offer-media">',
+        '    <img src="' + escapeHtml(suggestion.imageUrl || "/images/placeholder.svg") + '" alt="' + escapeHtml(suggestion.productName) + '" loading="lazy" decoding="async" />',
+        '    <span>' + escapeHtml(badge) + '</span>',
+        '  </div>',
+        '  <div class="cart-offer-copy">',
+        '    <strong>' + escapeHtml(suggestion.productName) + '</strong>',
+        '    <small>' + escapeHtml(suggestion.contextText || ("Kèm " + suggestion.anchorProductName)) + '</small>',
+        '    ' + price,
+        '  </div>',
+        '  <button class="cart-offer-add" type="button" data-cart-offer-add="' + escapeHtml(suggestion.productId) + '">',
+        '    <i data-lucide="plus" aria-hidden="true"></i>',
+        '    Thêm',
+        '  </button>',
+        '</article>'
+      ].join("");
+    }).join("");
+    refreshIcons();
+  }
+
+  window.showCartOfferModal = function (suggestions) {
+    if (!Array.isArray(suggestions) || suggestions.length === 0) return false;
+    render(suggestions);
+    modal.hidden = false;
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("cart-offer-open");
+    var closeButton = modal.querySelector("[data-cart-offer-close]");
+    if (closeButton) closeButton.focus();
+    return true;
+  };
+
+  modal.querySelectorAll("[data-cart-offer-close]").forEach(function (button) {
+    button.addEventListener("click", close);
+  });
+
+  list.addEventListener("click", function (event) {
+    var button = event.target.closest("[data-cart-offer-add]");
+    if (!button || button.disabled) return;
+    button.disabled = true;
+    button.dataset.originalHtml = button.dataset.originalHtml || button.innerHTML;
+    button.textContent = "Đang thêm";
+    postCartAdd(button.dataset.cartOfferAdd, "1")
+      .then(function (data) {
+        if (!data.success) {
+          showToast(data.message || "Không thể thêm sản phẩm vào giỏ.", "error");
+          return;
+        }
+        updateCartBadges(data);
+        showToast(data.message, "success");
+        var suggestions = getCartOfferSuggestions(data);
+        if (suggestions.length) {
+          render(suggestions);
+        } else {
+          close();
+        }
+      })
+      .catch(function () {
+        showToast("Không thể thêm sản phẩm vào giỏ. Vui lòng thử lại.", "error");
+      })
+      .finally(function () {
+        button.disabled = false;
+        if (button.dataset.originalHtml) {
+          button.innerHTML = button.dataset.originalHtml;
+          refreshIcons();
+        }
+      });
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && !modal.hidden) close();
+  });
+}
+
+function showCartOffersAfterAdd(data) {
+  var suggestions = getCartOfferSuggestions(data);
+  if (window.showCartOfferModal && window.showCartOfferModal(suggestions)) {
+    return true;
+  }
+  return false;
+}
+
+function initAiChatbot() {
+  var root = document.querySelector("[data-ai-chatbot]");
+  if (!root) return;
+
+  var toggle = root.querySelector("[data-ai-chat-toggle]");
+  var panel = root.querySelector("[data-ai-chat-panel]");
+  var close = root.querySelector("[data-ai-chat-close]");
+  var form = root.querySelector("[data-ai-chat-form]");
+  var input = root.querySelector("[data-ai-chat-input]");
+  var send = root.querySelector("[data-ai-chat-send]");
+  var messages = root.querySelector("[data-ai-chat-messages]");
+  var transcriptKey = "techvoraAiChatTranscript";
+  var history = [];
+  var transcript = loadTranscript();
+  var isSending = false;
+
+  function setOpen(open) {
+    if (!panel || !toggle) return;
+    panel.hidden = !open;
+    root.classList.toggle("is-open", open);
+    toggle.setAttribute("aria-expanded", String(open));
+    sessionStorage.setItem("techvoraAiChatOpen", open ? "true" : "false");
+    if (open && input) {
+      setTimeout(function () {
+        input.focus();
+        scrollMessages();
+      }, 40);
+    }
+    refreshIcons();
+  }
+
+  function scrollMessages() {
+    if (messages) messages.scrollTop = messages.scrollHeight;
+  }
+
+  function autoSizeInput() {
+    if (!input) return;
+    input.style.height = "auto";
+    input.style.height = Math.min(input.scrollHeight, 112) + "px";
+  }
+
+  function setBusy(busy) {
+    isSending = busy;
+    if (send) send.disabled = busy;
+    if (input) input.disabled = busy;
+    root.classList.toggle("is-sending", busy);
+  }
+
+  function normalizeProducts(products) {
+    return (products || []).filter(Boolean).slice(0, 4).map(function (product) {
+      return {
+        id: product.id,
+        name: product.name || "",
+        category: product.category || "",
+        price: product.price || "",
+        url: product.url || (product.id ? "/Product/Detail/" + product.id : "")
+      };
+    });
+  }
+
+  function loadTranscript() {
+    try {
+      var raw = sessionStorage.getItem(transcriptKey);
+      if (!raw) return [];
+      var saved = JSON.parse(raw);
+      if (!Array.isArray(saved)) return [];
+      return saved
+        .filter(function (item) {
+          return item && (item.role === "user" || item.role === "model") && String(item.text || "").trim();
+        })
+        .slice(-24)
+        .map(function (item) {
+          return {
+            role: item.role,
+            text: String(item.text || "").slice(0, 4000),
+            products: normalizeProducts(item.products),
+            keepInHistory: item.keepInHistory !== false
+          };
+        });
+    } catch (_) {
+      sessionStorage.removeItem(transcriptKey);
+      return [];
+    }
+  }
+
+  function syncHistory() {
+    history = transcript
+      .filter(function (item) { return item.keepInHistory !== false; })
+      .map(function (item) { return { role: item.role, text: item.text }; })
+      .slice(-8);
+  }
+
+  function saveTranscript() {
+    transcript = transcript.slice(-24);
+    try {
+      sessionStorage.setItem(transcriptKey, JSON.stringify(transcript));
+    } catch (_) {
+      transcript = transcript.slice(-12);
+    }
+    syncHistory();
+  }
+
+  function restoreTranscript() {
+    transcript.forEach(function (item) {
+      appendMessage(item.role, item.text, item.products, { persist: false });
+    });
+    syncHistory();
+  }
+
+  function appendMessage(role, text, products, options) {
+    if (!messages) return null;
+    options = options || {};
+    var item = document.createElement("div");
+    item.className = "ai-message " + (role === "user" ? "ai-message-user" : "ai-message-bot");
+    item.innerHTML = "<p>" + formatAiMessage(text, products) + "</p>";
+    if (role !== "user" && products && products.length) {
+      item.appendChild(renderProductLinks(products));
+    }
+    messages.appendChild(item);
+    if (options.persist !== false) {
+      transcript.push({
+        role: role === "user" ? "user" : "model",
+        text: String(text || "").trim(),
+        products: role === "user" ? [] : normalizeProducts(products),
+        keepInHistory: options.history !== false
+      });
+      saveTranscript();
+    }
+    scrollMessages();
+    return item;
+  }
+
+  function appendTyping() {
+    if (!messages) return null;
+    var item = document.createElement("div");
+    item.className = "ai-message ai-message-bot ai-message-typing";
+    item.innerHTML = '<i data-lucide="sparkles" aria-hidden="true"></i><span>Đang tư vấn...</span>';
+    messages.appendChild(item);
+    scrollMessages();
+    refreshIcons();
+    return item;
+  }
+
+  function submitPrompt(text) {
+    var prompt = String(text || "").trim();
+    if (!prompt || isSending) return;
+
+    appendMessage("user", prompt);
+    if (input) {
+      input.value = "";
+      autoSizeInput();
+    }
+
+    var typing = appendTyping();
+    setBusy(true);
+
+    fetch("/AiChat/Ask", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "RequestVerificationToken": antiForgeryToken()
+      },
+      body: JSON.stringify({
+        message: prompt,
+        history: history.slice(0, -1)
+      })
+    })
+      .then(function (response) {
+        if (response.status === 429) throw new Error("rate-limit");
+        return response.json().then(function (data) {
+          if (!response.ok || !data.success) {
+            throw new Error(data.message || "request-failed");
+          }
+          return data;
+        });
+      })
+      .then(function (data) {
+        if (typing) typing.remove();
+        var reply = data.reply || "Mình chưa có câu trả lời phù hợp. Bạn cho mình thêm nhu cầu nhé.";
+        appendMessage("model", reply, data.products || []);
+      })
+      .catch(function (error) {
+        if (typing) typing.remove();
+        var message = error.message === "rate-limit"
+          ? "Bạn gửi hơi nhanh. Mình đợi vài giây rồi hỏi tiếp nhé."
+          : "Mình chưa thể trả lời lúc này. Bạn thử lại sau một chút nhé.";
+        appendMessage("model", message, [], { history: false });
+      })
+      .finally(function () {
+        setBusy(false);
+        if (input) input.focus();
+      });
+  }
+
+  function renderProductLinks(products) {
+    var list = document.createElement("div");
+    list.className = "ai-product-links";
+    products.slice(0, 4).forEach(function (product) {
+      var link = document.createElement("a");
+      link.className = "ai-product-link";
+      link.href = product.url || ("/Product/Detail/" + product.id);
+      link.innerHTML =
+        '<span class="ai-product-name">' + escapeHtml(product.name || "Xem sản phẩm") + "</span>" +
+        '<span class="ai-product-meta">' + escapeHtml(product.category || "Sản phẩm") + " · " + escapeHtml(product.price || "") + "</span>";
+      list.appendChild(link);
+    });
+    return list;
+  }
+
+  function formatAiMessage(text, products) {
+    var productIds = {};
+    var placeholders = [];
+    (products || []).forEach(function (product) {
+      productIds[String(product.id)] = product.url || ("/Product/Detail/" + product.id);
+    });
+
+    var html = escapeHtml(text)
+      .replace(/\[([^\]]+)\]\((\/Product\/Detail\/(\d+))\)/g, function (_, label, url) {
+        var key = "@@AI_LINK_" + placeholders.length + "@@";
+        placeholders.push('<a href="' + url + '">' + label + "</a>");
+        return key;
+      })
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/(\/Product\/Detail\/(\d+))/g, '<a href="$1">$1</a>')
+      .replace(/#(\d+)/g, function (match, id) {
+        var url = productIds[String(id)] || ("/Product/Detail/" + id);
+        return '<a href="' + url + '">' + match + "</a>";
+      })
+      .replace(/\n/g, "<br>");
+
+    placeholders.forEach(function (link, index) {
+      html = html.replace("@@AI_LINK_" + index + "@@", link);
+    });
+
+    return html;
+  }
+
+  if (toggle) {
+    toggle.addEventListener("click", function () {
+      setOpen(panel ? panel.hidden : true);
+    });
+  }
+
+  if (close) {
+    close.addEventListener("click", function () {
+      setOpen(false);
+    });
+  }
+
+  if (form) {
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      submitPrompt(input ? input.value : "");
+    });
+  }
+
+  if (input) {
+    input.addEventListener("input", autoSizeInput);
+    input.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        submitPrompt(input.value);
+      }
+    });
+  }
+
+  root.querySelectorAll("[data-ai-prompt]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      setOpen(true);
+      submitPrompt(button.dataset.aiPrompt);
+    });
+  });
+
+  restoreTranscript();
+  setOpen(sessionStorage.getItem("techvoraAiChatOpen") === "true");
+  autoSizeInput();
+}
+
+var drawerTrigger = null;
+
+function initNavbar() {
+  var nav = document.querySelector(".site-nav");
+  if (nav) {
+    window.addEventListener("scroll", function () {
+      nav.classList.toggle("scrolled", window.scrollY > 10);
+    });
+  }
+
+  var searchBtn = document.querySelector(".nav-search-btn");
+  if (searchBtn) {
+    searchBtn.addEventListener("click", function () {
+      var search = document.querySelector(".nav-search");
+      if (!search) return;
+      search.classList.toggle("active");
+      searchBtn.setAttribute("aria-expanded", String(search.classList.contains("active")));
+      var input = search.querySelector("input");
+      if (search.classList.contains("active") && input) input.focus();
+      else if (input && input.value) search.submit();
+    });
+  }
+
+  var hamburger = document.querySelector(".nav-hamburger");
+  var drawer = document.querySelector(".nav-drawer");
+  var overlay = document.querySelector(".nav-overlay");
+  var close = document.querySelector(".nav-drawer-close");
+  if (hamburger) hamburger.addEventListener("click", openDrawer);
+  if (overlay) overlay.addEventListener("click", closeDrawer);
+  if (close) close.addEventListener("click", closeDrawer);
+
+  document.addEventListener("keydown", function (event) {
+    if (!drawer || !drawer.classList.contains("open")) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeDrawer();
+      return;
+    }
+    if (event.key !== "Tab") return;
+
+    var focusable = Array.prototype.slice.call(drawer.querySelectorAll("a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])"));
+    if (!focusable.length) return;
+    var first = focusable[0];
+    var last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
+
+  document.querySelectorAll(".avatar-menu").forEach(function (menu) {
+    var toggle = menu.querySelector(".avatar-btn");
+    if (!toggle) return;
+    toggle.addEventListener("click", function (event) {
+      event.stopPropagation();
+      var open = menu.classList.toggle("is-open");
+      toggle.setAttribute("aria-expanded", String(open));
+    });
+  });
+
+  document.addEventListener("click", function () {
+    document.querySelectorAll(".avatar-menu.is-open").forEach(function (menu) {
+      menu.classList.remove("is-open");
+      var toggle = menu.querySelector(".avatar-btn");
+      if (toggle) toggle.setAttribute("aria-expanded", "false");
+    });
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Escape") return;
+    document.querySelectorAll(".avatar-menu.is-open").forEach(function (menu) {
+      menu.classList.remove("is-open");
+      var toggle = menu.querySelector(".avatar-btn");
+      if (toggle) {
+        toggle.setAttribute("aria-expanded", "false");
+        toggle.focus();
+      }
+    });
+  });
+
+  var path = window.location.pathname.toLowerCase();
+  document.querySelectorAll(".nav-menu .nav-link").forEach(function (link) {
+    var href = (link.getAttribute("href") || "").toLowerCase();
+    var active = href === path || (href !== "/" && path.indexOf(href) === 0);
+    if (path === "/" && href === "/") active = true;
+    link.classList.toggle("active", active);
+  });
+}
+
+function openDrawer() {
+  var drawer = document.querySelector(".nav-drawer");
+  var overlay = document.querySelector(".nav-overlay");
+  var hamburger = document.querySelector(".nav-hamburger");
+  drawerTrigger = document.activeElement;
+  if (drawer) {
+    drawer.removeAttribute("inert");
+    drawer.setAttribute("aria-hidden", "false");
+    drawer.classList.add("open");
+    var close = drawer.querySelector(".nav-drawer-close");
+    if (close) close.focus();
+  }
+  if (overlay) {
+    overlay.setAttribute("aria-hidden", "false");
+    overlay.classList.add("open");
+  }
+  if (hamburger) hamburger.setAttribute("aria-expanded", "true");
+  document.body.style.overflow = "hidden";
+}
+
+function closeDrawer() {
+  var drawer = document.querySelector(".nav-drawer");
+  var overlay = document.querySelector(".nav-overlay");
+  var hamburger = document.querySelector(".nav-hamburger");
+  if (drawer) {
+    drawer.classList.remove("open");
+    drawer.setAttribute("aria-hidden", "true");
+    drawer.setAttribute("inert", "");
+  }
+  if (overlay) {
+    overlay.classList.remove("open");
+    overlay.setAttribute("aria-hidden", "true");
+  }
+  if (hamburger) hamburger.setAttribute("aria-expanded", "false");
+  document.body.style.overflow = "";
+  if (drawerTrigger && typeof drawerTrigger.focus === "function") drawerTrigger.focus();
+  drawerTrigger = null;
+}
+
+function initCatalogFilters() {
+  var root = document.querySelector("[data-catalog-filters]");
+  if (!root) return;
+
+  var toggle = root.querySelector("[data-catalog-filter-toggle]");
+  var panel = root.querySelector(".catalog-sidebar");
+  var categoryExpand = root.querySelector("[data-category-expand]");
+
+  function setOpen(open) {
+    root.classList.toggle("filter-open", open);
+    if (toggle) toggle.setAttribute("aria-expanded", String(open));
+    if (panel) panel.hidden = !open;
+  }
+
+  if (toggle && panel) {
+    toggle.addEventListener("click", function () {
+      setOpen(panel.hidden);
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && !panel.hidden) {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+  }
+
+  if (categoryExpand) {
+    categoryExpand.addEventListener("click", function () {
+      var expanded = root.classList.toggle("categories-expanded");
+      categoryExpand.setAttribute("aria-expanded", String(expanded));
+      var label = categoryExpand.querySelector("span");
+      if (label) label.textContent = expanded ? "Thu gọn" : "Xem thêm";
+    });
+  }
+
+  setOpen(false);
+}
+
+function initHeroSlider() {
+  var slider = document.querySelector(".hero-slider");
+  var track = document.querySelector(".slider-track");
+  var dots = slider ? slider.querySelectorAll(".dot") : [];
+  if (!slider || !track || dots.length === 0) return;
+  var total = dots.length;
+  var current = 0;
+  var timer;
+  var slides = slider.querySelectorAll(".slide");
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function goTo(index) {
+    current = (index + total) % total;
+    track.style.transform = "translateX(-" + current * 100 + "%)";
+    dots.forEach(function (dot, i) {
+      var active = i === current;
+      dot.classList.toggle("active", active);
+      dot.setAttribute("aria-current", String(active));
+    });
+    slides.forEach(function (slide, i) {
+      var active = i === current;
+      slide.setAttribute("aria-hidden", String(!active));
+      if (active) slide.removeAttribute("inert");
+      else slide.setAttribute("inert", "");
+    });
+  }
+
+  function startAuto() {
+    if (reduceMotion || document.hidden || timer) return;
+    timer = setInterval(function () { goTo(current + 1); }, 5000);
+  }
+  function stopAuto() {
+    clearInterval(timer);
+    timer = null;
+  }
+
+  var next = document.querySelector(".slider-next");
+  var prev = document.querySelector(".slider-prev");
+  if (next) next.addEventListener("click", function () { stopAuto(); goTo(current + 1); startAuto(); });
+  if (prev) prev.addEventListener("click", function () { stopAuto(); goTo(current - 1); startAuto(); });
+  dots.forEach(function (dot) {
+    dot.addEventListener("click", function () {
+      stopAuto();
+      goTo(Number(dot.dataset.index));
+      startAuto();
+    });
+  });
+  slider.addEventListener("mouseenter", stopAuto);
+  slider.addEventListener("mouseleave", startAuto);
+  slider.addEventListener("focusin", stopAuto);
+  slider.addEventListener("focusout", startAuto);
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) stopAuto();
+    else startAuto();
+  });
+  goTo(0);
+  startAuto();
+}
+
+function initCountdown() {
+  var elements = [];
+  var legacy = document.getElementById("countdown");
+  if (legacy) elements.push(legacy);
+  document.querySelectorAll("[data-countdown]").forEach(function (el) {
+    if (el !== legacy) elements.push(el);
+  });
+  if (!elements.length) return;
+
+  function pad(n) { return String(n).padStart(2, "0"); }
+
+  elements.forEach(function (el) {
+    var midnight = new Date();
+    midnight.setHours(24, 0, 0, 0);
+    var endTime = midnight.getTime();
+
+    function tick() {
+      var diff = endTime - Date.now();
+      if (diff <= 0) {
+        midnight = new Date();
+        midnight.setHours(24, 0, 0, 0);
+        endTime = midnight.getTime();
+        diff = endTime - Date.now();
+      }
+      if (diff <= 0) {
+        el.textContent = "Đã kết thúc";
+        return;
+      }
+      var h = Math.floor(diff / 3600000);
+      var m = Math.floor((diff % 3600000) / 60000);
+      var s = Math.floor((diff % 60000) / 1000);
+      el.textContent = pad(h) + ":" + pad(m) + ":" + pad(s);
+    }
+
+    tick();
+    setInterval(tick, 1000);
+  });
+}
+
+function initReveal() {
+  if (!("IntersectionObserver" in window)) {
+    document.querySelectorAll(".reveal").forEach(function (el) { el.classList.add("revealed"); });
+    return;
+  }
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("revealed");
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll(".reveal").forEach(function (el) { observer.observe(el); });
+}
+
+function initCountUp() {
+  var counters = Array.prototype.slice.call(document.querySelectorAll("[data-count-target]"));
+  if (!counters.length) return;
+
+  function formatValue(value, suffix) {
+    var rounded = Math.round(value);
+    var formatted = rounded >= 1000 ? rounded.toLocaleString("en-US") : String(rounded);
+    return formatted + (suffix || "");
+  }
+
+  function animateCounter(element) {
+    if (element.dataset.countStarted === "true") return;
+    element.dataset.countStarted = "true";
+
+    var target = Number(element.getAttribute("data-count-target") || "0");
+    if (!Number.isFinite(target)) return;
+
+    var suffix = element.getAttribute("data-count-suffix") || "";
+    var duration = 2000;
+    var start = null;
+
+    function step(timestamp) {
+      if (start === null) start = timestamp;
+      var progress = Math.min((timestamp - start) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 4);
+      element.textContent = formatValue(target * eased, suffix);
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        element.textContent = formatValue(target, suffix);
+      }
+    }
+
+    element.textContent = formatValue(0, suffix);
+    requestAnimationFrame(step);
+  }
+
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduceMotion || !("IntersectionObserver" in window)) {
+    counters.forEach(function (element) {
+      var target = Number(element.getAttribute("data-count-target") || "0");
+      if (Number.isFinite(target)) {
+        element.textContent = formatValue(target, element.getAttribute("data-count-suffix") || "");
+      }
+    });
+    return;
+  }
+
+  counters.forEach(function (element) {
+    element.textContent = formatValue(0, element.getAttribute("data-count-suffix") || "");
+  });
+
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        animateCounter(entry.target);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.35 });
+
+  counters.forEach(function (element) { observer.observe(element); });
+}
+
+function initWishlist() {
+  document.querySelectorAll(".btn-wishlist[data-product-id]").forEach(function (btn) {
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      fetch("/Wishlist/Toggle/" + btn.dataset.productId, {
+        method: "POST",
+        headers: { "RequestVerificationToken": antiForgeryToken() }
+      })
+        .then(function (response) {
+          if (response.status === 401 || response.redirected) {
+            window.location.href = "/Account/Login";
+            return null;
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          if (!data) return;
+          btn.classList.toggle("active", data.isWishlisted);
+          btn.title = data.isWishlisted ? "Bỏ yêu thích" : "Yêu thích";
+          var badge = document.getElementById("wishlist-count");
+          if (badge) badge.textContent = data.count;
+          showToast(data.message, "success");
+        });
+    });
+  });
+}
+
+function initProductCompare() {
+  var storageKey = "techvora-compare-products-v2";
+  var tray = document.querySelector("[data-compare-tray]");
+  var count = tray ? tray.querySelector("[data-compare-count]") : null;
+  var hint = tray ? tray.querySelector("[data-compare-hint]") : null;
+  var itemsRoot = tray ? tray.querySelector("[data-compare-items]") : null;
+  var clearButton = tray ? tray.querySelector("[data-compare-clear]") : null;
+  var openLink = tray ? tray.querySelector("[data-compare-open]") : null;
+
+  function normalize(items) {
+    if (!Array.isArray(items)) return [];
+    var seen = {};
+    return items.filter(function (item) {
+      var id = Number(item && item.id);
+      if (!id || seen[id]) return false;
+      seen[id] = true;
+      item.id = id;
+      item.name = String(item.name || "Sản phẩm");
+      item.image = String(item.image || "/images/placeholder.svg");
+      item.categoryId = Number(item.categoryId) || 0;
+      item.categoryName = String(item.categoryName || "danh mục này");
+      return true;
+    }).slice(0, 4);
+  }
+
+  function readSelection() {
+    try {
+      return normalize(JSON.parse(window.localStorage.getItem(storageKey) || "[]"));
+    } catch (error) {
+      return [];
+    }
+  }
+
+  var selected = readSelection();
+  var seeded = normalize([].slice.call(document.querySelectorAll("[data-compare-seed]")).map(function (element) {
+    return {
+      id: element.dataset.compareSeed,
+      name: element.dataset.compareName,
+      image: element.dataset.compareImage,
+      categoryId: element.dataset.compareCategoryId,
+      categoryName: element.dataset.compareCategoryName
+    };
+  }));
+  if (seeded.length > 0) selected = seeded;
+
+  function writeSelection() {
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(selected));
+    } catch (error) {
+      // Query-string navigation still works when local storage is unavailable.
+    }
+  }
+
+  function buildCompareUrl() {
+    var params = new URLSearchParams();
+    selected.forEach(function (item) { params.append("ids", String(item.id)); });
+    return "/Product/Compare?" + params.toString();
+  }
+
+  function renderItems() {
+    if (!itemsRoot) return;
+    itemsRoot.replaceChildren();
+    for (var index = 0; index < 4; index++) {
+      var item = selected[index];
+      if (!item) {
+        var empty = document.createElement("span");
+        empty.className = "compare-tray-slot is-empty";
+        empty.setAttribute("aria-hidden", "true");
+        itemsRoot.appendChild(empty);
+        continue;
+      }
+
+      var slot = document.createElement("span");
+      slot.className = "compare-tray-slot";
+      slot.title = item.name;
+
+      var image = document.createElement("img");
+      image.src = item.image;
+      image.alt = "";
+      image.loading = "lazy";
+      image.decoding = "async";
+      slot.appendChild(image);
+
+      var remove = document.createElement("button");
+      remove.type = "button";
+      remove.dataset.compareRemove = String(item.id);
+      remove.setAttribute("aria-label", "Bỏ " + item.name + " khỏi so sánh");
+      remove.innerHTML = '<i data-lucide="x" aria-hidden="true"></i>';
+      slot.appendChild(remove);
+      itemsRoot.appendChild(slot);
+    }
+  }
+
+  function render() {
+    document.querySelectorAll("[data-compare-product]").forEach(function (button) {
+      var active = selected.some(function (item) { return item.id === Number(button.dataset.compareProduct); });
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+      button.title = active ? "Bỏ khỏi so sánh" : "Thêm vào so sánh";
+    });
+
+    if (!tray) return;
+    tray.hidden = selected.length === 0;
+    document.body.classList.toggle("compare-tray-visible", selected.length > 0);
+    if (count) count.textContent = String(selected.length);
+    if (hint) {
+      var categoryName = selected[0] ? selected[0].categoryName : "";
+      hint.textContent = selected.length < 2
+        ? "Chọn thêm trong " + categoryName
+        : "Cùng danh mục " + categoryName;
+    }
+    if (openLink) {
+      var disabled = selected.length < 2;
+      openLink.href = buildCompareUrl();
+      openLink.classList.toggle("disabled", disabled);
+      openLink.setAttribute("aria-disabled", String(disabled));
+      openLink.tabIndex = disabled ? -1 : 0;
+    }
+    renderItems();
+    refreshIcons();
+  }
+
+  document.querySelectorAll("[data-compare-product]").forEach(function (button) {
+    button.addEventListener("click", function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      var id = Number(button.dataset.compareProduct);
+      var existingIndex = selected.findIndex(function (item) { return item.id === id; });
+      if (existingIndex >= 0) {
+        selected.splice(existingIndex, 1);
+      } else if (selected.length >= 4) {
+        showToast("Bạn chỉ có thể so sánh tối đa 4 sản phẩm.", "error");
+        return;
+      } else {
+        var categoryId = Number(button.dataset.compareCategoryId);
+        if (selected.length > 0 && selected[0].categoryId !== categoryId) {
+          showToast("Chỉ có thể so sánh sản phẩm cùng danh mục " + selected[0].categoryName + ".", "error");
+          return;
+        }
+        selected.push({
+          id: id,
+          name: button.dataset.compareName || "Sản phẩm",
+          image: button.dataset.compareImage || "/images/placeholder.svg",
+          categoryId: categoryId,
+          categoryName: button.dataset.compareCategoryName || "danh mục này"
+        });
+      }
+      writeSelection();
+      render();
+    });
+  });
+
+  if (itemsRoot) {
+    itemsRoot.addEventListener("click", function (event) {
+      var remove = event.target.closest("[data-compare-remove]");
+      if (!remove) return;
+      selected = selected.filter(function (item) { return item.id !== Number(remove.dataset.compareRemove); });
+      writeSelection();
+      render();
+    });
+  }
+
+  document.querySelectorAll("[data-compare-remove-id]").forEach(function (link) {
+    link.addEventListener("click", function () {
+      selected = selected.filter(function (item) { return item.id !== Number(link.dataset.compareRemoveId); });
+      writeSelection();
+    });
+  });
+
+  if (clearButton) {
+    clearButton.addEventListener("click", function () {
+      selected = [];
+      writeSelection();
+      render();
+    });
+  }
+
+  document.querySelectorAll("[data-compare-clear-link]").forEach(function (link) {
+    link.addEventListener("click", function () {
+      selected = [];
+      writeSelection();
+    });
+  });
+
+  if (openLink) {
+    openLink.addEventListener("click", function (event) {
+      if (selected.length >= 2) return;
+      event.preventDefault();
+      showToast("Chọn ít nhất 2 sản phẩm để so sánh.", "error");
+    });
+  }
+
+  writeSelection();
+  render();
+}
+function initCartButtons() {
+  document.querySelectorAll("[data-cart-product]").forEach(function (button) {
+    button.addEventListener("click", function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (button.disabled) return;
+      postCartAdd(button.dataset.cartProduct, "1")
+        .then(function (data) {
+          if (!data.success) {
+            showToast(data.message || "Không thể thêm sản phẩm vào giỏ.", "error");
+            return;
+          }
+          updateCartBadges(data);
+          if (button.dataset.cartReload === "true") {
+            if (document.getElementById("checkoutForm")) {
+              var checkoutUrl = new URL(window.location.href);
+              checkoutUrl.searchParams.append("selectedProductIds", button.dataset.cartProduct);
+              window.location.href = checkoutUrl.pathname + checkoutUrl.search + checkoutUrl.hash;
+              return;
+            }
+            window.location.reload();
+            return;
+          }
+          if (!showCartOffersAfterAdd(data)) {
+            showToast(data.message, "success");
+          }
+        })
+        .catch(function () {
+          showToast("Không thể thêm sản phẩm vào giỏ. Vui lòng thử lại.", "error");
+        });
+    });
+  });
+}
+
+function initDetailAddToCart() {
+  var addButtons = document.querySelectorAll("[data-detail-add-cart]");
+  var buyButtons = document.querySelectorAll("[data-detail-buy-now]");
+  var input = document.getElementById("qtyInput");
+  if (!input || (!addButtons.length && !buyButtons.length)) return;
+
+  function setBusy(source, busy) {
+    if (!source) return;
+    source.disabled = busy || source.dataset.stockDisabled === "true";
+    if (busy) {
+      source.dataset.originalHtml = source.dataset.originalHtml || source.innerHTML;
+      source.innerHTML = "Đang xử lý...";
+    } else if (source.dataset.originalHtml) {
+      source.innerHTML = source.dataset.originalHtml;
+      refreshIcons();
+    }
+  }
+
+  function addDetailProduct(source) {
+    if (!source || source.disabled) return;
+    var qty = clampQuantity(input);
+    setBusy(source, true);
+    postCartAdd(source.dataset.productId, qty)
+      .then(function (data) {
+        if (!data.success) {
+          showToast(data.message || "Không thể thêm sản phẩm vào giỏ.", "error");
+          return;
+        }
+        updateCartBadges(data);
+        if (!showCartOffersAfterAdd(data)) {
+          showToast(data.message, "success");
+        }
+      })
+      .catch(function () {
+        showToast("Không thể thêm sản phẩm vào giỏ. Vui lòng thử lại.", "error");
+      })
+      .finally(function () {
+        setBusy(source, false);
+      });
+  }
+
+  addButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      addDetailProduct(button);
+    });
+  });
+
+  buyButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      if (button.disabled) return;
+      var qty = clampQuantity(input);
+      window.location.href = "/Order/Checkout?buyNowProductId=" + encodeURIComponent(button.dataset.productId)
+        + "&buyNowQuantity=" + encodeURIComponent(qty);
+    });
+  });
+}
+
+function parseLocalizedNumber(value, fallback) {
+  fallback = typeof fallback === "number" && Number.isFinite(fallback) ? fallback : 0;
+  if (typeof value === "number") return Number.isFinite(value) ? value : fallback;
+
+  var text = String(value === null || value === undefined ? "" : value).trim();
+  if (!text) return fallback;
+
+  text = text.replace(/[^\d,.-]/g, "");
+  if (!text) return fallback;
+
+  var lastComma = text.lastIndexOf(",");
+  var lastDot = text.lastIndexOf(".");
+  if (lastComma >= 0 && lastDot >= 0) {
+    var decimalSeparator = lastComma > lastDot ? "," : ".";
+    var thousandsSeparator = decimalSeparator === "," ? "." : ",";
+    text = text.replace(new RegExp("\\" + thousandsSeparator, "g"), "").replace(decimalSeparator, ".");
+  } else if (lastComma >= 0) {
+    text = text.length - lastComma - 1 <= 2 ? text.replace(/\./g, "").replace(",", ".") : text.replace(/,/g, "");
+  } else if (lastDot >= 0 && text.length - lastDot - 1 > 2) {
+    text = text.replace(/\./g, "");
+  }
+
+  var parsed = Number(text);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function clampQuantity(input) {
+  if (!input) return 1;
+  var min = Math.max(1, Math.floor(parseLocalizedNumber(input.min, 1)));
+  var max = Math.floor(parseLocalizedNumber(input.max, 99));
+  if (max < min) max = min;
+  var qty = Math.floor(parseLocalizedNumber(input.value, min));
+  qty = Math.max(min, Math.min(max, qty));
+  input.value = String(qty);
+  return qty;
+}
+
+function formatVnd(value) {
+  return new Intl.NumberFormat("vi-VN").format(parseLocalizedNumber(value, 0)) + " ₫";
+}
+
+function initPdpNotes() {
+  document.querySelectorAll("[data-pdp-note]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      showToast(button.dataset.pdpNote || "Thông tin này sẽ được chọn ở bước checkout.", "success");
+    });
+  });
+}
+
+function initDetailCoupon() {
+  var button = document.querySelector("[data-save-detail-coupon]");
+  var input = document.getElementById("pdpCouponInput");
+  var message = document.getElementById("pdpCouponMessage");
+  if (!button || !input) return;
+
+  var saved = sessionStorage.getItem("techvoraVoucherCode");
+  if (saved) input.value = saved;
+
+  function setMessage(text, type) {
+    if (!message) return;
+    message.textContent = text;
+    message.className = type ? "pdp-coupon-message " + type : "pdp-coupon-message";
+  }
+
+  function currentSubtotal() {
+    var card = document.querySelector("[data-product-price]");
+    var qtyInput = document.getElementById("qtyInput");
+    var price = card ? parseLocalizedNumber(card.dataset.productPrice, 0) : 0;
+    var qty = qtyInput ? clampQuantity(qtyInput) : 1;
+    return price * qty;
+  }
+
+  function setBusy(busy) {
+    button.disabled = busy;
+    button.textContent = busy ? "Đang kiểm tra..." : "Áp dụng";
+  }
+
+  button.addEventListener("click", function () {
+    var code = input.value.trim().toUpperCase();
+    if (!code) {
+      setMessage("Nhập mã giảm giá trước khi áp dụng.", "error");
+      showToast("Nhập mã giảm giá trước khi áp dụng.", "error");
+      return;
+    }
+
+    var body = new URLSearchParams();
+    body.append("code", code);
+    body.append("subtotalOverride", String(currentSubtotal()));
+    setBusy(true);
+
+    fetch("/Voucher/Validate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "RequestVerificationToken": antiForgeryToken()
+      },
+      body: body.toString()
+    })
+      .then(function (response) {
+        if (response.redirected || response.status === 401) throw new Error("login-required");
+        if (!response.ok) throw new Error("Voucher request failed");
+        return response.json();
+      })
+      .then(function (data) {
+        if (!data.valid) {
+          sessionStorage.removeItem("techvoraVoucherCode");
+          setMessage(data.message || "Mã giảm giá không hợp lệ.", "error");
+          showToast(data.message || "Mã giảm giá không hợp lệ.", "error");
+          return;
+        }
+
+        var savedCode = data.code || code;
+        var discountText = data.formattedDiscount || data.discountLabel || "";
+        sessionStorage.setItem("techvoraVoucherCode", savedCode);
+        setMessage("Mã " + savedCode + " hợp lệ. " + discountText + " sẽ được áp dụng ở checkout.", "success");
+        showToast(data.message || "Đã lưu mã giảm giá cho checkout.", "success");
+      })
+      .catch(function (error) {
+        var loginRequired = error && error.message === "login-required";
+        var text = loginRequired ? "Đăng nhập để dùng mã giảm giá." : "Chưa thể kiểm tra mã giảm giá. Vui lòng thử lại.";
+        setMessage(text, "error");
+        showToast(text, "error");
+      })
+      .finally(function () {
+        setBusy(false);
+      });
+  });
+}
+
+var cartUpdatePending = false;
+
+function initCartPage() {
+  document.querySelectorAll(".cart-qty").forEach(function (input) {
+    input.dataset.confirmedQuantity = input.value;
+    input.addEventListener("change", function () {
+      var row = input.closest(".cart-item");
+      if (!row) return;
+      var quantity = Number(input.value);
+      if (input.value.trim() === "" || !Number.isInteger(quantity) || quantity < 0 || quantity > 2147483647) {
+        input.value = input.dataset.confirmedQuantity;
+        showToast("Vui lòng nhập số lượng là số nguyên từ 0 trở lên.", "error");
+        return;
+      }
+      updateCart("/Cart/Update", row.dataset.productId, input.value, row);
+    });
+  });
+  document.querySelectorAll(".cart-remove").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var row = button.closest(".cart-item");
+      if (!row) return;
+      updateCart("/Cart/Remove", row.dataset.productId, 0, row);
+    });
+  });
+}
+
+function initCartSelection() {
+  var form = document.getElementById("cartCheckoutForm");
+  if (!form) return;
+
+  function itemInputs(scope) {
+    return Array.from((scope || form).querySelectorAll("[data-cart-item-select]"));
+  }
+
+  function syncGroup(group) {
+    if (!group) return;
+    var groupInput = group.querySelector("[data-cart-group-select]");
+    if (!groupInput) return;
+
+    var inputs = itemInputs(group);
+    var checked = inputs.filter(function (input) { return input.checked; }).length;
+    groupInput.checked = inputs.length > 0 && checked === inputs.length;
+    groupInput.indeterminate = checked > 0 && checked < inputs.length;
+  }
+
+  function syncAllGroups() {
+    form.querySelectorAll("[data-cart-group]").forEach(syncGroup);
+  }
+
+  function syncSelection() {
+    var checkedItems = itemInputs().filter(function (input) { return input.checked; });
+    var count = checkedItems.length;
+    var totalValue = checkedItems.reduce(function (sum, input) {
+      return sum + parseLocalizedNumber(input.dataset.lineTotal, 0);
+    }, 0);
+    var selectedCount = document.getElementById("cart-selected-count");
+    var total = document.querySelector("[data-cart-selected-total]") || document.getElementById("cart-total");
+    var submit = document.getElementById("cartCheckoutSubmit");
+
+    if (selectedCount) selectedCount.textContent = String(count);
+    if (total) total.textContent = formatVnd(totalValue);
+    if (submit) submit.disabled = count === 0 || cartUpdatePending;
+    syncAllGroups();
+  }
+
+  form.querySelectorAll("[data-cart-group-toggle]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var targetId = button.getAttribute("aria-controls");
+      var panel = targetId ? document.getElementById(targetId) : null;
+      var group = button.closest("[data-cart-group]");
+      var expanded = button.getAttribute("aria-expanded") === "true";
+      var nextExpanded = !expanded;
+      var label = button.querySelector("span");
+
+      button.setAttribute("aria-expanded", String(nextExpanded));
+      if (panel) panel.hidden = !nextExpanded;
+      if (group) group.classList.toggle("is-collapsed", !nextExpanded);
+      if (label) label.textContent = nextExpanded ? "Thu gọn" : "Xem linh kiện";
+    });
+  });
+
+  form.querySelectorAll("[data-cart-group-select]").forEach(function (input) {
+    input.addEventListener("change", function () {
+      var group = input.closest("[data-cart-group]");
+      itemInputs(group).forEach(function (itemInput) {
+        itemInput.checked = input.checked;
+      });
+      input.indeterminate = false;
+      syncSelection();
+    });
+  });
+
+  itemInputs().forEach(function (input) {
+    input.addEventListener("change", syncSelection);
+  });
+
+  form.addEventListener("submit", function (event) {
+    if (cartUpdatePending) {
+      event.preventDefault();
+      showToast("Vui lòng chờ giỏ hàng cập nhật xong.", "error");
+      return;
+    }
+    if (itemInputs().some(function (input) { return input.checked; })) return;
+    event.preventDefault();
+    showToast("Vui lòng chọn ít nhất một sản phẩm để thanh toán.", "error");
+  });
+
+  window.syncCartSelection = syncSelection;
+  syncSelection();
+}
+
+function updateCart(url, productId, quantity, row) {
+  if (cartUpdatePending) return;
+  cartUpdatePending = true;
+  var form = document.getElementById("cartCheckoutForm");
+  if (form) form.setAttribute("aria-busy", "true");
+  var controls = Array.from(document.querySelectorAll(".cart-qty, .cart-stepper button, .cart-remove"))
+    .map(function (element) { return { element: element, disabled: element.disabled }; });
+  controls.forEach(function (control) { control.element.disabled = true; });
+  if (window.syncCartSelection) window.syncCartSelection();
+
+  function restoreQuantity() {
+    var input = row ? row.querySelector(".cart-qty") : null;
+    if (input) input.value = input.dataset.confirmedQuantity;
+  }
+
+  var body = new URLSearchParams();
+  body.append("productId", productId);
+  body.append("quantity", quantity);
+  fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "RequestVerificationToken": antiForgeryToken()
+    },
+    body: body.toString()
+  })
+    .then(function (response) {
+      if (!response.ok || response.redirected) throw new Error("Cart update failed");
+      return response.json();
+    })
+    .then(function (data) {
+      if (!data.success) {
+        restoreQuantity();
+        showToast(data.message || "Không thể cập nhật giỏ hàng.", "error");
+        return;
+      }
+      syncCartSnapshot(data);
+      showToast(data.message, "success");
+      if (data.itemCount === 0) window.location.reload();
+    })
+    .catch(function () {
+      restoreQuantity();
+      showToast("Không thể cập nhật giỏ hàng. Vui lòng thử lại.", "error");
+    })
+    .finally(function () {
+      cartUpdatePending = false;
+      if (form) form.removeAttribute("aria-busy");
+      controls.forEach(function (control) { control.element.disabled = control.disabled; });
+      if (window.syncCartSelection) window.syncCartSelection();
+    });
+}
+
+function syncCartSnapshot(data) {
+  updateCartBadges(data);
+  // Removing one item can change offer prices on every remaining item.
+  document.querySelectorAll(".cart-item").forEach(function (row) {
+    var item = data.items.find(function (entry) { return String(entry.productId) === row.dataset.productId; });
+    if (!item) {
+      row.remove();
+      return;
+    }
+    var input = row.querySelector(".cart-qty");
+    if (input) {
+      input.value = String(item.quantity);
+      input.dataset.confirmedQuantity = input.value;
+      if (item.stock !== undefined) input.max = String(item.stock);
+    }
+    var lineTotal = row.querySelector(".line-total");
+    var select = row.querySelector("[data-cart-item-select]");
+    if (lineTotal) lineTotal.textContent = item.lineTotal;
+    if (select) select.dataset.lineTotal = String(item.lineTotalValue);
+    var unitPrice = row.querySelector("[data-cart-unit-price]");
+    var regularPrice = row.querySelector("[data-cart-regular-price]");
+    var offerNote = row.querySelector("[data-cart-offer-note]");
+    if (unitPrice) unitPrice.textContent = item.unitPrice;
+    if (regularPrice) {
+      regularPrice.textContent = item.regularUnitPrice;
+      regularPrice.hidden = !item.hasCrossSellPrice;
+    }
+    if (offerNote) offerNote.hidden = !item.hasCrossSellPrice;
+  });
+  document.querySelectorAll("[data-cart-group]").forEach(function (group) { syncCartGroup(group, data); });
+  document.querySelectorAll("[data-cart-cross-sell-summary]").forEach(function (line) {
+    line.hidden = !data.hasCrossSellDiscount;
+  });
+  var gross = document.querySelector("[data-cart-gross-total]");
+  var discount = document.querySelector("[data-cart-cross-sell-discount]");
+  if (gross) gross.textContent = data.grossTotal;
+  if (discount) discount.textContent = "-" + data.crossSellDiscount;
+  if (window.syncCartSelection) window.syncCartSelection();
+}
+
+function syncCartGroup(group, data) {
+  if (!group) return;
+
+  var remainingItems = group.querySelectorAll(".cart-item").length;
+  if (remainingItems === 0) {
+    group.remove();
+    return;
+  }
+
+  var groupKey = group.dataset.cartGroup;
+  var groups = data && Array.isArray(data.groups) ? data.groups : [];
+  var updated = groups.find(function (entry) {
+    return String(entry.key) === String(groupKey);
+  });
+  if (!updated) return;
+
+  var total = group.querySelector("[data-cart-group-total]");
+  var count = group.querySelector("[data-cart-group-count]");
+  if (total) total.textContent = updated.total;
+  if (count) count.textContent = updated.componentCount;
+
+  var firstRow = group.querySelector(".cart-item");
+  var firstImage = firstRow ? firstRow.querySelector("img") : null;
+  var firstTitle = firstRow ? firstRow.querySelector("h3") : null;
+  var leadImage = group.querySelector(".cart-build-cover");
+  var leadTitle = group.querySelector(".cart-build-copy small strong");
+  if (leadImage && firstImage) {
+    leadImage.src = firstImage.currentSrc || firstImage.src;
+    leadImage.alt = firstImage.alt || "";
+  }
+  if (leadTitle && firstTitle) leadTitle.textContent = firstTitle.textContent || "";
+}
+
+function initReviewForm() {
+  var form = document.getElementById("reviewForm");
+  if (!form) return;
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+    var body = new FormData(form);
+    fetch("/Review/Submit", {
+      method: "POST",
+      headers: {
+        "RequestVerificationToken": antiForgeryToken()
+      },
+      body: body
+    })
+      .then(function (response) { return response.json(); })
+      .then(function (data) {
+        if (!data.success) {
+          showToast(data.message, "error");
+          return;
+        }
+        appendReview(data.review);
+        form.remove();
+        refreshIcons();
+        applyReviewFilter();
+        showToast(data.message, "success");
+      });
+  });
+}
+
+function initReviewImagePreview() {
+  var input = document.querySelector("[data-review-images]");
+  var preview = document.querySelector("[data-review-preview]");
+  if (!input || !preview) return;
+
+  input.addEventListener("change", function () {
+    preview.innerHTML = "";
+    var files = Array.prototype.slice.call(input.files || []);
+    if (files.length > 4) {
+      showToast("Bạn chỉ có thể tải tối đa 4 ảnh cho mỗi đánh giá.", "error");
+      input.value = "";
+      return;
+    }
+
+    files.forEach(function (file) {
+      var item = document.createElement("span");
+      var image = document.createElement("img");
+      var url = URL.createObjectURL(file);
+      image.src = url;
+      image.alt = file.name;
+      image.decoding = "async";
+      image.onload = function () { URL.revokeObjectURL(url); };
+      item.appendChild(image);
+      preview.appendChild(item);
+    });
+  });
+}
+
+function appendReview(review) {
+  var list = document.getElementById("reviewList");
+  if (!list) return;
+  var empty = document.querySelector("[data-review-empty]");
+  if (empty) empty.remove();
+  var item = document.createElement("article");
+  item.className = "review-item new";
+  item.dataset.reviewItem = "";
+  item.dataset.rating = String(review.rating);
+  var initial = review.user ? review.user.substring(0, 1).toUpperCase() : "K";
+  var stars = '<span class="star-meter" aria-hidden="true">';
+  for (var i = 1; i <= 5; i++) {
+    stars += '<span class="star-meter-star" style="--fill:' + (i <= review.rating ? 100 : 0) + '%"><span>★</span></span>';
+  }
+  stars += "</span>";
+  item.innerHTML =
+    '<div class="review-avatar">' + escapeHtml(initial) + "</div>" +
+    '<div class="review-copy">' +
+    '<div class="review-meta"><strong>' + escapeHtml(review.user) + "</strong><span>" + escapeHtml(review.date) + "</span></div>" +
+    stars +
+    "<p>" + escapeHtml(review.comment) + "</p>" +
+    renderReviewImages(review.images) +
+    "</div>";
+  list.prepend(item);
+  incrementReviewFilterCount("all");
+  incrementReviewFilterCount(String(review.rating));
+}
+
+function renderReviewImages(images) {
+  if (!images || !images.length) return "";
+  var html = '<div class="review-photo-grid">';
+  images.forEach(function (url) {
+    html += '<a class="review-photo-thumb" href="' + escapeHtml(url) + '" target="_blank" rel="noopener">' +
+      '<img src="' + escapeHtml(url) + '" alt="Ảnh đánh giá" loading="lazy" decoding="async" />' +
+      "</a>";
+  });
+  return html + "</div>";
+}
+
+function incrementReviewFilterCount(filter) {
+  var count = document.querySelector('[data-review-filter="' + filter + '"] span');
+  if (!count) return;
+  count.textContent = String(parseLocalizedNumber(count.textContent, 0) + 1);
+}
+
+function refreshCheckoutTotal() {
+  var total = document.getElementById("checkoutTotal");
+  if (!total) return;
+
+  var subtotal = parseLocalizedNumber(total.dataset.subtotal, 0);
+  var shippingFee = parseLocalizedNumber(total.dataset.shippingFee, 0);
+  var discountInput = document.getElementById("DiscountAmount");
+  var discount = discountInput ? parseLocalizedNumber(discountInput.value, 0) : 0;
+  var nextTotal = Math.max(0, subtotal - discount) + shippingFee;
+
+  total.textContent = formatVnd(nextTotal);
+  total.classList.remove("bump");
+  requestAnimationFrame(function () { total.classList.add("bump"); });
+}
+
+function initVoucher() {
+  var button = document.getElementById("applyVoucher");
+  if (!button) return;
+  var savedCode = sessionStorage.getItem("techvoraVoucherCode");
+  var savedInput = document.getElementById("voucherInput");
+  if (savedCode && savedInput && !savedInput.value) savedInput.value = savedCode;
+  function clearVoucher() {
+    var code = document.getElementById("VoucherCode");
+    var discount = document.getElementById("DiscountAmount");
+    var line = document.getElementById("discountLine");
+    if (code) code.value = "";
+    if (discount) discount.value = "0";
+    if (line) line.classList.remove("show");
+    sessionStorage.removeItem("techvoraVoucherCode");
+    refreshCheckoutTotal();
+  }
+  if (savedInput) savedInput.addEventListener("input", function () {
+    clearVoucher();
+    var message = document.getElementById("voucherMessage");
+    if (message) message.textContent = "";
+  });
+  button.addEventListener("click", function () {
+    if (button.disabled) return;
+    var input = document.getElementById("voucherInput");
+    var message = document.getElementById("voucherMessage");
+    if (!input || !message) return;
+    clearVoucher();
+    if (!input.value.trim()) {
+      message.textContent = "Nhập mã giảm giá trước khi áp dụng.";
+      message.className = "voucher-message error";
+      return;
+    }
+    button.disabled = true;
+    input.disabled = true;
+    message.textContent = "Đang kiểm tra mã giảm giá...";
+    message.className = "voucher-message";
+    var body = new URLSearchParams();
+    body.append("code", input.value);
+    var checkoutTotal = document.getElementById("checkoutTotal");
+    if (checkoutTotal) body.append("subtotalOverride", checkoutTotal.dataset.subtotal || "0");
+    fetch("/Voucher/Validate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "RequestVerificationToken": antiForgeryToken()
+      },
+      body: body.toString()
+    })
+      .then(function (response) {
+        if (response.redirected || response.status === 401) throw new Error("login-required");
+        if (!response.ok) throw new Error("voucher-failed");
+        return response.json();
+      })
+      .then(function (data) {
+        message.textContent = data.message;
+        message.className = "voucher-message " + (data.valid ? "success" : "error");
+        if (!data.valid) return;
+        var voucherCode = document.getElementById("VoucherCode");
+        var discountAmount = document.getElementById("DiscountAmount");
+        var discountText = document.getElementById("discountText");
+        var discountLine = document.getElementById("discountLine");
+        if (voucherCode) voucherCode.value = data.code;
+        if (discountAmount) discountAmount.value = data.discountAmount;
+        if (discountText) discountText.textContent = data.formattedDiscount || data.discountLabel;
+        if (discountLine) discountLine.classList.add("show");
+        refreshCheckoutTotal();
+        showToast(data.message, "success");
+        sessionStorage.removeItem("techvoraVoucherCode");
+      })
+      .catch(function (error) {
+        message.textContent = error.message === "login-required"
+          ? "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
+          : "Chưa thể kiểm tra mã giảm giá. Vui lòng thử lại.";
+        message.className = "voucher-message error";
+      })
+      .finally(function () {
+        button.disabled = false;
+        input.disabled = false;
+      });
+  });
+  if (savedCode && savedInput) {
+    setTimeout(function () {
+      button.click();
+    }, 0);
+  }
+}
+
+var checkoutShippingRequestId = 0;
+function updateCheckoutShippingFee() {
+  var requestId = ++checkoutShippingRequestId;
+  var total = document.getElementById("checkoutTotal");
+  var feeText = document.getElementById("shippingFeeText");
+  var feeNote = document.getElementById("shippingFeeNote");
+  var province = document.querySelector("[data-province-select]") || document.getElementById("Province");
+  var district = document.querySelector("[data-district-select]") || document.getElementById("District");
+  if (!total || !feeText || !province) return;
+
+  if (!province.value) {
+    total.dataset.shippingFee = "0";
+    feeText.textContent = formatVnd(0);
+    if (feeNote) feeNote.textContent = "Chọn tỉnh/thành phố để tính phí.";
+    refreshCheckoutTotal();
+    return;
+  }
+
+  var query = new URLSearchParams();
+  query.append("province", province.value);
+  if (district && district.value) query.append("district", district.value);
+  document.querySelectorAll('input[name="SelectedProductIds"]').forEach(function (input) {
+    if (input.value) query.append("selectedProductIds", input.value);
+  });
+  var buyNowProductId = document.getElementById("BuyNowProductId");
+  var buyNowQuantity = document.getElementById("BuyNowQuantity");
+  if (buyNowProductId && buyNowProductId.value) query.append("buyNowProductId", buyNowProductId.value);
+  if (buyNowQuantity && buyNowQuantity.value) query.append("buyNowQuantity", buyNowQuantity.value);
+
+  fetch("/Order/ShippingFee?" + query.toString(), { headers: { Accept: "application/json" } })
+    .then(function (response) {
+      if (!response.ok || response.redirected) throw new Error("shipping-failed");
+      return response.json();
+    })
+    .then(function (data) {
+      if (requestId !== checkoutShippingRequestId) return;
+      total.dataset.shippingFee = String(data.fee || 0);
+      feeText.textContent = data.formattedFee || formatVnd(data.fee || 0);
+      if (feeNote) {
+        var meta = data.zone ? data.zone : "";
+        feeNote.textContent = meta ? meta + " · " + (data.message || "") : (data.message || "");
+      }
+      refreshCheckoutTotal();
+    })
+    .catch(function () {
+      if (requestId !== checkoutShippingRequestId) return;
+      total.dataset.shippingFee = "0";
+      feeText.textContent = "Chưa xác định";
+      if (feeNote) feeNote.textContent = "Chưa tính được phí vận chuyển.";
+      refreshCheckoutTotal();
+    });
+}
+
+function initQuantitySteppers() {
+  document.querySelectorAll(".quantity-stepper").forEach(function (stepper) {
+    var input = stepper.querySelector("input");
+    var minus = stepper.querySelector("[data-qty-minus]");
+    var plus = stepper.querySelector("[data-qty-plus]");
+    if (!input) return;
+    if (minus) minus.addEventListener("click", function () {
+      input.value = parseLocalizedNumber(input.value, parseLocalizedNumber(input.min, 1)) - 1;
+      clampQuantity(input);
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    if (plus) plus.addEventListener("click", function () {
+      input.value = parseLocalizedNumber(input.value, parseLocalizedNumber(input.min, 1)) + 1;
+      clampQuantity(input);
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    input.addEventListener("change", updateProductSubtotal);
+  });
+  updateProductSubtotal();
+}
+
+function updateProductSubtotal() {
+  var card = document.querySelector("[data-product-price]");
+  var input = document.getElementById("qtyInput");
+  var subtotal = document.getElementById("pdpSubtotal");
+  if (!card || !input || !subtotal) return;
+  var price = parseLocalizedNumber(card.dataset.productPrice, 0);
+  var qty = clampQuantity(input);
+  subtotal.textContent = formatVnd(price * qty);
+}
+
+function initAuthHelpers() {
+  document.querySelectorAll("[data-toggle-password]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var input = button.parentElement.querySelector("[data-password-input]");
+      if (!input) return;
+      input.type = input.type === "password" ? "text" : "password";
+      button.textContent = input.type === "password" ? "Hiện" : "Ẩn";
+    });
+  });
+  document.querySelectorAll("[data-password-strength]").forEach(function (input) {
+    input.addEventListener("input", function () {
+      var score = 0;
+      if (input.value.length >= 6) score++;
+      if (/[A-Z]/.test(input.value)) score++;
+      if (/[0-9]/.test(input.value)) score++;
+      if (/[^A-Za-z0-9]/.test(input.value)) score++;
+      var meter = document.querySelector(".password-meter span");
+      if (meter) meter.style.width = Math.max(15, score * 25) + "%";
+      var bar = document.getElementById("strengthBar");
+      var label = document.getElementById("strengthLabel");
+      var labels = ["Chưa nhập", "Yếu", "Trung bình", "Mạnh", "Rất mạnh"];
+      var colors = ["#e2e8f0", "#ef4444", "#f59e0b", "#22c55e", "#0066ff"];
+      if (bar) {
+        bar.style.width = score * 25 + "%";
+        bar.style.background = colors[score];
+      }
+      if (label) label.textContent = labels[score];
+    });
+  });
+}
+
+function initPaymentChoice() {
+  var safe = document.getElementById("vnpaySafe");
+  var submit = document.getElementById("checkoutSubmit");
+  document.querySelectorAll('input[name="PaymentMethod"]').forEach(function (radio) {
+    radio.addEventListener("change", function () {
+      var isVnpay = radio.value === "VNPAY" && radio.checked;
+      if (safe) safe.classList.toggle("show", isVnpay);
+      if (submit && isVnpay) submit.textContent = "Thanh toán VNPAY";
+      if (submit && !isVnpay) submit.textContent = "Đặt hàng";
+    });
+  });
+}
+
+function initSearchAutocomplete() {
+  var input = document.querySelector("[data-search-autocomplete]");
+  var suggestions = document.getElementById("searchSuggestions");
+  if (!input || !suggestions) return;
+  var timer;
+  var activeRequest;
+
+  function closeSuggestions() {
+    suggestions.classList.remove("show");
+    suggestions.innerHTML = "";
+  }
+
+  input.addEventListener("input", function () {
+    clearTimeout(timer);
+    if (activeRequest) activeRequest.abort();
+    var value = input.value.trim();
+    if (value.length < 2) {
+      closeSuggestions();
+      return;
+    }
+    timer = setTimeout(function () {
+      activeRequest = new AbortController();
+      fetch("/Product/Search?q=" + encodeURIComponent(value), { signal: activeRequest.signal })
+        .then(function (response) { return response.json(); })
+        .then(function (items) {
+          suggestions.innerHTML = items.map(function (item) {
+            return '<a data-product-click="' + escapeHtml(item.id) + '" href="' + escapeHtml(item.url || ("/Product/Detail/" + item.id)) + '"><img src="' + escapeHtml(item.imageUrl || "/images/placeholder.svg") + '" alt="" loading="lazy" decoding="async"><span>' + escapeHtml(item.name) + '<small>' + escapeHtml(item.category || "Sản phẩm") + '</small></span><strong>' + escapeHtml(item.price) + "</strong></a>";
+          }).join("");
+          suggestions.classList.toggle("show", items.length > 0);
+        })
+        .catch(function (error) {
+          if (!error || error.name !== "AbortError") closeSuggestions();
+        });
+    }, 180);
+  });
+
+  document.addEventListener("click", function (event) {
+    if (!suggestions.contains(event.target) && event.target !== input) closeSuggestions();
+  });
+}
+
+function initReviewFilters() {
+  var filters = document.querySelectorAll("[data-review-filter]");
+  var list = document.getElementById("reviewList");
+  if (!list) return;
+  list.dataset.visibleLimit = list.dataset.visibleLimit || "5";
+
+  filters.forEach(function (button) {
+    button.addEventListener("click", function () {
+      filters.forEach(function (item) {
+        var active = item === button;
+        item.classList.toggle("active", active);
+        item.setAttribute("aria-pressed", String(active));
+      });
+      list.dataset.visibleLimit = "5";
+      applyReviewFilter();
+    });
+  });
+
+  applyReviewFilter();
+}
+
+function applyReviewFilter() {
+  var list = document.getElementById("reviewList");
+  if (!list) return;
+  var active = document.querySelector("[data-review-filter].active");
+  var filter = active ? active.dataset.reviewFilter : "all";
+  var loadMore = document.querySelector("[data-load-reviews]");
+  var limit = loadMore ? Math.max(5, Math.floor(parseLocalizedNumber(list.dataset.visibleLimit, 5))) : Number.MAX_SAFE_INTEGER;
+  var shown = 0;
+  var matched = 0;
+
+  document.querySelectorAll("[data-review-item]").forEach(function (item) {
+    var matches = filter === "all" || item.dataset.rating === filter;
+    if (!matches) {
+      item.classList.add("is-hidden");
+      return;
+    }
+
+    matched++;
+    shown++;
+    item.classList.toggle("is-hidden", shown > limit);
+  });
+
+  var empty = document.querySelector("[data-review-empty]");
+  if (empty) empty.hidden = matched > 0;
+
+  if (loadMore) {
+    loadMore.hidden = matched <= limit;
+  }
+}
+
+function initReviewPagination() {
+  var button = document.querySelector("[data-load-reviews]");
+  if (!button) return;
+  button.addEventListener("click", function () {
+    var list = document.getElementById("reviewList");
+    if (!list) return;
+    list.dataset.visibleLimit = String(parseLocalizedNumber(list.dataset.visibleLimit, 5) + 5);
+    applyReviewFilter();
+  });
+}
+
+function initProductGallery() {
+  var main = document.getElementById("mainProductImage");
+  if (!main) return;
+  document.querySelectorAll("[data-gallery-thumb]").forEach(function (thumb) {
+    thumb.addEventListener("click", function () {
+      main.src = thumb.dataset.galleryThumb;
+      document.querySelectorAll("[data-gallery-thumb]").forEach(function (item) { item.classList.remove("active"); });
+      thumb.classList.add("active");
+    });
+  });
+}
+
+function initProductTabs() {
+  document.querySelectorAll(".tab-btn[data-tab]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var tab = button.dataset.tab;
+      document.querySelectorAll(".tab-btn[data-tab]").forEach(function (item) { item.classList.toggle("active", item.dataset.tab === tab); });
+      document.querySelectorAll(".tab-panel[data-tab-panel]").forEach(function (panel) { panel.classList.toggle("active", panel.dataset.tabPanel === tab); });
+    });
+  });
+}
+
+function initProductSpecModal() {
+  var modal = document.querySelector("[data-spec-modal]");
+  var open = document.querySelector("[data-spec-modal-open]");
+  if (!modal || !open) return;
+
+  var closeButtons = modal.querySelectorAll("[data-spec-modal-close]");
+  var lastFocus = null;
+  var lockedScrollY = 0;
+
+  if (modal.parentElement !== document.body) {
+    document.body.appendChild(modal);
+  }
+
+  function lockPage() {
+    lockedScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    document.body.style.top = "-" + lockedScrollY + "px";
+    document.body.classList.add("spec-modal-lock");
+  }
+
+  function unlockPage() {
+    document.body.classList.remove("spec-modal-lock");
+    document.body.style.top = "";
+    window.scrollTo(0, lockedScrollY);
+  }
+
+  function setOpen(isOpen) {
+    if (isOpen) {
+      lastFocus = document.activeElement;
+      modal.hidden = false;
+      lockPage();
+      var close = modal.querySelector("[data-spec-modal-close]");
+      if (close) close.focus();
+      refreshIcons();
+      return;
+    }
+
+    modal.hidden = true;
+    unlockPage();
+    if (lastFocus && typeof lastFocus.focus === "function") lastFocus.focus();
+  }
+
+  open.addEventListener("click", function () {
+    setOpen(true);
+  });
+
+  closeButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      setOpen(false);
+    });
+  });
+
+  modal.addEventListener("click", function (event) {
+    if (event.target === modal) setOpen(false);
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (!modal.hidden && event.key === "Escape") setOpen(false);
+  });
+}
+
+var addressOptions = (function () {
+  var detailed = {
+    "Hồ Chí Minh": {
+      "Quận 1": ["Phường Bến Nghé", "Phường Bến Thành", "Phường Cầu Kho", "Phường Cô Giang"],
+      "Quận 3": ["Phường Võ Thị Sáu", "Phường 9", "Phường 10", "Phường 11"],
+      "Quận 7": ["Phường Tân Phong", "Phường Tân Phú", "Phường Tân Quy", "Phường Phú Mỹ"],
+      "Thành phố Thủ Đức": ["Phường Thảo Điền", "Phường An Phú", "Phường Hiệp Bình Chánh", "Phường Linh Trung"],
+      "Quận Bình Thạnh": ["Phường 1", "Phường 3", "Phường 17", "Phường 25"]
+    },
+    "Hà Nội": {
+      "Quận Ba Đình": ["Phường Điện Biên", "Phường Đội Cấn", "Phường Kim Mã", "Phường Ngọc Hà"],
+      "Quận Hoàn Kiếm": ["Phường Hàng Bạc", "Phường Hàng Bài", "Phường Tràng Tiền", "Phường Cửa Nam"],
+      "Quận Cầu Giấy": ["Phường Dịch Vọng", "Phường Nghĩa Đô", "Phường Quan Hoa", "Phường Trung Hòa"],
+      "Quận Đống Đa": ["Phường Cát Linh", "Phường Láng Hạ", "Phường Ô Chợ Dừa", "Phường Trung Liệt"]
+    },
+    "Đà Nẵng": {
+      "Quận Hải Châu": ["Phường Hải Châu I", "Phường Hải Châu II", "Phường Thạch Thang", "Phường Hòa Thuận Đông"],
+      "Quận Thanh Khê": ["Phường An Khê", "Phường Chính Gián", "Phường Thạc Gián", "Phường Xuân Hà"],
+      "Quận Sơn Trà": ["Phường An Hải Bắc", "Phường An Hải Đông", "Phường Mân Thái", "Phường Phước Mỹ"]
+    },
+    "Cần Thơ": {
+      "Quận Ninh Kiều": ["Phường An Cư", "Phường An Hòa", "Phường Cái Khế", "Phường Tân An"],
+      "Quận Cái Răng": ["Phường Ba Láng", "Phường Hưng Phú", "Phường Lê Bình", "Phường Thường Thạnh"],
+      "Quận Bình Thủy": ["Phường An Thới", "Phường Bình Thủy", "Phường Long Hòa", "Phường Trà An"]
+    },
+    "Hải Phòng": {
+      "Quận Hồng Bàng": ["Phường Hoàng Văn Thụ", "Phường Minh Khai", "Phường Sở Dầu", "Phường Thượng Lý"],
+      "Quận Lê Chân": ["Phường An Biên", "Phường Dư Hàng", "Phường Niệm Nghĩa", "Phường Trại Cau"],
+      "Quận Ngô Quyền": ["Phường Cầu Đất", "Phường Đằng Giang", "Phường Lạch Tray", "Phường Máy Tơ"]
+    },
+    "Bình Dương": {
+      "Thành phố Thủ Dầu Một": ["Phường Chánh Nghĩa", "Phường Hiệp Thành", "Phường Phú Cường", "Phường Phú Hòa"],
+      "Thành phố Dĩ An": ["Phường An Bình", "Phường Dĩ An", "Phường Đông Hòa", "Phường Tân Đông Hiệp"],
+      "Thành phố Thuận An": ["Phường An Phú", "Phường Bình Hòa", "Phường Lái Thiêu", "Phường Thuận Giao"]
+    },
+    "Đồng Nai": {
+      "Thành phố Biên Hòa": ["Phường An Bình", "Phường Bửu Long", "Phường Long Bình", "Phường Tân Phong"],
+      "Thành phố Long Khánh": ["Phường Bảo Vinh", "Phường Xuân An", "Phường Xuân Bình", "Phường Xuân Trung"],
+      "Huyện Trảng Bom": ["Thị trấn Trảng Bom", "Xã An Viễn", "Xã Bắc Sơn", "Xã Hố Nai 3"]
+    }
+  };
+  [
+    "Bà Rịa - Vũng Tàu", "An Giang", "Bắc Giang", "Bắc Ninh", "Bến Tre", "Bình Định",
+    "Bình Phước", "Bình Thuận", "Cà Mau", "Đắk Lắk", "Đồng Tháp", "Gia Lai",
+    "Khánh Hòa", "Lâm Đồng", "Long An", "Nghệ An", "Quảng Nam", "Quảng Ninh",
+    "Thanh Hóa", "Thừa Thiên Huế"
+  ].forEach(function (province) {
+    detailed[province] = detailed[province] || {
+      "Thành phố trung tâm": ["Phường 1", "Phường 2", "Phường 3"],
+      "Thị xã trung tâm": ["Phường trung tâm", "Phường phía Bắc", "Phường phía Nam"],
+      "Huyện trung tâm": ["Thị trấn", "Xã trung tâm", "Xã lân cận"]
+    };
+  });
+  return detailed;
+})();
+
+function fillSelect(select, placeholder, values, selectedValue) {
+  if (!select) return;
+  select.innerHTML = '<option value="">' + placeholder + "</option>";
+  values.forEach(function (value) {
+    var option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    if (value === selectedValue) option.selected = true;
+    select.appendChild(option);
+  });
+  select.disabled = values.length === 0;
+}
+
+function normalizeAddressText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/^(tinh|thanh pho|tp\.?|quan|huyen|thi xa|thi tran|phuong|xa)\s+/i, "")
+    .trim();
+}
+
+function stripAddressPrefix(value) {
+  return String(value || "")
+    .trim()
+    .replace(/^(tỉnh|tinh|thành phố|thanh pho|tp\.?|quận|quan|huyện|huyen|thị xã|thi xa|thị trấn|thi tran|phường|phuong|xã|xa)\s+/i, "")
+    .trim();
+}
+
+function plainAddressText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function addressPartKind(value) {
+  var text = plainAddressText(value);
+  if (/^(tinh|tp\.?)\s+/.test(text)) return "province";
+  if (/^thanh pho\s+/.test(text)) return "city";
+  if (/^(quan|huyen|thi xa)\s+/.test(text)) return "district";
+  if (/^(phuong|xa|thi tran)\s+/.test(text)) return "ward";
+  return "";
+}
+
+function findAddressMatch(items, name) {
+  var key = normalizeAddressText(name);
+  if (!key) return null;
+  return items.find(function (item) { return normalizeAddressText(item.name) === key; }) || items[0] || null;
+}
+
+function parseSavedAddressParts(parts) {
+  var parsed = {
+    streetParts: [],
+    province: "",
+    district: "",
+    ward: ""
+  };
+  var used = {};
+
+  for (var i = parts.length - 1; i >= 0; i--) {
+    var kind = addressPartKind(parts[i]);
+    var previousKind = i > 0 ? addressPartKind(parts[i - 1]) : "";
+
+    if (!parsed.province && kind === "province") {
+      parsed.province = parts[i];
+      used[i] = true;
+    } else if (!parsed.district && kind === "district") {
+      parsed.district = parts[i];
+      used[i] = true;
+    } else if (!parsed.ward && kind === "ward") {
+      parsed.ward = parts[i];
+      used[i] = true;
+    } else if (kind === "city") {
+      if (!parsed.district && i === parts.length - 1 && previousKind === "ward") {
+        parsed.district = parts[i];
+      } else if (!parsed.province) {
+        parsed.province = parts[i];
+      }
+      used[i] = true;
+    }
+  }
+
+  if (!parsed.province && !parsed.district && !parsed.ward && parts.length >= 4) {
+    parsed.province = parts[parts.length - 1];
+    parsed.district = parts[parts.length - 2];
+    parsed.ward = parts[parts.length - 3];
+    used[parts.length - 1] = true;
+    used[parts.length - 2] = true;
+    used[parts.length - 3] = true;
+  }
+
+  parsed.streetParts = parts.filter(function (_, index) { return !used[index]; });
+  return parsed;
+}
+
+function fetchAddressJson(url) {
+  return fetch(url, { headers: { Accept: "application/json" } }).then(function (response) {
+    if (!response.ok) throw new Error("Address API request failed");
+    return response.json();
+  });
+}
+
+function setSelectStatus(select, placeholder, disabled) {
+  if (!select) return;
+  select.innerHTML = '<option value="">' + placeholder + "</option>";
+  select.disabled = Boolean(disabled);
+}
+
+function fillAddressSelect(select, placeholder, items, selectedValue) {
+  if (!select) return null;
+  select.innerHTML = '<option value="">' + placeholder + "</option>";
+  var selectedOption = null;
+  var selectedKey = normalizeAddressText(selectedValue);
+
+  items.forEach(function (item) {
+    var option = document.createElement("option");
+    option.value = item.name;
+    option.textContent = item.name;
+    option.dataset.code = item.code;
+    if (selectedKey && normalizeAddressText(item.name) === selectedKey) {
+      option.selected = true;
+      selectedOption = option;
+    }
+    select.appendChild(option);
+  });
+
+  if (selectedValue && !selectedOption) {
+    selectedOption = document.createElement("option");
+    selectedOption.value = selectedValue;
+    selectedOption.textContent = selectedValue;
+    selectedOption.selected = true;
+    select.appendChild(selectedOption);
+  }
+
+  select.disabled = items.length === 0;
+  return selectedOption;
+}
+
+function selectedAddressCode(select) {
+  if (!select || !select.selectedOptions || !select.selectedOptions.length) return "";
+  return select.selectedOptions[0].dataset.code || "";
+}
+
+function initAddressDropdowns() {
+  var province = document.querySelector("[data-province-select]") || document.getElementById("Province");
+  var district = document.querySelector("[data-district-select]");
+  var ward = document.querySelector("[data-ward-select]");
+  var street = document.getElementById("Street");
+  if (!province || !district || !ward) return;
+
+  // This checkout uses the three-level province/district/ward address format.
+  var addressApiBase = "https://provinces.open-api.vn/api/v1";
+  var addressCache = {
+    provinces: null,
+    districtsByProvince: {},
+    wardsByDistrict: {}
+  };
+  var currentProvince = province.dataset.current || province.value;
+  var currentDistrict = district.dataset.current || district.value;
+  var currentWard = ward.dataset.current || ward.value;
+  var loadToken = 0;
+
+  function clearWards() {
+    setSelectStatus(ward, "-- Chọn phường xã --", true);
+  }
+
+  function clearDistricts() {
+    setSelectStatus(district, "-- Chọn quận huyện --", true);
+    clearWards();
+  }
+
+  function loadProvinces() {
+    if (addressCache.provinces) {
+      fillAddressSelect(province, "-- Chọn tỉnh thành --", addressCache.provinces, currentProvince);
+      return Promise.resolve(addressCache.provinces);
+    }
+
+    var fallbackOptions = Array.prototype.slice.call(province.options)
+      .filter(function (option) { return option.value; })
+      .map(function (option) { return { name: option.value, code: option.dataset.code || "" }; });
+
+    setSelectStatus(province, "Đang tải tỉnh thành...", true);
+    return fetchAddressJson(addressApiBase + "/p/")
+      .then(function (items) {
+        addressCache.provinces = items;
+        fillAddressSelect(province, "-- Chọn tỉnh thành --", items, currentProvince);
+        return items;
+      })
+      .catch(function () {
+        fillAddressSelect(province, "-- Chọn tỉnh thành --", fallbackOptions, currentProvince);
+        return fallbackOptions;
+      })
+      .finally(function () {
+        province.disabled = false;
+      });
+  }
+
+  function loadDistricts(provinceCode, selectedDistrict) {
+    var token = ++loadToken;
+    if (!provinceCode) {
+      clearDistricts();
+      return Promise.resolve([]);
+    }
+
+    if (addressCache.districtsByProvince[provinceCode]) {
+      fillAddressSelect(district, "-- Chọn quận huyện --", addressCache.districtsByProvince[provinceCode], selectedDistrict);
+      return Promise.resolve(addressCache.districtsByProvince[provinceCode]);
+    }
+
+    setSelectStatus(district, "Đang tải quận huyện...", true);
+    clearWards();
+    return fetchAddressJson(addressApiBase + "/p/" + encodeURIComponent(provinceCode) + "?depth=2")
+      .then(function (data) {
+        var districts = data.districts || [];
+        addressCache.districtsByProvince[provinceCode] = districts;
+        if (token === loadToken) fillAddressSelect(district, "-- Chọn quận huyện --", districts, selectedDistrict);
+        return districts;
+      })
+      .catch(function () {
+        if (token === loadToken) clearDistricts();
+        return [];
+      });
+  }
+
+  function loadWards(districtCode, selectedWard) {
+    if (!districtCode) {
+      clearWards();
+      return Promise.resolve([]);
+    }
+
+    if (addressCache.wardsByDistrict[districtCode]) {
+      fillAddressSelect(ward, "-- Chọn phường xã --", addressCache.wardsByDistrict[districtCode], selectedWard);
+      return Promise.resolve(addressCache.wardsByDistrict[districtCode]);
+    }
+
+    setSelectStatus(ward, "Đang tải phường xã...", true);
+    return fetchAddressJson(addressApiBase + "/d/" + encodeURIComponent(districtCode) + "?depth=2")
+      .then(function (data) {
+        var wards = data.wards || [];
+        addressCache.wardsByDistrict[districtCode] = wards;
+        fillAddressSelect(ward, "-- Chọn phường xã --", wards, selectedWard);
+        return wards;
+      })
+      .catch(function () {
+        clearWards();
+        return [];
+      });
+  }
+
+  function applyAddressParts(parts) {
+    if (!parts || parts.length < 4) {
+      if (street && parts && parts.length) street.value = parts.join(", ");
+      return Promise.resolve();
+    }
+
+    currentProvince = parts[parts.length - 1];
+    currentDistrict = parts[parts.length - 2];
+    currentWard = parts[parts.length - 3];
+    if (street) street.value = parts.slice(0, parts.length - 3).join(", ");
+
+    return loadProvinces().then(function () {
+      fillAddressSelect(province, "-- Chọn tỉnh thành --", addressCache.provinces || [], currentProvince);
+      return loadDistricts(selectedAddressCode(province), currentDistrict);
+    })
+      .then(function () { return loadWards(selectedAddressCode(district), currentWard); });
+  }
+
+  function findDistrictByName(districtName) {
+    var query = stripAddressPrefix(districtName) || normalizeAddressText(districtName);
+    if (!query) return Promise.resolve(null);
+
+    return fetchAddressJson(addressApiBase + "/d/search/?q=" + encodeURIComponent(query))
+      .then(function (items) {
+        return findAddressMatch(items || [], districtName);
+      })
+      .catch(function () {
+        return null;
+      });
+  }
+
+  function setProvinceFromCode(provinceCode) {
+    if (!provinceCode) return Promise.resolve("");
+    var cachedProvince = (addressCache.provinces || []).find(function (item) {
+      return String(item.code) === String(provinceCode);
+    });
+
+    if (cachedProvince) {
+      currentProvince = cachedProvince.name;
+      fillAddressSelect(province, "-- Chọn tỉnh thành --", addressCache.provinces || [], currentProvince);
+      return Promise.resolve(String(cachedProvince.code));
+    }
+
+    return fetchAddressJson(addressApiBase + "/p/" + encodeURIComponent(provinceCode))
+      .then(function (item) {
+        currentProvince = item.name;
+        fillAddressSelect(province, "-- Chọn tỉnh thành --", addressCache.provinces || [item], currentProvince);
+        return String(item.code);
+      })
+      .catch(function () {
+        return "";
+      });
+  }
+
+  function applySmartAddressParts(parts) {
+    if (!parts || !parts.length) return Promise.resolve();
+
+    var parsed = parseSavedAddressParts(parts);
+    if (!parsed.province && !parsed.district && !parsed.ward) {
+      if (street) street.value = parts.join(", ");
+      return Promise.resolve();
+    }
+
+    currentProvince = parsed.province;
+    currentDistrict = parsed.district;
+    currentWard = parsed.ward;
+    if (street) street.value = parsed.streetParts.join(", ");
+
+    return loadProvinces().then(function () {
+      if (currentProvince) {
+        fillAddressSelect(province, "-- Chọn tỉnh thành --", addressCache.provinces || [], currentProvince);
+        return selectedAddressCode(province);
+      }
+
+      return findDistrictByName(currentDistrict).then(function (matchedDistrict) {
+        return setProvinceFromCode(matchedDistrict && matchedDistrict.province_code);
+      });
+    }).then(function (provinceCode) {
+      return loadDistricts(provinceCode || selectedAddressCode(province), currentDistrict);
+    })
+      .then(function () { return loadWards(selectedAddressCode(district), currentWard); });
+  }
+
+  window.techvoraAddressPicker = {
+    applyParts: applySmartAddressParts
+  };
+
+  province.addEventListener("change", function () {
+    currentProvince = province.value;
+    currentDistrict = "";
+    currentWard = "";
+    loadDistricts(selectedAddressCode(province), "").then(updateCheckoutShippingFee);
+  });
+
+  district.addEventListener("change", function () {
+    currentDistrict = district.value;
+    currentWard = "";
+    loadWards(selectedAddressCode(district), "").then(updateCheckoutShippingFee);
+  });
+
+  ward.addEventListener("change", updateCheckoutShippingFee);
+
+  clearDistricts();
+  loadProvinces().then(function () {
+    return loadDistricts(selectedAddressCode(province), currentDistrict);
+  }).then(function () {
+    return loadWards(selectedAddressCode(district), currentWard);
+  }).then(updateCheckoutShippingFee);
+}
+
+function initProfileAddressFill() {
+  var button = document.querySelector("[data-profile-address]");
+  if (!button) return;
+  button.addEventListener("click", function () {
+    var parts = button.dataset.profileAddress.split(",").map(function (part) { return part.trim(); }).filter(Boolean);
+    var street = document.getElementById("Street");
+    if (window.techvoraAddressPicker && typeof window.techvoraAddressPicker.applyParts === "function") {
+      window.techvoraAddressPicker.applyParts(parts).then(function () {
+        updateCheckoutShippingFee();
+        showToast("Đã điền địa chỉ đã lưu.", "success");
+      });
+    } else {
+      if (street) street.value = button.dataset.profileAddress;
+      updateCheckoutShippingFee();
+      showToast("Đã điền địa chỉ đã lưu.", "success");
+    }
+  });
+}
+
+function showToast(message, type) {
+  var stack = document.getElementById("toast-stack");
+  if (!stack) return;
+  var toast = document.createElement("div");
+  toast.className = "toast " + (type === "error" ? "toast-error" : "toast-success");
+  toast.textContent = message;
+  stack.appendChild(toast);
+  setTimeout(function () { toast.remove(); }, 2600);
+}
+
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, function (ch) {
+    return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[ch];
+  });
+}
+
+function initNotificationMenu() {
+  document.querySelectorAll(".notification-menu").forEach(function (menu) {
+    var toggle = menu.querySelector(".notification-toggle");
+    if (!toggle) return;
+
+    toggle.addEventListener("click", function (event) {
+      event.stopPropagation();
+      var isOpen = menu.classList.toggle("is-open");
+      toggle.setAttribute("aria-expanded", String(isOpen));
+    });
+  });
+
+  document.addEventListener("click", function () {
+    document.querySelectorAll(".notification-menu.is-open").forEach(function (menu) {
+      menu.classList.remove("is-open");
+      var toggle = menu.querySelector(".notification-toggle");
+      if (toggle) toggle.setAttribute("aria-expanded", "false");
+    });
+  });
+}
+
+function initOrderRouteMap() {
+  var mapElements = Array.prototype.slice.call(document.querySelectorAll("[data-order-real-map]"));
+  if (mapElements.length) {
+    loadOrderLeafletAssets()
+      .then(function () {
+        mapElements.forEach(initOrderLeafletMap);
+      })
+      .catch(function () {
+        mapElements.forEach(function (element) {
+          element.classList.add("is-map-error");
+          var loading = element.querySelector(".order-map-loading span");
+          if (loading) loading.textContent = "Không tải được nền bản đồ. Vui lòng kiểm tra kết nối mạng.";
+        });
+      });
+  }
+
+  document.querySelectorAll("[data-order-route-expand]").forEach(function (button) {
+    var panel = button.closest(".order-shipping-map-panel");
+    var label = button.querySelector("span");
+    if (!panel) return;
+
+    button.addEventListener("click", function () {
+      var expanded = panel.classList.toggle("is-expanded");
+      button.setAttribute("aria-expanded", String(expanded));
+      if (label) label.textContent = expanded ? "Thu gọn" : "Xem rõ hơn";
+
+      if (expanded) {
+        var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        panel.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+      }
+
+      refreshOrderLeafletMaps(panel);
+    });
+  });
+}
+
+function loadOrderLeafletAssets() {
+  if (window.L && typeof window.L.map === "function") {
+    return Promise.resolve();
+  }
+
+  if (window.orderLeafletPromise) {
+    return window.orderLeafletPromise;
+  }
+
+  window.orderLeafletPromise = new Promise(function (resolve, reject) {
+    if (!document.querySelector("link[data-order-leaflet-css]")) {
+      var link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      link.setAttribute("data-order-leaflet-css", "true");
+      document.head.appendChild(link);
+    }
+
+    var existing = document.querySelector("script[data-order-leaflet-js]");
+    if (existing) {
+      existing.addEventListener("load", resolve, { once: true });
+      existing.addEventListener("error", reject, { once: true });
+      return;
+    }
+
+    var script = document.createElement("script");
+    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    script.defer = true;
+    script.setAttribute("data-order-leaflet-js", "true");
+    script.addEventListener("load", resolve, { once: true });
+    script.addEventListener("error", reject, { once: true });
+    document.body.appendChild(script);
+  });
+
+  return window.orderLeafletPromise;
+}
+
+function initOrderLeafletMap(element) {
+  if (element._orderLeafletMap || !window.L) return;
+
+  var route = [
+    [10.8482, 106.6146],
+    [10.935, 106.72],
+    [11.18, 107.08],
+    [11.62, 108.38],
+    [12.24, 109.19],
+    [13.78, 109.22],
+    [16.05, 108.2],
+    [18.43, 105.86]
+  ];
+  var progress = Number(element.getAttribute("data-route-progress") || "0");
+  if (!Number.isFinite(progress)) progress = 0;
+
+  var statusMap = element.closest(".order-route-map");
+  var isComplete = statusMap && statusMap.classList.contains("is-complete");
+  var isCancelled = statusMap && statusMap.classList.contains("is-cancelled");
+  var isEstimatedArrival = statusMap && statusMap.classList.contains("is-estimated-arrival");
+  var routeColor = isCancelled ? "#dc2626" : isComplete ? "#16a34a" : isEstimatedArrival ? "#d97706" : "#2563eb";
+
+  var map = window.L.map(element, {
+    zoomControl: true,
+    attributionControl: true,
+    scrollWheelZoom: false,
+    doubleClickZoom: true,
+    zoomSnap: 0.25,
+    zoomDelta: 0.5
+  });
+
+  var tiles = window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap"
+  }).addTo(map);
+
+  var routePoints = route.map(function (point) {
+    return window.L.latLng(point[0], point[1]);
+  });
+  var progressData = getOrderRouteProgress(routePoints, progress, map);
+  element._orderRouteFocus = progressData.point;
+
+  window.L.polyline(routePoints, {
+    color: "#f8fafc",
+    opacity: 0.92,
+    weight: 12,
+    lineCap: "round",
+    lineJoin: "round"
+  }).addTo(map);
+
+  window.L.polyline(routePoints, {
+    color: "#64748b",
+    opacity: 0.62,
+    weight: 6,
+    lineCap: "round",
+    lineJoin: "round"
+  }).addTo(map);
+
+  window.L.polyline(progressData.path, {
+    color: routeColor,
+    opacity: 0.95,
+    weight: 8,
+    lineCap: "round",
+    lineJoin: "round"
+  }).addTo(map);
+
+  window.L.marker(routePoints[0], {
+    icon: createOrderRouteIcon("warehouse", "origin", 36),
+    zIndexOffset: 400
+  }).addTo(map).bindTooltip("Shop Techvora, Hóc Môn, gần bến xe An Sương", {
+    direction: "top",
+    offset: [0, -18]
+  });
+
+  window.L.marker(routePoints[routePoints.length - 1], {
+    icon: createOrderRouteIcon("map-pin", "destination", 36),
+    zIndexOffset: 400
+  }).addTo(map).bindTooltip("Điểm nhận mô phỏng", {
+    direction: "top",
+    offset: [0, -18]
+  });
+
+  window.L.marker(progressData.point, {
+    icon: createOrderRouteIcon("truck", "truck" + (isComplete ? " is-complete" : isCancelled ? " is-cancelled" : isEstimatedArrival ? " is-estimated-arrival" : ""), 46),
+    zIndexOffset: 800
+  }).addTo(map).bindTooltip("Vị trí mô phỏng theo mốc thời gian", {
+    direction: "top",
+    offset: [0, -21]
+  });
+
+  element._orderLeafletMap = map;
+  element._orderLeafletFit = function () {
+    map.setView(element._orderRouteFocus || routePoints[0], getOrderLeafletZoom(element), { animate: false });
+  };
+
+  tiles.on("load", function () {
+    element.classList.add("is-map-ready");
+  });
+
+  setTimeout(function () {
+    element.classList.add("is-map-ready");
+    map.invalidateSize();
+    element._orderLeafletFit();
+    refreshIcons();
+  }, 120);
+}
+
+function getOrderRouteProgress(routePoints, progress, map) {
+  var clamped = Math.max(0, Math.min(100, progress)) / 100;
+  if (routePoints.length < 2 || clamped <= 0) {
+    return { point: routePoints[0], path: [routePoints[0]] };
+  }
+
+  var segments = [];
+  var total = 0;
+  for (var index = 0; index < routePoints.length - 1; index += 1) {
+    var distance = map.distance(routePoints[index], routePoints[index + 1]);
+    segments.push(distance);
+    total += distance;
+  }
+
+  var target = total * clamped;
+  var travelled = 0;
+  var path = [routePoints[0]];
+
+  for (var segmentIndex = 0; segmentIndex < segments.length; segmentIndex += 1) {
+    var segmentDistance = segments[segmentIndex];
+    var start = routePoints[segmentIndex];
+    var end = routePoints[segmentIndex + 1];
+
+    if (travelled + segmentDistance >= target) {
+      var ratio = segmentDistance === 0 ? 0 : (target - travelled) / segmentDistance;
+      var point = window.L.latLng(
+        start.lat + ((end.lat - start.lat) * ratio),
+        start.lng + ((end.lng - start.lng) * ratio)
+      );
+      path.push(point);
+      return { point: point, path: path };
+    }
+
+    path.push(end);
+    travelled += segmentDistance;
+  }
+
+  return { point: routePoints[routePoints.length - 1], path: routePoints.slice() };
+}
+
+function createOrderRouteIcon(icon, className, size) {
+  return window.L.divIcon({
+    className: "order-route-div-icon",
+    html: '<span class="order-route-marker is-' + className + '"><i data-lucide="' + icon + '" aria-hidden="true"></i></span>',
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2]
+  });
+}
+
+function getOrderLeafletZoom(element) {
+  var panel = element.closest(".order-shipping-map-panel");
+  var expanded = panel && panel.classList.contains("is-expanded");
+  var width = element.clientWidth || 0;
+
+  if (width < 520) {
+    return expanded ? 9 : 8.25;
+  }
+
+  return expanded ? 9.25 : 8.5;
+}
+
+function refreshOrderLeafletMaps(panel) {
+  if (!panel) return;
+
+  window.setTimeout(function () {
+    panel.querySelectorAll("[data-order-real-map]").forEach(function (element) {
+      if (!element._orderLeafletMap) return;
+      element._orderLeafletMap.invalidateSize();
+      if (typeof element._orderLeafletFit === "function") {
+        element._orderLeafletFit();
+      }
+    });
+  }, 260);
+}

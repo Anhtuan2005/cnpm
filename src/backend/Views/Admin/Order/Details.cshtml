@@ -1,0 +1,180 @@
+@model Order
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = $"Đơn hàng #{Model.Id}";
+    var hasInvoice = !string.IsNullOrWhiteSpace(Model.InvoiceFkey) && Model.InvoiceStatus != InvoiceStatuses.NotIssued;
+}
+
+<section class="admin-grid">
+    <div class="admin-panel">
+        <div class="panel-head">
+            <h2>Thông tin đơn hàng</h2>
+            <a class="admin-button secondary" href="/Admin/Order/Print/@Model.Id" target="_blank" rel="noopener">In phiếu</a>
+        </div>
+        <dl class="detail-list">
+            <dt>Khách hàng</dt><dd>@Model.User?.FullName (@Model.User?.Email)</dd>
+            <dt>Người nhận</dt><dd>@Model.RecipientName - @Model.RecipientPhone</dd>
+            <dt>Địa chỉ</dt><dd>@Model.ShippingAddress</dd>
+            <dt>Thanh toán</dt><dd>@Model.PaymentMethod</dd>
+            <dt>Hoàn tiền</dt><dd><span class="admin-pill @(Model.RefundStatus == RefundStatuses.PendingManual ? "warning" : Model.RefundStatus == RefundStatuses.Refunded ? "success" : "")">@Model.RefundStatus</span></dd>
+            @if (Model.RefundRequestedAt.HasValue)
+            {
+                <dt>Yêu cầu hoàn</dt><dd>@Model.RefundRequestedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+            }
+            @if (Model.RefundedAt.HasValue)
+            {
+                <dt>Đã hoàn lúc</dt><dd>@Model.RefundedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.RefundNote))
+            {
+                <dt>Ghi chú hoàn tiền</dt><dd>@Model.RefundNote</dd>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.VoucherCode) || Model.DiscountAmount > 0)
+            {
+                <dt>Mã giảm giá</dt><dd>@(string.IsNullOrWhiteSpace(Model.VoucherCode) ? "Không có" : Model.VoucherCode) (-@Model.DiscountAmount.ToString("N0") ₫)</dd>
+            }
+            <dt>Phí vận chuyển</dt><dd>@Model.ShippingFee.ToString("N0") ₫</dd>
+            <dt>Tổng tiền</dt><dd>@Model.TotalAmount.ToString("N0") ₫</dd>
+        </dl>
+        <form asp-action="UpdateStatus" method="post" class="inline-form">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <select name="status" aria-label="Trạng thái đơn hàng">
+                @foreach (var status in OrderStatuses.All.Where(status => EcommerceApp.Services.OrderLifecycle.CanTransition(Model, status)))
+                {
+                    <option value="@status" selected="@(Model.Status == status)">@status</option>
+                }
+            </select>
+            <button class="admin-button" type="submit">Cập nhật trạng thái</button>
+        </form>
+        @if (Model.RefundStatus == RefundStatuses.PendingManual)
+        {
+            <form asp-action="MarkRefunded" method="post" class="stack-form">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <label for="refund-note">Ghi chú hoàn tiền thủ công</label>
+                <textarea id="refund-note" name="note" rows="3" placeholder="VD: Đã hoàn qua VNPAY/manual banking, mã đối soát...">@Model.RefundNote</textarea>
+                <button class="admin-button" type="submit">Đánh dấu đã hoàn tiền</button>
+            </form>
+        }
+    </div>
+    <div class="admin-panel">
+        <div class="panel-head">
+            <h2>Vận chuyển</h2>
+        </div>
+        @if (EcommerceApp.Services.OrderLifecycle.CanShip(Model))
+        {
+        <form asp-action="AssignShipping" method="post" class="stack-form">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <label for="shipping-carrier">Đơn vị vận chuyển</label>
+            <select id="shipping-carrier" name="carrier">
+                @foreach (var carrier in new[] { "Giao Hàng Nhanh", "Giao Hàng Tiết Kiệm", "Viettel Post", "VNPost" })
+                {
+                    <option value="@carrier" selected="@(Model.ShippingInfo?.Carrier == carrier)">@carrier</option>
+                }
+            </select>
+            <label for="tracking-code">Mã vận đơn</label>
+            <input id="tracking-code" name="trackingCode" value="@Model.ShippingInfo?.TrackingCode" maxlength="80" />
+            <label for="estimated-delivery">Dự kiến giao</label>
+            <input id="estimated-delivery" type="date" name="estimatedDelivery" value="@Model.ShippingInfo?.EstimatedDelivery?.ToString("yyyy-MM-dd")" />
+            <button class="admin-button" type="submit">Lưu vận chuyển</button>
+        </form>
+        }
+        else
+        {
+            <p>Chỉ gán vận chuyển khi đơn đã được xác nhận và đủ điều kiện thanh toán.</p>
+        }
+    </div>
+    <div class="admin-panel">
+        <div class="panel-head">
+            <h2>Hóa đơn nội bộ</h2>
+            <span class="admin-pill @(Model.InvoiceStatus == InvoiceStatuses.Error ? "warning" : Model.InvoiceStatus == InvoiceStatuses.Cancelled ? "off" : Model.InvoiceStatus == InvoiceStatuses.NotIssued ? "off" : "success")">@Model.InvoiceStatus</span>
+        </div>
+        <dl class="detail-list">
+            <dt>Loại hóa đơn</dt><dd>@(Model.InvoiceProvider ?? "Hóa đơn mô phỏng")</dd>
+            <dt>Mã hóa đơn</dt><dd>@(Model.InvoiceFkey ?? $"LOCAL-DH{Model.Id:D6}")</dd>
+            <dt>Số hóa đơn</dt><dd>@(Model.InvoiceNumber ?? "Chưa có")</dd>
+            <dt>Mã tra cứu</dt><dd>@(Model.InvoiceLookupCode ?? "Chưa có")</dd>
+            @if (Model.InvoiceIssuedAt.HasValue)
+            {
+                <dt>Đã xuất lúc</dt><dd>@Model.InvoiceIssuedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+            }
+            @if (Model.InvoiceSyncedAt.HasValue)
+            {
+                <dt>Cập nhật lúc</dt><dd>@Model.InvoiceSyncedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.InvoiceErrorMessage))
+            {
+                <dt>Lỗi gần nhất</dt><dd>@Model.InvoiceErrorMessage</dd>
+            }
+        </dl>
+        <div class="table-actions">
+            <form asp-action="IssueInvoice" method="post">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button class="admin-button" type="submit" disabled="@(hasInvoice && Model.InvoiceStatus != InvoiceStatuses.Error)">Xuất hóa đơn PDF</button>
+            </form>
+            <form asp-action="DownloadInvoicePdf" method="post">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button class="admin-button secondary" type="submit" disabled="@(!hasInvoice || Model.InvoiceStatus == InvoiceStatuses.Cancelled)">Tải lại PDF</button>
+            </form>
+            <form asp-action="CancelInvoice" method="post" data-confirm="Huỷ hóa đơn nội bộ của đơn #@Model.Id?">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button class="admin-button danger" type="submit" disabled="@(!hasInvoice || Model.InvoiceStatus == InvoiceStatuses.Cancelled)">Huỷ hóa đơn</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+@if (Model.ReturnWarrantyRequests.Any())
+{
+    <section class="admin-panel">
+        <div class="panel-head"><h2>Yêu cầu đổi trả và bảo hành đã nhận</h2></div>
+        @foreach (var request in Model.ReturnWarrantyRequests.OrderByDescending(request => request.CreatedAt))
+        {
+            <div id="support-request-@request.Id" class="admin-support-summary">
+                <div class="panel-head">
+                    <div>
+                        <h3>@request.Type #@request.Id</h3>
+                        <p>Gửi lúc @request.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+                    </div>
+                    <span class="admin-pill">@request.Status</span>
+                </div>
+                <dl class="detail-list">
+                    <dt>Liên hệ</dt><dd>@request.ContactName - @request.ContactPhone</dd>
+                    <dt>Lý do</dt><dd>@request.Reason</dd>
+                    <dt>Mô tả</dt><dd>@request.Description</dd>
+                    <dt>Phương án mong muốn</dt><dd>@request.PreferredResolution</dd>
+                    <dt>Sản phẩm</dt>
+                    <dd>@(string.Join(", ", request.Items.Select(item => $"{item.ProductNameSnapshot} × {item.Quantity}")))</dd>
+                </dl>
+                @if (request.Images.Any())
+                {
+                    <div class="admin-support-images">
+                        @foreach (var image in request.Images.OrderBy(image => image.SortOrder))
+                        {
+                            <a href="@image.ImageUrl" target="_blank" rel="noopener">
+                                <img src="@image.ImageUrl" alt="Ảnh minh chứng yêu cầu #@request.Id" loading="lazy" decoding="async" />
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </section>
+}
+
+<section class="admin-panel">
+    <div class="panel-head"><h2>Sản phẩm trong đơn</h2></div>
+    <table class="admin-table">
+        <thead><tr><th>Sản phẩm</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+        <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.Product?.Name</td>
+                    <td>@item.Quantity</td>
+                    <td>@item.UnitPrice.ToString("N0") ₫</td>
+                    <td>@((item.UnitPrice * item.Quantity).ToString("N0")) ₫</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</section>

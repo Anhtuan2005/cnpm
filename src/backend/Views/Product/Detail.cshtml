@@ -1,0 +1,497 @@
+@model ProductDetailViewModel
+@using System.Globalization
+@using Microsoft.AspNetCore.Html
+@{
+    ViewData["Title"] = Model.Product.Name;
+    var product = Model.Product;
+    var promotionEnabled = SprintFeatures.IsEnabled(3);
+    var displayPrice = promotionEnabled ? product.SalePrice : product.Price;
+    var stockClass = product.Stock == 0 ? "out" : product.Stock <= 5 ? "low" : "ok";
+    var stockText = product.Stock == 0 ? "Hết hàng" : $"Còn {product.Stock} sản phẩm";
+    var formattedDisplayPrice = displayPrice.ToString("N0");
+    var socialDescription = $"Giá: {formattedDisplayPrice}đ";
+    var seoDescription = $"{product.Name}. {socialDescription}. {stockText}. Mua hàng chính hãng tại Techvora.";
+    ViewData["MetaDescription"] = seoDescription.Length > 160
+        ? $"{seoDescription[..157]}..."
+        : seoDescription;
+    ViewData["CanonicalPath"] = $"/Product/Detail/{product.Id}";
+    ViewData["OgType"] = "product";
+    ViewData["OgTitle"] = product.Name;
+    ViewData["OgDescription"] = socialDescription;
+    ViewData["OgImage"] = product.PrimaryImageUrl;
+    ViewData["OgImageAlt"] = $"Ảnh {product.Name}";
+    ViewData["ProductPriceAmount"] = displayPrice.ToString("0.##", CultureInfo.InvariantCulture);
+    ViewData["ProductPriceCurrency"] = "VND";
+    var gallery = BuildProductGallery(product);
+    var discountAmount = Math.Max(0, product.Price - product.SalePrice);
+    var productCode = $"TVR-{product.Id:0000}";
+    var productSalePriceValue = displayPrice.ToString(CultureInfo.InvariantCulture);
+    var isFlashSale = promotionEnabled && product.DiscountPercent > 0 && product.Stock > 0;
+    var reviewPhotoCount = Model.Reviews.Sum(review => review.Images.Count);
+    var stockDisabled = product.Stock == 0 ? "true" : "false";
+    var isAdminViewer = User.IsInRole("Admin");
+    var brandSpec = Model.TechnicalSpecs.FirstOrDefault(spec => spec.Label == "Hãng sản xuất")?.Value ?? "Techvora Select";
+    var displayBrand = PhoneBrandCatalog.Resolve(product.Name)?.Name ?? brandSpec;
+}
+
+<nav class="pdp-breadcrumb breadcrumb">
+    <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+    <span>›</span>
+    <a asp-controller="Product" asp-action="Index" asp-route-search="@(PhoneBrandCatalog.Resolve(product.Name)?.SearchTerm)">@displayBrand</a>
+    <span>›</span>
+    <strong>@product.Name</strong>
+</nav>
+
+<section class="pdp-layout">
+    @Html.AntiForgeryToken()
+    <aside class="pdp-left">
+        <div class="pdp-gallery-card">
+            <img class="main-product-image" id="mainProductImage" src="@gallery.First()" alt="@product.Name" loading="eager" decoding="async" fetchpriority="high"
+                 onerror="this.onerror=null;this.src='/images/placeholder.svg';" />
+        </div>
+        <div class="thumb-row pdp-thumbs">
+            @foreach (var image in gallery.Select((url, index) => new { url, index }))
+            {
+                <button type="button" class="thumb @(image.index == 0 ? "active" : "")" data-gallery-thumb="@image.url">
+                    <img src="@image.url" alt="@product.Name ảnh @(image.index + 1)" loading="lazy" decoding="async"
+                         onerror="this.onerror=null;this.src='/images/placeholder.svg';" />
+                </button>
+            }
+        </div>
+
+        <div class="pdp-side-card">
+            <div class="pdp-side-head">
+                <strong>Giao hàng</strong>
+                <span>i</span>
+            </div>
+            <div class="pdp-side-row">
+                <span><i data-lucide="map-pin" aria-hidden="true"></i></span>
+                <div><strong>TP. Hồ Chí Minh, Việt Nam</strong><small>Có thể thay đổi khi thanh toán</small></div>
+                <button type="button" class="pdp-note-btn" data-pdp-note="Bạn sẽ chọn địa chỉ giao hàng ở bước checkout.">Khi thanh toán</button>
+            </div>
+            <div class="pdp-side-row">
+                <span><i data-lucide="truck" aria-hidden="true"></i></span>
+                <div><strong>Giao tiêu chuẩn 2-5 ngày</strong><small>Phí được tính theo khu vực nhận hàng</small></div>
+            </div>
+            <div class="pdp-side-row">
+                <span><i data-lucide="credit-card" aria-hidden="true"></i></span>
+                <div><strong>@(SprintFeatures.IsEnabled(2) ? "COD và VNPAY" : "Thanh toán COD")</strong><small>Thanh toán an toàn, xác nhận nhanh</small></div>
+            </div>
+        </div>
+
+        @if (SprintFeatures.IsEnabled(2))
+        {
+            <div class="pdp-side-card">
+                <div class="pdp-side-head">
+                    <strong>Dịch vụ</strong>
+                    <span>?</span>
+                </div>
+                <div class="pdp-side-row"><span><i data-lucide="rotate-ccw" aria-hidden="true"></i></span><div><strong>Hỗ trợ đổi trả và bảo hành</strong><small>Gửi yêu cầu sau khi đơn đã giao</small></div></div>
+                <div class="pdp-side-row"><span><i data-lucide="shield-check" aria-hidden="true"></i></span><div><strong>Bảo hành 12 tháng</strong><small>Sản phẩm chính hãng Techvora</small></div></div>
+            </div>
+        }
+
+        <div class="pdp-seller-card">
+            <small>Bán bởi</small>
+            <strong>Techvora Store</strong>
+            <div>
+                <span><b>100%</b><small>Hàng chính hãng</small></span>
+                <span><b>COD</b><small>Thanh toán nhận hàng</small></span>
+                <span><b>Rõ</b><small>Giá và tồn kho</small></span>
+            </div>
+        </div>
+    </aside>
+
+    <section class="pdp-main">
+        <div class="pdp-title-row">
+            <div>
+                <span class="eyebrow">@displayBrand</span>
+                <h1>@product.Name</h1>
+            </div>
+            @if (!isAdminViewer)
+            {
+                <div class="pdp-icon-actions">
+                    @if (SprintFeatures.IsEnabled(2))
+                    {
+                        <button type="button"
+                                data-compare-product="@product.Id"
+                                data-compare-name="@product.Name"
+                                data-compare-image="@product.PrimaryImageUrl"
+                                data-compare-category-id="@product.CategoryId"
+                                data-compare-category-name="@product.Category?.Name"
+                                title="Thêm vào so sánh"
+                                aria-label="Thêm @product.Name vào so sánh"
+                                aria-pressed="false">
+                            <i data-lucide="git-compare-arrows" aria-hidden="true"></i>
+                        </button>
+                    }
+                    @if (Model.IsAuthenticated)
+                    {
+                        <button class="btn-wishlist @(Model.IsWishlisted ? "active" : "")" type="button" data-product-id="@product.Id" aria-label="Yêu thích"><i data-lucide="heart" aria-hidden="true"></i></button>
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path" aria-label="Đăng nhập để yêu thích"><i data-lucide="heart" aria-hidden="true"></i></a>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="pdp-rating-line">
+            @if (SprintFeatures.IsEnabled(2))
+            {
+                @RenderStars(Model.AverageRating)
+                <strong>@(Model.ReviewCount == 0 ? "Chưa có đánh giá" : $"{Model.AverageRating:0.#}/5 sao")</strong>
+                <span>@Model.ReviewCount đánh giá</span>
+                <span>•</span>
+            }
+            <span>@stockText</span>
+        </div>
+
+        <div class="pdp-price-block">
+            <strong>@displayPrice.ToString("N0") ₫</strong>
+            @if (promotionEnabled && product.DiscountPercent > 0)
+            {
+                <span>@product.Price.ToString("N0") ₫</span>
+                <em>-@product.DiscountPercent%</em>
+            }
+        </div>
+
+        @if (isFlashSale)
+        {
+            <div class="pdp-flash-sale">
+                <div>
+                    <span><i data-lucide="flame" aria-hidden="true"></i> Flash Sale</span>
+                    <strong>Tiết kiệm @discountAmount.ToString("N0") ₫ hôm nay</strong>
+                </div>
+                <div class="pdp-flash-timer" aria-label="Thời gian còn lại của Flash Sale">
+                    <small>Kết thúc sau</small>
+                    <b data-countdown>00:00:00</b>
+                </div>
+            </div>
+        }
+
+        <div class="product-info-tabs pdp-tabs">
+            @if (SprintFeatures.IsEnabled(2))
+            {
+                <div class="product-tabs">
+                    <button class="tab-btn active" type="button" data-tab="description">Thông tin</button>
+                    <button class="tab-btn" type="button" data-tab="reviews">Đánh giá</button>
+                </div>
+            }
+            else
+            {
+                <h2 class="pdp-static-section-title">Thông tin sản phẩm</h2>
+            }
+            <div class="tab-panel active" data-tab-panel="description">
+                <dl class="pdp-facts">
+                    <div><dt>Thương hiệu</dt><dd>@displayBrand</dd></div>
+                    <div><dt>Tình trạng</dt><dd>Hàng mới</dd></div>
+                    @if (SprintFeatures.IsEnabled(2))
+                    {
+                        var warrantySpec = Model.TechnicalSpecs.FirstOrDefault(spec => spec.Label == "Bảo hành")?.Value ?? "12 tháng";
+                        <div><dt>Bảo hành</dt><dd>@warrantySpec</dd></div>
+                    }
+                </dl>
+                <h2>Mô tả sản phẩm</h2>
+                <p>@product.Description</p>
+                <h2>Thông số kỹ thuật</h2>
+                <button class="pdp-spec-open" type="button" data-spec-modal-open>
+                    <i data-lucide="list-checks" aria-hidden="true"></i>
+                    Xem cấu hình chi tiết
+                </button>
+                <ul class="pdp-spec-list">
+                    <li>Mã sản phẩm: @productCode</li>
+                    <li>Kho hiện tại: @stockText</li>
+                    <li>@(SprintFeatures.IsEnabled(2) ? "Hỗ trợ thanh toán COD và VNPAY" : "Hỗ trợ thanh toán khi nhận hàng (COD)")</li>
+                    @if (SprintFeatures.IsEnabled(2))
+                    {
+                        <li>Có thể gửi yêu cầu đổi trả hoặc bảo hành cho đơn đã giao</li>
+                    }
+                </ul>
+            </div>
+            @if (SprintFeatures.IsEnabled(2))
+            {
+            <div class="tab-panel" data-tab-panel="reviews">
+                <div class="review-summary">
+                    <div class="avg-score">
+                        @RenderStars(Model.AverageRating)
+                        <strong>@(Model.ReviewCount == 0 ? "0/5 sao" : $"{Model.AverageRating:0.#}/5 sao")</strong>
+                        <span>@Model.ReviewCount lượt đánh giá</span>
+                        <span>@reviewPhotoCount ảnh thực tế</span>
+                    </div>
+                    <div class="rating-bars">
+                        @for (var star = 5; star >= 1; star--)
+                        {
+                            var count = Model.RatingDistribution.GetValueOrDefault(star);
+                            var pct = Model.ReviewCount == 0 ? 0 : (count * 100 / Model.ReviewCount);
+                            <div><span>@star sao</span><progress value="@pct" max="100"></progress><small>@pct%</small></div>
+                        }
+                    </div>
+                </div>
+
+                <div class="review-filter-row" aria-label="Lọc đánh giá theo số sao">
+                    <button class="active" type="button" data-review-filter="all" aria-pressed="true">Tất cả <span>@Model.ReviewCount</span></button>
+                    @for (var star = 5; star >= 1; star--)
+                    {
+                        var count = Model.RatingDistribution.GetValueOrDefault(star);
+                        <button type="button" data-review-filter="@star" aria-pressed="false">@star sao <span>@count</span></button>
+                    }
+                </div>
+
+                @if (Model.CanReview)
+                {
+                    <form class="review-form" id="reviewForm" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="productId" value="@product.Id" />
+                        <div class="star-picker">
+                            @for (var star = 5; star >= 1; star--)
+                            {
+                                <input id="star-@star" type="radio" name="rating" value="@star" />
+                                <label for="star-@star">★</label>
+                            }
+                        </div>
+                        <textarea name="comment" rows="4" minlength="10" maxlength="1000" placeholder="Chia sẻ trải nghiệm của bạn, tối thiểu 10 ký tự"></textarea>
+                        <div class="review-upload">
+                            <label for="reviewImages"><i data-lucide="camera" aria-hidden="true"></i><span>Thêm ảnh thực tế</span></label>
+                            <input id="reviewImages" type="file" name="images" accept="image/png,image/jpeg,image/webp" multiple data-review-images />
+                            <small>Tối đa 4 ảnh, mỗi ảnh dưới 3MB.</small>
+                            <div class="review-image-preview" data-review-preview></div>
+                        </div>
+                        <button class="btn-primary" type="submit">Gửi đánh giá</button>
+                    </form>
+                }
+                else if (isAdminViewer)
+                {
+                    <p class="review-note">Tài khoản admin chỉ xem và kiểm duyệt, không gửi đánh giá sản phẩm.</p>
+                }
+                else if (!Model.IsAuthenticated)
+                {
+                    <p class="review-note"><a asp-controller="Account" asp-action="Login">Đăng nhập</a> để đánh giá sau khi mua sản phẩm.</p>
+                }
+                else if (!Model.HasPurchased)
+                {
+                    <p class="review-note">Bạn cần có đơn hàng đã giao chứa sản phẩm này để đánh giá.</p>
+                }
+                else if (Model.HasReviewed)
+                {
+                    <p class="review-note">Bạn đã đánh giá sản phẩm này.</p>
+                }
+
+                <div class="review-list" id="reviewList">
+                    @if (!Model.Reviews.Any())
+                    {
+                        <div class="review-empty" data-review-empty>
+                            <i data-lucide="message-square-plus" aria-hidden="true"></i>
+                            <strong>Chưa có đánh giá</strong>
+                            <span>Review sau khi mua sẽ giúp khách khác tự tin hơn khi chọn linh kiện.</span>
+                        </div>
+                    }
+                    @foreach (var review in Model.Reviews.Select((value, index) => new { value, index }))
+                    {
+                        var item = review.value;
+                        var hue = Math.Abs(item.UserId.GetHashCode()) % 360;
+                        var reviewImages = item.Images.OrderBy(image => image.SortOrder).ToList();
+                        <article class="review-item @(review.index >= 5 ? "is-hidden" : "")" style="--avatar-hue:@hue" data-review-item data-rating="@item.Rating">
+                            <div class="review-avatar">@((item.User?.FullName ?? "K").Substring(0, 1).ToUpper())</div>
+                            <div class="review-copy">
+                                <div class="review-meta"><strong>@(item.User?.FullName ?? "Khách hàng")</strong><span>@item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</span></div>
+                                @RenderStars(item.Rating)
+                                <p>@item.Comment</p>
+                                @if (reviewImages.Any())
+                                {
+                                    <div class="review-photo-grid">
+                                        @foreach (var image in reviewImages)
+                                        {
+                                            <a class="review-photo-thumb" href="@image.ImageUrl" target="_blank" rel="noopener">
+                                                <img src="@image.ImageUrl" alt="Ảnh đánh giá của @(item.User?.FullName ?? "khách hàng")" loading="lazy" decoding="async" />
+                                            </a>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </article>
+                    }
+                </div>
+                @if (Model.ReviewCount > 5)
+                {
+                    <button class="btn-ghost load-more-reviews" type="button" data-load-reviews>Xem thêm đánh giá</button>
+                }
+            </div>
+            }
+        </div>
+    </section>
+
+    <aside class="pdp-order-card" data-product-price="@productSalePriceValue">
+        @if (promotionEnabled && product.DiscountPercent > 0)
+        {
+            <div class="pdp-sale-ribbon">
+                <strong>@product.DiscountPercent% OFF</strong>
+                <span>Ưu đãi trong hôm nay</span>
+            </div>
+        }
+        <h2>Chi tiết đơn hàng</h2>
+        @if (!isAdminViewer)
+        {
+            <div class="pdp-order-qty">
+                <strong>Số lượng</strong>
+                <div class="qty-selector quantity-stepper">
+                    <button type="button" id="qtyMinus" data-qty-minus aria-label="Giảm số lượng">−</button>
+                    <input id="qtyInput" type="number" value="1" min="1" max="@Math.Max(product.Stock, 1)" aria-label="Số lượng sản phẩm" />
+                    <button type="button" id="qtyPlus" data-qty-plus aria-label="Tăng số lượng">+</button>
+                </div>
+            </div>
+        }
+        <div class="pdp-order-lines">
+            <div><span>Mã sản phẩm</span><strong>@productCode</strong></div>
+            <div><span>Thương hiệu</span><strong>@displayBrand</strong></div>
+            <div><span>Tình trạng</span><strong class="@stockClass">@stockText</strong></div>
+            <div><span>Giá bán</span><strong>@displayPrice.ToString("N0") ₫</strong></div>
+            @if (promotionEnabled && product.DiscountPercent > 0)
+            {
+                <div><span>Giảm giá</span><strong>@product.DiscountPercent% (@discountAmount.ToString("N0") ₫)</strong></div>
+            }
+            <div><span>Vận chuyển</span><strong>Tính theo khu vực</strong></div>
+        </div>
+        @if (!isAdminViewer && SprintFeatures.IsEnabled(2) && Model.IsAuthenticated)
+        {
+            <div class="pdp-coupon-box">
+                <label for="pdpCouponInput">Mã giảm giá</label>
+                <div>
+                    <input id="pdpCouponInput" placeholder="WELCOME10" autocomplete="off" />
+                    <button class="pdp-coupon" type="button" data-save-detail-coupon>Áp dụng</button>
+                </div>
+                <small id="pdpCouponMessage">Mã hợp lệ sẽ được tự áp dụng ở checkout.</small>
+            </div>
+        }
+        else if (!isAdminViewer && SprintFeatures.IsEnabled(2))
+        {
+            <div class="pdp-coupon-box pdp-coupon-login">
+                <strong>Mã giảm giá</strong>
+                <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path">Đăng nhập để dùng mã</a>
+                <small>Mã giảm giá được kiểm tra và áp dụng khi checkout.</small>
+            </div>
+        }
+        @if (!isAdminViewer)
+        {
+            <div class="pdp-subtotal"><span>Tạm tính</span><strong id="pdpSubtotal">@displayPrice.ToString("N0") ₫</strong></div>
+            <button class="btn-primary pdp-buy" type="button" id="btnAddCart" data-detail-add-cart data-product-id="@product.Id" data-stock-disabled="@stockDisabled" @(product.Stock == 0 ? "disabled" : "")>
+                @(product.Stock == 0 ? "Hết hàng" : "Thêm vào giỏ")
+            </button>
+            <button class="btn-ghost pdp-checkout" type="button" id="btnBuyNow" data-detail-buy-now data-product-id="@product.Id" data-stock-disabled="@stockDisabled" @(product.Stock == 0 ? "disabled" : "")>Mua ngay</button>
+        }
+    </aside>
+</section>
+
+@if (SprintFeatures.IsEnabled(3) && Model.RecommendedProducts.Any())
+{
+    <section class="section reveal pdp-related-section">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">Gợi ý thông minh</span>
+                <h2>Có thể hợp với bạn</h2>
+            </div>
+        </div>
+        <div class="related-scroll compact-related related-products-grid">
+            @foreach (var item in Model.RecommendedProducts.Take(4))
+            {
+                <partial name="_ProductCard" model="item" />
+            }
+        </div>
+    </section>
+}
+
+<div class="spec-modal-backdrop" data-spec-modal hidden>
+    <section class="spec-modal-panel" role="dialog" aria-modal="true" aria-labelledby="specModalTitle" aria-describedby="specModalProduct">
+        <header class="spec-modal-head">
+            <div>
+                <span>Techvora Specs</span>
+                <h2 id="specModalTitle">Cấu hình chi tiết</h2>
+            </div>
+            <button class="spec-modal-close" type="button" data-spec-modal-close aria-label="Đóng">
+                <i data-lucide="x" aria-hidden="true"></i>
+            </button>
+        </header>
+        <div class="spec-modal-body">
+            <div class="spec-modal-product" id="specModalProduct">
+                <img src="@gallery.First()" alt="@product.Name" loading="lazy" decoding="async"
+                     onerror="this.onerror=null;this.src='/images/placeholder.svg';" />
+                <div>
+                    <span>@displayBrand</span>
+                    <strong>@product.Name</strong>
+                </div>
+            </div>
+            <div class="spec-table-title">
+                <i data-lucide="list-checks" aria-hidden="true"></i>
+                <span>Thông số kỹ thuật</span>
+            </div>
+            <table class="spec-table">
+                <tbody>
+                    @foreach (var spec in Model.TechnicalSpecs)
+                    {
+                        <tr>
+                            <th scope="row">@spec.Label</th>
+                            <td>@spec.Value</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+@functions {
+    private IHtmlContent RenderStars(double rating)
+    {
+        var rounded = Math.Round(rating * 2, MidpointRounding.AwayFromZero) / 2;
+        var builder = new HtmlContentBuilder();
+        builder.AppendHtml("<span class=\"star-meter\" aria-hidden=\"true\">");
+        for (var star = 1; star <= 5; star++)
+        {
+            var fill = Math.Clamp((rounded - (star - 1)) * 100, 0, 100);
+            builder.AppendHtml($"<span class=\"star-meter-star\" style=\"--fill:{fill}%\"><span>★</span></span>");
+        }
+        builder.AppendHtml("</span>");
+        return builder;
+    }
+
+    private static IReadOnlyList<string> BuildProductGallery(Product product)
+    {
+        var gallery = new List<string>();
+        AddGalleryImages(gallery, product.Images
+            .OrderBy(image => image.SortOrder)
+            .ThenBy(image => image.Id)
+            .Select(image => image.ImageUrl));
+        AddGalleryImage(gallery, product.PrimaryImageUrl);
+        AddGalleryImages(gallery, GetFallbackGallery(product));
+
+        if (gallery.Count == 0)
+        {
+            gallery.Add("/images/placeholder.svg");
+        }
+
+        return gallery.Take(6).ToList();
+    }
+
+    private static void AddGalleryImages(List<string> gallery, IEnumerable<string?> imageUrls)
+    {
+        foreach (var imageUrl in imageUrls)
+        {
+            AddGalleryImage(gallery, imageUrl);
+        }
+    }
+
+    private static void AddGalleryImage(List<string> gallery, string? imageUrl)
+    {
+        if (!string.IsNullOrWhiteSpace(imageUrl)
+            && !gallery.Contains(imageUrl.Trim(), StringComparer.OrdinalIgnoreCase))
+        {
+            gallery.Add(imageUrl.Trim());
+        }
+    }
+
+    private static IEnumerable<string> GetFallbackGallery(Product product)
+    {
+        return new[] { product.PrimaryImageUrl };
+    }
+}

@@ -1,0 +1,324 @@
+@model Order
+@{
+    ViewData["Title"] = $"Đơn hàng #DH{Model.Id:D4}";
+    var subtotal = Model.Items.Sum(item => item.Quantity * item.UnitPrice);
+    var shippingFee = Model.ShippingFee;
+    var discount = Model.DiscountAmount;
+    var currentStep = OrderStatusFilters.StepIndex(Model.Status);
+    var isAdminViewer = User.IsInRole("Admin");
+    var latestRequest = SprintFeatures.IsEnabled(2)
+        ? Model.ReturnWarrantyRequests.OrderByDescending(request => request.CreatedAt).FirstOrDefault()
+        : null;
+    var canCreateSupportRequest = !isAdminViewer && Model.Status == OrderStatuses.Delivered;
+    var shippingStatus = Model.ShippingInfo?.Status ?? string.Empty;
+    var hasShippingRoute = SprintFeatures.IsEnabled(2) && Model.ShippingInfo is not null &&
+        (!string.IsNullOrWhiteSpace(Model.ShippingInfo.TrackingCode) || Model.Status == OrderStatuses.Shipping || Model.Status == OrderStatuses.Delivered);
+    var actualShippingStage = shippingStatus switch
+    {
+        _ when Model.Status == OrderStatuses.Cancelled || shippingStatus == ShippingStatuses.Cancelled => "Đã huỷ",
+        _ when shippingStatus == ShippingStatuses.WaitingPickup => "Chờ lấy hàng",
+        _ when shippingStatus == ShippingStatuses.InTransit => "Đang giao",
+        _ when shippingStatus == ShippingStatuses.Delayed => "Chậm trễ",
+        _ when shippingStatus == ShippingStatuses.Returned => "Đang hoàn hàng",
+        _ when shippingStatus == ShippingStatuses.Delivered || Model.Status == OrderStatuses.Delivered => "Đã giao",
+        _ when Model.Status == OrderStatuses.Shipping => "Đang giao",
+        _ => "Đang cập nhật"
+    };
+    var routeProgress = ShippingRouteProgressCalculator.Calculate(Model, DateTime.UtcNow);
+    var isActuallyDelivered = Model.Status == OrderStatuses.Delivered || shippingStatus == ShippingStatuses.Delivered;
+    var isCancelled = Model.Status == OrderStatuses.Cancelled || shippingStatus == ShippingStatuses.Cancelled;
+    var userRouteMapClass = isActuallyDelivered
+        ? " is-complete"
+        : isCancelled
+            ? " is-cancelled"
+            : routeProgress.Percent >= 100
+                ? " is-estimated-arrival"
+                : routeProgress.Percent > 0
+                    ? " is-moving"
+                    : string.Empty;
+}
+
+<section class="order-detail-page">
+    <header class="order-detail-head">
+        <div>
+            <a class="orders-back" asp-action="History"><i data-lucide="arrow-left" aria-hidden="true"></i> Đơn hàng của tôi</a>
+            <h1>#DH@(Model.Id.ToString("D4"))</h1>
+            <p>Đặt lúc @Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+        </div>
+        <span class="order-status @StatusClass(Model.Status)">@OrderStatusFilters.ToDisplayLabel(Model.Status)</span>
+    </header>
+
+    <div class="order-detail-grid">
+        <main class="order-detail-main">
+            <section class="order-panel">
+                <div class="panel-title">
+                    <h2>Tiến trình đơn hàng</h2>
+                    <span>Cập nhật gần nhất @Model.UpdatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
+
+                @if (Model.Status == OrderStatuses.Cancelled)
+                {
+                    <div class="cancelled-timeline">
+                        <i data-lucide="circle-x" aria-hidden="true"></i>
+                        <div>
+                            <strong>Đơn hàng đã huỷ</strong>
+                            <span>@(string.IsNullOrWhiteSpace(Model.CancelledReason) ? "Đơn hàng không còn được xử lý." : Model.CancelledReason)</span>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <ol class="order-timeline">
+                        @foreach (var step in TimelineSteps())
+                        {
+                            var done = step.Index <= currentStep;
+                            <li class="@(done ? "done" : "")">
+                                <span><i data-lucide="@step.Icon" aria-hidden="true"></i></span>
+                                <div>
+                                    <strong>@step.Label</strong>
+                                    <small>@step.Description</small>
+                                </div>
+                            </li>
+                        }
+                    </ol>
+                }
+            </section>
+
+            @if (hasShippingRoute)
+            {
+                <section class="order-panel order-shipping-map-panel">
+                    <div class="panel-title order-route-title">
+                        <div>
+                            <h2>Theo dõi giao hàng</h2>
+                            <span>GHN: @actualShippingStage</span>
+                        </div>
+                        <button class="order-route-expand" type="button" data-order-route-expand aria-expanded="false">
+                            <i data-lucide="maximize-2" aria-hidden="true"></i>
+                            <span>Xem rõ hơn</span>
+                        </button>
+                    </div>
+                    <div class="order-route-map@(userRouteMapClass)" aria-label="Bản đồ mô phỏng giao hàng tại Việt Nam" style="--order-route-progress: @routeProgress.Percent%; --order-route-progress-num: @routeProgress.Percent;">
+                        <div class="order-route-canvas order-real-route-canvas">
+                            <div class="order-real-map"
+                                 data-order-real-map
+                                 data-route-progress="@routeProgress.Percent"
+                                 data-route-stage="@routeProgress.Stage"
+                                 data-route-tracking="@Model.ShippingInfo?.TrackingCode">
+                                <div class="order-map-loading">
+                                    <i data-lucide="map" aria-hidden="true"></i>
+                                    <span>Đang tải bản đồ...</span>
+                                </div>
+                            </div>
+                            <div class="order-map-status-card">
+                                <span><i data-lucide="route" aria-hidden="true"></i> Lộ trình mô phỏng</span>
+                                <strong>@routeProgress.Stage</strong>
+                            </div>
+                        </div>
+                        <div class="order-route-meta">
+                            <span><b></b>Mô phỏng theo 4 chặng thời gian</span>
+                            <strong>@routeProgress.Percent% · @routeProgress.Step/4 chặng</strong>
+                        </div>
+                        <div class="order-route-facts">
+                            @if (!string.IsNullOrWhiteSpace(Model.ShippingInfo?.TrackingCode))
+                            {
+                                <span>Mã vận đơn <strong>@Model.ShippingInfo.TrackingCode</strong></span>
+                            }
+                            @if (Model.ShippingInfo?.EstimatedDelivery is not null)
+                            {
+                                <span>Dự kiến giao <strong>@Model.ShippingInfo.EstimatedDelivery.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</strong></span>
+                            }
+                        </div>
+                        @if (routeProgress.IsOverdue && !isActuallyDelivered)
+                        {
+                            <div class="order-route-alert" role="status">
+                                <i data-lucide="triangle-alert" aria-hidden="true"></i>
+                                <span><strong>@routeProgress.OverdueLabel.</strong> Xe mô phỏng đã đến điểm cuối, GHN chưa xác nhận giao thành công.</span>
+                            </div>
+                        }
+                    </div>
+                </section>
+            }
+
+            <section class="order-panel">
+                <div class="panel-title">
+                    <h2>Sản phẩm</h2>
+                    <span>@Model.Items.Sum(item => item.Quantity) sản phẩm</span>
+                </div>
+                <div class="order-detail-items">
+                    @foreach (var item in Model.Items)
+                    {
+                        <article class="order-detail-item">
+                            @if (!string.IsNullOrWhiteSpace(item.Product?.PrimaryImageUrl))
+                            {
+                                <img src="@item.Product.PrimaryImageUrl" alt="@item.Product.Name" loading="lazy" decoding="async" />
+                            }
+                            else
+                            {
+                                <div class="order-item-fallback"><i data-lucide="cpu" aria-hidden="true"></i></div>
+                            }
+                            <div>
+                                <h3>@(item.Product?.Name ?? "Sản phẩm đã ngừng bán")</h3>
+                                <span>@item.UnitPrice.ToString("N0") đ x @item.Quantity</span>
+                            </div>
+                            <strong>@((item.UnitPrice * item.Quantity).ToString("N0")) đ</strong>
+                        </article>
+                    }
+                </div>
+            </section>
+        </main>
+
+        <aside class="order-detail-side">
+            <section class="order-panel">
+                <h2>Giao hàng</h2>
+                <dl class="order-info-list">
+                    <div><dt>Người nhận</dt><dd>@Model.RecipientName</dd></div>
+                    <div><dt>Số điện thoại</dt><dd>@Model.RecipientPhone</dd></div>
+                    <div><dt>Địa chỉ</dt><dd>@Model.ShippingAddress</dd></div>
+                    @if (SprintFeatures.IsEnabled(2))
+                    {
+                        <div><dt>Đơn vị vận chuyển</dt><dd>@(Model.ShippingInfo?.Carrier ?? "Chưa gán")</dd></div>
+                        <div><dt>Mã vận đơn</dt><dd>@(Model.ShippingInfo?.TrackingCode ?? "Chưa có")</dd></div>
+                        @if (!string.IsNullOrWhiteSpace(Model.ShippingInfo?.Status))
+                        {
+                            <div><dt>Trạng thái giao</dt><dd>@Model.ShippingInfo.Status</dd></div>
+                        }
+                        @if (Model.ShippingInfo?.EstimatedDelivery is not null)
+                        {
+                            <div><dt>Dự kiến giao</dt><dd>@Model.ShippingInfo.EstimatedDelivery.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd></div>
+                        }
+                    }
+                </dl>
+            </section>
+
+            <section class="order-panel">
+                <h2>Thanh toán</h2>
+                <dl class="order-info-list">
+                    <div><dt>Phương thức</dt><dd>@Model.PaymentMethod</dd></div>
+                    <div><dt>Trạng thái</dt><dd>@(Model.IsPaid ? "Đã thanh toán" : "Chưa thanh toán")</dd></div>
+                    @if (SprintFeatures.IsEnabled(2))
+                    {
+                        @if (!string.IsNullOrWhiteSpace(Model.VoucherCode))
+                        {
+                            <div><dt>Mã giảm giá</dt><dd>@Model.VoucherCode</dd></div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.VnpayTransactionId))
+                        {
+                            <div><dt>Mã giao dịch VNPAY</dt><dd>@Model.VnpayTransactionId</dd></div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.VnpayResponseCode))
+                        {
+                            <div><dt>Mã phản hồi VNPAY</dt><dd>@Model.VnpayResponseCode</dd></div>
+                        }
+                        @if (Model.PaidAt.HasValue)
+                        {
+                            <div><dt>Thanh toán lúc</dt><dd>@Model.PaidAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd></div>
+                        }
+                    }
+                </dl>
+            </section>
+
+            @if (SprintFeatures.IsEnabled(2))
+            {
+                <section class="order-panel">
+                    <h2>Hỗ trợ sau mua</h2>
+                    @if (latestRequest is not null)
+                    {
+                        <div class="support-summary">
+                            <span class="support-pill">@latestRequest.Status</span>
+                            <strong>@latestRequest.Type #@latestRequest.Id</strong>
+                            <small>Gửi lúc @latestRequest.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small>
+                            <a asp-controller="ReturnWarranty" asp-action="Details" asp-route-id="@latestRequest.Id">Xem yêu cầu</a>
+                        </div>
+                    }
+                    else if (canCreateSupportRequest)
+                    {
+                        <p class="support-copy">Đơn đã giao. Bạn có thể gửi yêu cầu đổi trả hoặc bảo hành cho từng sản phẩm trong đơn.</p>
+                        <a class="btn-ghost support-action" asp-controller="ReturnWarranty" asp-action="Create" asp-route-orderId="@Model.Id">
+                            <i data-lucide="shield-check" aria-hidden="true"></i>
+                            Yêu cầu đổi trả / bảo hành
+                        </a>
+                    }
+                    else
+                    {
+                        <p class="support-copy">Yêu cầu đổi trả hoặc bảo hành sẽ mở sau khi đơn hàng giao thành công.</p>
+                    }
+                </section>
+            }
+
+            <section class="order-panel">
+                <h2>Tổng kết</h2>
+                <dl class="order-price-list">
+                    <div><dt>Tạm tính</dt><dd>@subtotal.ToString("N0") đ</dd></div>
+                    <div><dt>Phí vận chuyển</dt><dd>@shippingFee.ToString("N0") đ</dd></div>
+                    @if (discount > 0)
+                    {
+                        <div><dt>Giảm giá@(string.IsNullOrWhiteSpace(Model.VoucherCode) ? "" : $" ({Model.VoucherCode})")</dt><dd>-@discount.ToString("N0") đ</dd></div>
+                    }
+                    <div class="grand-total"><dt>Tổng tiền</dt><dd>@Model.TotalAmount.ToString("N0") đ</dd></div>
+                </dl>
+
+                @if (SprintFeatures.IsEnabled(2))
+                {
+                    <div class="order-detail-actions">
+                        @if (isAdminViewer)
+                        {
+                            <div class="admin-view-note">
+                                <strong>Chế độ xem admin</strong>
+                                <span>Admin chỉ kiểm tra đơn, không mua lại hoặc thanh toán.</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <form asp-action="Reorder" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <button class="btn-primary" type="submit">Mua lại</button>
+                            </form>
+                        }
+                        @if (EcommerceApp.Services.OrderLifecycle.IsUnpaidVnpay(Model) && Model.Status is OrderStatuses.AwaitingPayment or OrderStatuses.Pending)
+                        {
+                            <p>Hạn thanh toán: @EcommerceApp.Services.OrderLifecycle.PaymentDeadline(Model).AddHours(7).ToString("dd/MM/yyyy HH:mm") (giờ Việt Nam). Hết hạn, đơn sẽ tự huỷ và hàng được trả về kho.</p>
+                        }
+                        @if (!isAdminViewer && string.Equals(Model.PaymentMethod, "VNPAY", StringComparison.OrdinalIgnoreCase) && !Model.IsPaid && (Model.Status == OrderStatuses.AwaitingPayment || Model.Status == OrderStatuses.Pending) && !EcommerceApp.Services.OrderLifecycle.IsPaymentExpired(Model, DateTime.UtcNow))
+                        {
+                            <form asp-controller="Payment" asp-action="VnpayCreate" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="orderId" value="@Model.Id" />
+                                <button class="btn-primary" type="submit">Thanh toán lại VNPAY</button>
+                            </form>
+                        }
+                        @if (Model.Status == OrderStatuses.AwaitingPayment || Model.Status == OrderStatuses.Pending)
+                        {
+                            <form asp-action="Cancel" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <button class="btn-ghost danger" type="submit" onclick="return confirm('Huỷ đơn hàng #DH@(Model.Id.ToString("D4"))?')">Huỷ đơn</button>
+                            </form>
+                        }
+                    </div>
+                }
+            </section>
+        </aside>
+    </div>
+</section>
+
+@functions {
+    private static string StatusClass(string status)
+    {
+        if (status == OrderStatuses.AwaitingPayment) return "pending";
+        if (status == OrderStatuses.Pending) return "pending";
+        if (status == OrderStatuses.Confirmed) return "processing";
+        if (status == OrderStatuses.Shipping) return "shipping";
+        if (status == OrderStatuses.Delivered) return "completed";
+        if (status == OrderStatuses.Cancelled) return "cancelled";
+        return "pending";
+    }
+
+    private static IEnumerable<(int Index, string Label, string Description, string Icon)> TimelineSteps()
+    {
+        yield return (0, "Chờ xác nhận", "Techvora đã nhận đơn và đang kiểm tra thông tin.", "clipboard-check");
+        yield return (1, "Đang xử lý", "Đơn được xác nhận, linh kiện đang được chuẩn bị.", "settings");
+        yield return (2, "Đang giao", "Đơn đã bàn giao cho vận chuyển.", "truck");
+        yield return (3, "Hoàn thành", "Đơn đã giao thành công.", "badge-check");
+    }
+}

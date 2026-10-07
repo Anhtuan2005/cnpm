@@ -1,7 +1,7 @@
 # Build
 bin/
 obj/
-App_Data/DataProtectionKeys/
+**/App_Data/DataProtectionKeys/
 
 .vs/
 *.user
@@ -13,7 +13,7 @@ logs/
 TestResults/
 artifacts/
 node_modules/
-wwwroot/uploads/
+**/wwwroot/uploads/
 .env
 
 # ASP.NET secrets
@@ -30,10 +30,8 @@ appsettings.Development.json
 .codex-*/
 outputs/
 
-# Internal development and QA tooling
+# Local development and QA tooling
 .github/
-ClientAssets/
-scripts/
 tests/
 docs/*.md
 docs/adr/
@@ -47,14 +45,6 @@ docs/adr/
 !tests/
 tests/*
 !tests/EcommerceApp.Tests/
-
-# Optional container and frontend toolchain
-.dockerignore
-Dockerfile
-compose*.yml
-package.json
-package-lock.json
-playwright.config.*
 
 # Internal product notes
 PRODUCT.md
