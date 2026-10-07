@@ -6,7 +6,7 @@ Ngày lập: 07/10/2026 · Trạng thái: đã triển khai trên branch và m�
 | --- | --- |
 | Mã thay đổi | CR-01 |
 | Mô tả | Bổ sung dữ liệu test có đầu vào hợp lệ, không hợp lệ và giá trị biên cho biểu mẫu đăng ký; thêm bài kiểm thử tự động đọc chính dữ liệu này để kiểm tra quy tắc validation hiện hành. |
-| Người đề xuất | Codex trong quá trình thực hiện bài Lab 3 theo yêu cầu của chủ repository; nhóm cần xác nhận người đề xuất chính thức. |
+| Người đề xuất | Chưa xác nhận người đề xuất chính thức trong nhóm. |
 | Mức ưu tiên | Medium |
 | CI bị ảnh hưởng | CI-06 (test và test data), CI-07 (hồ sơ thay đổi), CI-05 (cấu hình test project). |
 | Tiến độ | Thấp: dữ liệu và bài test độc lập, không cần sửa schema hoặc luồng mua hàng. |

@@ -12,6 +12,8 @@
 
 ## Minh chứng và việc cần xác nhận
 
-Branch `codex/lab3-scm-registration-tests` chứa thay đổi của Lab 3; [PR #1](https://github.com/Anhtuan2005/cnpm/pull/1) đang mở để nhóm review. Review, kết quả merge và đóng góp của từng thành viên chỉ được ghi nhận sau khi các thao tác đó thực sự có trên GitHub. Chưa xác định được lớp và danh sách thành viên Nhóm 3 từ tài liệu được cung cấp.
+Branch `codex/lab3-scm-registration-tests` chứa thay đổi của Lab 3; [PR #1](https://github.com/Anhtuan2005/cnpm/pull/1) đang mở để nhóm review. Review, kết quả merge và đóng góp của từng thành viên chỉ được ghi nhận sau khi các thao tác đó thực sự có trên GitHub. Chưa xác định được lớp của Nhóm 3 từ tài liệu được cung cấp.
+
+Theo sheet `Team` trong `T4_B3_Nhom3.xlsx`, Nhóm 3 gồm Nguyễn Trương Anh Tuấn (Dev / Product Owner), Trần Tấn Phát (Dev / Scrum Master), Trương Đức Phú (Dev / Scrum Master) và Bùi Phạm Phong Phú (Dev / Leader). File này ghi tài khoản `Dev1`–`Dev4`, chưa ghi tài khoản GitHub hoặc minh chứng branch/commit của từng người.
 
 Repository này chưa chứa tài liệu Tuần 1–2 ở dạng riêng để chuyển vào `docs/requirements` hoặc `docs/design`. Danh sách collaborator hiện chỉ có `Anhtuan2005` (admin) tại thời điểm kiểm tra. Nhóm cần bổ sung các tài liệu gốc nếu có và mời đúng các thành viên khác vào repository.

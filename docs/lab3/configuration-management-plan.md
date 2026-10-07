@@ -29,7 +29,7 @@ Giữ nguyên cấu trúc ASP.NET Core MVC hiện có: `Controllers/`, `Services
 
 ## Branch, commit và review
 
-1. Tạo branch từ `main` cho từng phần việc. Tên gợi ý: `feature/<muc-tieu>`, `fix/<loi>`, `docs/<noi-dung>`; công việc do Codex thực hiện dùng `codex/<muc-tieu>`.
+1. Tạo branch từ `main` cho từng phần việc. Đặt tên theo mục đích thay đổi, ví dụ `feature/<muc-tieu>`, `fix/<loi>`, `docs/<noi-dung>`.
 2. Mỗi commit chứa một thay đổi có mục đích rõ, theo mẫu `type: mô tả cụ thể` (`feat`, `fix`, `test`, `docs`, `chore`). Ví dụ: `test: cover registration validation boundaries`. Tránh `update`, `fix`, `final`, `abc` đứng một mình.
 3. Mở PR với mục tiêu, CI bị ảnh hưởng, cách kiểm thử, ảnh minh chứng khi thay đổi giao diện và liên kết Change Request nếu có.
 4. Người khác tác giả đọc diff, kiểm tra tác động và kết quả test trước khi approve. Sau review và checks đạt, người có quyền merge vào `main`. Chưa thiết lập hoặc xác nhận được branch protection tự động trên repository; đây là quy trình nhóm cần thực hiện.
