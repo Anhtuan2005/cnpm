@@ -12,7 +12,7 @@ Ngày lập: 07/10/2026 · Trạng thái: đã triển khai trên branch và m�
 | Tiến độ | Thấp: dữ liệu và bài test độc lập, không cần sửa schema hoặc luồng mua hàng. |
 | Chi phí | Không phát sinh dịch vụ ngoài; chỉ cần thời gian review và chạy test. |
 | Chất lượng | Tăng khả năng phát hiện hồi quy ở các ranh giới email, số điện thoại và mật khẩu; bài test chỉ kiểm tra model validation, chưa kiểm thử đăng ký với database thật. |
-| Quyết định | Chọn triển khai để mở PR; quyết định chấp thuận và merge chính thức thuộc về reviewer/nhóm. |
+| Quyết định | Approve cho việc triển khai trên branch theo yêu cầu của chủ repository; việc merge vẫn chờ reviewer/nhóm chấp thuận. |
 | Branch | `codex/lab3-scm-registration-tests` |
 
 ## Tiêu chí chấp nhận
