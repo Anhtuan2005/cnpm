@@ -7,18 +7,18 @@ Phiên bản kế hoạch: `v1.0.0` · Ngày lập: 07/10/2026 · Phạm vi: rep
 | Mã | CI | Vị trí hiện tại | Vai trò phụ trách | Kiểm soát phiên bản |
 | --- | --- | --- | --- | --- |
 | CI-01 | Yêu cầu và mô tả sản phẩm | `README.md`; tài liệu mới tại `docs/requirements/` khi có | BA / chủ sản phẩm | Git; sửa qua PR; gắn tag phát hành |
-| CI-02 | Thiết kế giao diện và ảnh minh chứng | `Views/`, `wwwroot/`, `docs/screenshots/`; thiết kế mới tại `docs/design/` | UI/UX và frontend | Git; review ảnh và giao diện khi đổi |
-| CI-03 | Mã nguồn backend | `Controllers/`, `Services/`, `Models/` | Backend | Branch riêng, commit và PR |
-| CI-04 | Lược đồ và dữ liệu demo | `Data/AppDbContext.cs`, `Data/Migrations/`, `Data/SeedData.cs` | Backend / database | Migration bất biến sau khi đã chia sẻ; PR kèm kiểm thử |
-| CI-05 | Cấu hình ứng dụng và build | `appsettings.json`, `EcommerceApp.csproj`, `.github/workflows/` | Backend / DevOps | Git; secret lưu ngoài repository; review thay đổi cấu hình |
-| CI-06 | Ca kiểm thử và dữ liệu kiểm thử | `tests/EcommerceApp.Tests/`, `evidence/lab3/` | Tester / developer | Git; dữ liệu có kết quả mong đợi; chạy test trong PR |
-| CI-07 | Tài liệu hướng dẫn và hồ sơ thay đổi | `README.md`, `docs/lab3/`, `evidence/` | BA / người thực hiện thay đổi | Git; cập nhật cùng PR liên quan |
+| CI-02 | Thiết kế giao diện và ảnh minh chứng | `src/frontend/`, `src/backend/Views/`, `docs/design/` | UI/UX và frontend | Git; review ảnh và giao diện khi đổi |
+| CI-03 | Mã nguồn backend | `src/backend/Controllers/`, `src/backend/Services/`, `src/backend/Models/` | Backend | Branch riêng, commit và PR |
+| CI-04 | Lược đồ và dữ liệu demo | `src/backend/Data/AppDbContext.cs`, `database/schema/`, `database/seed/` | Backend / database | Migration bất biến sau khi đã chia sẻ; PR kèm kiểm thử |
+| CI-05 | Cấu hình ứng dụng và build | `src/backend/appsettings.json`, `src/backend/EcommerceApp.csproj`, `.github/workflows/` | Backend / DevOps | Git; secret lưu ngoài repository; review thay đổi cấu hình |
+| CI-06 | Ca kiểm thử và dữ liệu kiểm thử | `test/test-cases/`, `test/test-data/` | Tester / developer | Git; dữ liệu có kết quả mong đợi; chạy test trong PR |
+| CI-07 | Tài liệu hướng dẫn và hồ sơ thay đổi | `README.md`, `docs/user-guide/`, `docs/lab3/` | BA / người thực hiện thay đổi | Git; cập nhật cùng PR liên quan |
 
 Tên trong cột phụ trách là **vai trò dự kiến**, chưa thay thế danh sách thành viên thật của Nhóm 3.
 
 ## Cấu trúc lưu trữ
 
-Giữ nguyên cấu trúc ASP.NET Core MVC hiện có: `Controllers/`, `Services/`, `Models/`, `Views/`, `Data/`, `wwwroot/`. Test tự động đặt tại `tests/EcommerceApp.Tests/`; dữ liệu và kết quả có thể tái sử dụng đặt tại `evidence/`. Hồ sơ quản lý cấu hình đặt tại `docs/lab3/`. Nếu có tài liệu Tuần 1–2, đặt yêu cầu vào `docs/requirements/` và thiết kế vào `docs/design/`; không tạo bản sao giả khi chưa có tài liệu gốc.
+Repository phân nhóm theo `docs/`, `src/`, `database/` và `test/` như mô tả trong README gốc. Razor Views và `wwwroot` nằm trong project ASP.NET Core tại `src/backend/` để framework biên dịch và phục vụ asset; nguồn CSS/JavaScript nằm tại `src/frontend/`. Migrations và seed nằm ở `database/` và được project backend tham chiếu khi build. Hồ sơ Lab 3 đặt tại `docs/lab3/`. Nếu có tài liệu Tuần 1–2, đặt yêu cầu gốc vào `docs/requirements/` và thiết kế gốc vào `docs/design/`.
 
 ## Quy tắc file và phiên bản
 

@@ -17,14 +17,14 @@ Ngày lập: 07/10/2026 · Trạng thái: đã triển khai trên branch và m�
 
 ## Tiêu chí chấp nhận
 
-1. Có ít nhất ba mẫu hợp lệ và ba mẫu không hợp lệ hoặc biên trong `evidence/lab3/registration_test_data.json`.
+1. Có ít nhất ba mẫu hợp lệ và ba mẫu không hợp lệ hoặc biên trong `test/test-data/registration_test_data.json`.
 2. Bài test đọc file dữ liệu, kiểm tra `RegisterViewModel` bằng `Validator.TryValidateObject` và xác nhận trường có lỗi.
 3. Test chạy độc lập, không cần SQL Server hoặc tài khoản ngoài.
 4. PR có review của người khác tác giả trước khi merge.
 
 ## Minh chứng
 
-- Dữ liệu: [`registration_test_data.json`](../../evidence/lab3/registration_test_data.json)
-- Mã test: [`RegistrationValidationDataTests.cs`](../../tests/EcommerceApp.Tests/RegistrationValidationDataTests.cs)
-- Kết quả local: `dotnet test tests/EcommerceApp.Tests/EcommerceApp.Tests.csproj --filter FullyQualifiedName~RegistrationValidationDataTests --no-restore --verbosity minimal` đạt **6/6** ngày 07/10/2026.
+- Dữ liệu: [`registration_test_data.json`](../../test/test-data/registration_test_data.json)
+- Mã test: [`RegistrationValidationDataTests.cs`](../../test/test-cases/EcommerceApp.Tests/RegistrationValidationDataTests.cs)
+- Kết quả local: `dotnet test test/test-cases/EcommerceApp.Tests/EcommerceApp.Tests.csproj --filter FullyQualifiedName~RegistrationValidationDataTests --no-restore --verbosity minimal` đạt **6/6** ngày 07/10/2026.
 - Commit bộ dữ liệu và bài test: `ae26805` (`test: cover registration validation with lab data`). PR: [#1](https://github.com/Anhtuan2005/cnpm/pull/1). Chưa có review hoặc merge tại thời điểm lập hồ sơ.

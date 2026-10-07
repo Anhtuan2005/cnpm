@@ -1,0 +1,57 @@
+﻿@model Order
+@{
+    ViewData["Title"] = "Xác nhận đơn hàng";
+    var statusClass = Model.Status switch
+    {
+        OrderStatuses.Confirmed => "processing",
+        OrderStatuses.Shipping => "shipping",
+        OrderStatuses.Delivered => "completed",
+        OrderStatuses.Cancelled => "cancelled",
+        _ => "pending"
+    };
+    var paymentLabel = string.Equals(Model.PaymentMethod, "COD", StringComparison.OrdinalIgnoreCase)
+        ? "COD, thanh toán khi nhận hàng"
+        : Model.IsPaid ? "Đã thanh toán" : "Chưa thanh toán";
+}
+
+<section class="order-confirmation-page">
+    <div class="order-confirmation-icon" aria-hidden="true">
+        <i data-lucide="check" aria-hidden="true"></i>
+    </div>
+    <span class="eyebrow">Đặt hàng thành công</span>
+    <h1>Techvora đã nhận đơn hàng</h1>
+    <p>Đơn <strong>#DH@(Model.Id.ToString("D4"))</strong> đã được tạo. Bạn có thể xem trạng thái bất cứ lúc nào trong mục Đơn hàng.</p>
+
+    <dl class="order-confirmation-summary">
+        <div>
+            <dt>Mã đơn hàng</dt>
+            <dd>#DH@(Model.Id.ToString("D4"))</dd>
+        </div>
+        <div>
+            <dt>Trạng thái đơn</dt>
+            <dd><span class="order-status @statusClass">@OrderStatusFilters.ToDisplayLabel(Model.Status)</span></dd>
+        </div>
+        <div>
+            <dt>Thanh toán</dt>
+            <dd>@paymentLabel</dd>
+        </div>
+        <div>
+            <dt>Tổng thanh toán</dt>
+            <dd>@Model.TotalAmount.ToString("N0") ₫</dd>
+        </div>
+    </dl>
+
+    <p class="order-confirmation-note">
+        <i data-lucide="info" aria-hidden="true"></i>
+        Trạng thái hiện tại là <strong>@OrderStatusFilters.ToDisplayLabel(Model.Status)</strong>. Mở chi tiết đơn để xem tiến trình đầy đủ.
+    </p>
+
+    <div class="order-confirmation-actions">
+        <a class="btn-primary" asp-action="Detail" asp-route-id="@Model.Id">
+            Xem chi tiết đơn
+            <i data-lucide="arrow-right" aria-hidden="true"></i>
+        </a>
+        <a class="btn-ghost" asp-action="History">Xem tất cả đơn hàng</a>
+    </div>
+</section>
+

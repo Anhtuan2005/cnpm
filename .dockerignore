@@ -1,0 +1,14 @@
+bin
+obj
+**/bin
+**/obj
+**/node_modules
+.git
+**/App_Data
+**/logs
+artifacts
+TestResults
+appsettings.Development.json
+.env
+docs/design/screenshots
+**/wwwroot/uploads
