@@ -29,8 +29,8 @@ Bản chạy mặc định hiển thị phạm vi **Sprint 2**; các route thu�
 Yêu cầu: **.NET SDK 8+** và **SQL Server** có quyền tạo database. Không cần cài Node.js hoặc Docker để chạy ứng dụng.
 
 ```powershell
-git clone https://github.com/Anhtuan2005/E-Lectrical--Commerce-.git
-cd E-Lectrical--Commerce-
+git clone https://github.com/Anhtuan2005/cnpm.git
+cd cnpm
 dotnet restore EcommerceApp.sln
 dotnet tool restore
 
@@ -102,5 +102,3 @@ Email được tắt khi chưa cung cấp thông tin xác thực, nên không b�
 
 Các route thuộc Sprint 3 trở lên trả `404`; menu và tiến trình nền tương ứng không hoạt động. Xác thực, phân quyền, chống CSRF và rate limit nền tảng vẫn được giữ để ứng dụng an toàn.
 # TechvoraLab
-
-> *Đã cập nhật kiểm tra đồng bộ kho lưu trữ GitHub qua Pull Request.*
