@@ -1,6 +1,6 @@
 # Backend test evidence
 
-Sau khi sắp xếp lại repo ngày 07/10/2026, lệnh `dotnet test test/test-cases/EcommerceApp.Tests/EcommerceApp.Tests.csproj --configuration Debug --no-restore --verbosity minimal` đạt **110/110** test backend trên máy local. `dotnet build EcommerceApp.sln` và `npm run check:assets` trong `src/frontend/` cũng thành công. Ứng dụng trả HTTP 200 cho `/Home/Privacy` và `/css/site.css`.
+Ngày 14/10/2026, lệnh `dotnet test test/test-cases/EcommerceApp.Tests/EcommerceApp.Tests.csproj --configuration Debug --no-restore --verbosity minimal` đạt **110/110** test backend trên máy local. Sau khi sắp xếp lại repo ngày 07/10/2026, `dotnet build EcommerceApp.sln` và `npm run check:assets` trong `src/frontend/` cũng thành công; ứng dụng trả HTTP 200 cho `/Home/Privacy` và `/css/site.css` ở lần kiểm tra đó.
 
 Kiểm tra local ngày 03/10/2026 trên Windows, test target `net8.0` và SQL Server local. Đây là kết quả của mã nguồn tại máy ở thời điểm chạy, không thay thế kết quả CI sau khi publish.
 
@@ -24,10 +24,10 @@ Trên bản clone mới, bỏ `--no-restore` để `dotnet test` tự khôi ph�
 
 [Workflow CI](../../.github/workflows/portfolio-tests.yml) chạy lại project test với SQL Server 2022 và lưu file TRX. Mốc **104/104** ở trên là lần chạy local, không phải kết quả CI đã publish.
 
-Smoke test trình duyệt chạy trên Microsoft Edge với ứng dụng Sprint 2 tại `http://localhost:5009`:
+Smoke test trình duyệt chạy trên Microsoft Edge với ứng dụng Sprint 2 tại `http://localhost:5009` và database demo riêng `TechvoraLab4Demo_20261014` ngày 14/10/2026:
 
-Từ `src/frontend/`, chạy `npm run test:smoke` sau khi ứng dụng demo đã khởi động. Lần chạy 22/22 bên dưới là kết quả trước khi sắp xếp lại repo; sau khi di chuyển, Playwright đã liệt kê được đầy đủ 22 ca kiểm thử ở đường dẫn mới.
+Từ `src/frontend/`, chạy `npm run test:smoke` sau khi ứng dụng demo đã khởi động. Kết quả mới sau khi sắp xếp lại repo:
 
 ```text
-22 passed (1.0m)
+22 passed (1.4m)
 ```
