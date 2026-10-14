@@ -1,5 +1,9 @@
 # Techvora
 
+**Theo dõi tiến độ:** [Mở bảng GitHub Project](https://github.com/users/Anhtuan2005/projects/1) · [Milestone Sprint 1](https://github.com/Anhtuan2005/cnpm/milestone/1) · [Sprint 2](https://github.com/Anhtuan2005/cnpm/milestone/2) · [Sprint 3](https://github.com/Anhtuan2005/cnpm/milestone/3).
+
+Project có **10 User Story đã làm**, **12 đang hoàn thiện** và **8 dự kiến**. Bảng cho biết trạng thái theo Sprint Backlog; danh sách chức năng bên dưới cho biết chức năng nào có trong bản chạy mặc định.
+
 **Cửa hàng điện thoại từ lúc chọn máy đến khi theo dõi đơn hàng.** Khách có thể so sánh sản phẩm, đặt mua và gửi yêu cầu hậu mãi; nhân viên quản lý danh mục, tồn kho và đơn hàng trên cùng một hệ thống.
 
 `ASP.NET Core 8 MVC` · `EF Core 8` · `SQL Server` · `Razor` · `JavaScript`
