@@ -57,6 +57,19 @@ Vai trò dưới đây là trách nhiệm trong nhóm, theo [hồ sơ Lab 3](doc
 | Trương Đức Phú | [@PhuTruong259](https://github.com/PhuTruong259) | Dev / Scrum Master |
 | Bùi Phạm Phong Phú | [@572bpphu](https://github.com/572bpphu) | Dev / Leader |
 
+## Nhóm 3
+
+Theo danh sách trong `T4_B3_Nhom3.xlsx`:
+
+| Thành viên | Vai trò |
+| --- | --- |
+| Nguyễn Trương Anh Tuấn | Dev / Product Owner |
+| Trần Tấn Phát | Dev / Scrum Master |
+| Trương Đức Phú | Dev / Scrum Master |
+| Bùi Phạm Phong Phú | Dev / Leader |
+
+[Hồ sơ quản lý cấu hình Lab 3](docs/lab3/README.md) ghi danh sách CI, quy tắc thay đổi, CR-01 và dữ liệu kiểm thử.
+
 ## Công nghệ
 
 - ASP.NET Core 8 MVC và Razor Views
