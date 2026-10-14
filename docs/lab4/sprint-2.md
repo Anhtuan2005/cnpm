@@ -27,6 +27,8 @@ Bảng dưới đây giữ nguyên 12 User Story Sprint 2 mà nhóm gửi. `AC` 
 
 **Phạm vi báo cáo nên chọn sau khi nhóm chốt:** không nhận mặc định cả 12 story là đã nghiệm thu. Trước 21/10, chọn số story phù hợp năng lực nhóm, ước lượng và phân công; những story chưa được kiểm tra đủ Acceptance Criteria giữ trạng thái `In progress` hoặc `To do`. Có thể dùng US-04, US-15, US-13 và US-01 làm bốn luồng minh họa đầu tiên trong phiếu, rồi mở rộng khi nhóm xác nhận.
 
+Bốn luồng minh họa đã có Issue chờ nhóm chốt: [US-04 #7](https://github.com/Anhtuan2005/cnpm/issues/7), [US-15 #8](https://github.com/Anhtuan2005/cnpm/issues/8), [US-13 #9](https://github.com/Anhtuan2005/cnpm/issues/9), [US-01 #10](https://github.com/Anhtuan2005/cnpm/issues/10). Tám story còn lại trong bảng chưa có Issue riêng; không coi bốn Issue mới là bằng chứng công việc đã thực hiện trong quá khứ.
+
 ## Tích hợp với Sprint 1
 
 - `SprintScopeTests` kiểm tra route Sprint 1 vẫn mở khi Sprint 2 hoạt động, route Sprint 2 được mở và Sprint 3 trở lên vẫn bị khóa.
@@ -61,9 +63,9 @@ Bảng dưới đây giữ nguyên 12 User Story Sprint 2 mà nhóm gửi. `AC` 
 | Nội dung | Trạng thái có bằng chứng |
 | --- | --- |
 | Mã Sprint 2 | Có trong repository; các route được mở khi `Release:ActiveSprint=2` theo `Program.cs` và `SprintFeatures.cs`. |
-| Branch/commit theo từng story | Chưa có chuỗi Issue → branch → commit → PR chứng minh cho 12 story. |
-| PR và review | [PR #1](https://github.com/Anhtuan2005/cnpm/pull/1), [#4](https://github.com/Anhtuan2005/cnpm/pull/4), [#5](https://github.com/Anhtuan2005/cnpm/pull/5) đã merge; API chưa ghi nhận review. [#2](https://github.com/Anhtuan2005/cnpm/pull/2), [#3](https://github.com/Anhtuan2005/cnpm/pull/3) đang mở. |
-| GitHub Issues/Project | Chưa có Issue riêng cho Sprint 2 trong repository tại ngày 14/10/2026. |
+| Branch/commit theo từng story | Có bốn Issue nháp nhưng chưa có chuỗi Issue → branch → commit → PR chứng minh cho từng story. |
+| PR và review | [PR #6](https://github.com/Anhtuan2005/cnpm/pull/6) chứa hồ sơ Lab 4 và đang mở, chờ thành viên khác review. [PR #1](https://github.com/Anhtuan2005/cnpm/pull/1), [#4](https://github.com/Anhtuan2005/cnpm/pull/4), [#5](https://github.com/Anhtuan2005/cnpm/pull/5) đã merge nhưng API chưa ghi nhận review; [#2](https://github.com/Anhtuan2005/cnpm/pull/2), [#3](https://github.com/Anhtuan2005/cnpm/pull/3) cũng đang mở. |
+| GitHub Issues/Project | [#7](https://github.com/Anhtuan2005/cnpm/issues/7)–[#10](https://github.com/Anhtuan2005/cnpm/issues/10) mới được tạo cho bốn luồng minh họa; chưa có Project board hoặc Issue cho tám story còn lại. |
 
 ## Sprint Review và Retrospective để nhóm xác nhận
 
