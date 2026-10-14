@@ -6,6 +6,7 @@ Hồ sơ này dùng cho hai phiếu LAB 4.1 và LAB 4.2 của dự án Techvora.
 | --- | --- |
 | Phiếu LAB 4.1 đã điền | [LAB4.1-Techvora.docx](LAB4.1-Techvora.docx) |
 | Phiếu LAB 4.2 đã điền | [LAB4.2-Techvora.docx](LAB4.2-Techvora.docx) |
+| Bảng trạng thái theo từng User Story, kiểu GitHub Projects | [Sprint 1–3 và việc quản lý còn thiếu](progress-board.md) |
 | Backlog, Acceptance Criteria và phân công | [Sprint 1](sprint-1.md#sprint-backlog) · [Sprint 2](sprint-2.md#sprint-backlog) |
 | Test report, lỗi và kiểm thử hồi quy | [Sprint 1](sprint-1.md#kiểm-thử-và-lỗi) · [Sprint 2](sprint-2.md#kiểm-thử-và-lỗi) |
 | Kết quả chạy test mới | [110 backend và 22 browser smoke](test-run-2026-10-14.md) |
