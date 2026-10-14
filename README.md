@@ -4,22 +4,31 @@
 
 `ASP.NET Core 8 MVC` · `EF Core 8` · `SQL Server` · `Razor` · `JavaScript`
 
-**Khám phá dự án:** [Chạy demo local](#demo-local) · [Kiến trúc](docs/design/architecture.md) · [Kịch bản demo](docs/user-guide/demo.md) · [Bằng chứng kiểm thử](docs/user-guide/backend-tests.md)
+**Khám phá dự án:** [Tiến độ chức năng](#tiến-độ-chức-năng) · [Chạy demo local](#demo-local) · [Kiến trúc](docs/design/architecture.md) · [Kịch bản demo](docs/user-guide/demo.md) · [Bằng chứng kiểm thử](docs/user-guide/backend-tests.md)
 
 | Trang chủ cửa hàng | Quản trị sản phẩm |
 | :---: | :---: |
 | ![Trang chủ Techvora với dữ liệu demo](docs/design/screenshots/home.png) | ![Trang quản trị sản phẩm Techvora với dữ liệu demo](docs/design/screenshots/admin.png) |
 
-## Chức năng nổi bật
+## Tiến độ chức năng
 
-| Luồng | Chức năng |
-| --- | --- |
-| Mua sắm | Tìm kiếm, lọc/sắp xếp, phân trang, so sánh giá/thông số, wishlist và giỏ hàng |
-| Đặt hàng | Checkout theo địa chỉ, voucher, COD/VNPAY, hủy đơn và mua lại |
-| Hậu mãi | Theo dõi giao hàng, thông báo, review kèm ảnh và yêu cầu đổi trả/bảo hành |
-| Quản trị | Dashboard, catalog, tồn kho, đơn hàng, hoàn tiền, hóa đơn/CSV, GHN và duyệt review |
+Trạng thái dưới đây tính theo bản chạy mặc định **Sprint 2** (`Release:ActiveSprint=2`). Có mã nguồn trong repository chưa đồng nghĩa với việc chức năng đã được phát hành cho người dùng.
 
-Bản chạy mặc định hiển thị phạm vi **Sprint 2**; các route thuộc Sprint 3 trở lên vẫn bị chặn.
+### Đã làm — sử dụng được trong bản mặc định
+
+- [x] **Khám phá sản phẩm:** trang chủ, danh mục điện thoại, tìm kiếm, lọc, sắp xếp, phân trang, chi tiết và so sánh sản phẩm.
+- [x] **Tài khoản và mua sắm:** đăng ký, đăng nhập, hồ sơ, danh sách yêu thích, giỏ hàng khách/giỏ hàng tài khoản và mua ngay.
+- [x] **Đặt hàng:** địa chỉ và phí giao hàng, voucher, COD, luồng VNPAY, xác nhận đơn, lịch sử, hủy đơn và mua lại. VNPAY cần cấu hình sandbox để thử thanh toán ngoài hệ thống.
+- [x] **Hậu mãi:** theo dõi giao hàng, thông báo, đánh giá kèm ảnh và gửi yêu cầu đổi trả/bảo hành.
+- [x] **Quản trị:** quản lý danh mục, sản phẩm, banner, tồn kho và đơn hàng; dashboard, xử lý hoàn tiền, hóa đơn/CSV, tích hợp GHN và duyệt đánh giá. GHN cần thông tin sandbox để gọi dịch vụ ngoài.
+
+### Chưa phát hành — dự kiến làm tiếp
+
+- [ ] **Sprint 3:** hoàn thiện và mở các chức năng khuyến mãi, gợi ý sản phẩm cá nhân hóa, bán kèm, nhắc giỏ hàng bỏ quên và trợ lý AI.
+- [ ] **Sprint 3:** mở báo cáo doanh thu, phân khúc khách hàng, quản lý người dùng/voucher, màn hình quản trị đổi trả/bảo hành và các trang SEO (`sitemap.xml`, `robots.txt`).
+- [ ] **Giai đoạn sau:** hoàn thiện và phát hành tính năng Build PC, gợi ý cấu hình và xem trước 3D.
+
+Các mục dự kiến đã có **một phần hoặc toàn bộ mã nguồn** nhưng hiện chưa dùng được trong bản mặc định. Route Sprint 3 trả `404`; Build PC được gắn Sprint 4 trong khi cấu hình hiện chỉ cho phép tối đa Sprint 3. Danh sách này thể hiện kế hoạch tiếp theo, không phải cam kết ngày phát hành.
 
 ## Tài liệu dự án
 
@@ -29,6 +38,7 @@ Bản chạy mặc định hiển thị phạm vi **Sprint 2**; các route thu�
 | Thiết kế | [Sơ đồ kiến trúc](docs/design/architecture.md) và [ảnh giao diện](docs/design/screenshots/) |
 | Hướng dẫn | [Kịch bản demo](docs/user-guide/demo.md) và [bằng chứng kiểm thử](docs/user-guide/backend-tests.md) |
 | Quản lý cấu hình | [Hồ sơ Lab 3](docs/lab3/README.md) |
+| Tiến độ Sprint 1–2 | [Hồ sơ Lab 4 và phiếu thực hành](docs/lab4/README.md) |
 
 **Tài liệu gốc Tuần 1–2 chưa có trong repository.** `docs/requirements/` hiện chỉ có trang hướng dẫn đặt tài liệu; `docs/design/` đã có sơ đồ kiến trúc và ảnh minh họa. Khi có bản gốc, đặt yêu cầu vào `docs/requirements/` và thiết kế vào `docs/design/`. Repo hiện chưa có video demo hoặc URL triển khai công khai.
 
@@ -55,8 +65,8 @@ Vai trò dưới đây là trách nhiệm trong nhóm, theo [hồ sơ Lab 3](doc
 Yêu cầu: **.NET SDK 8+** và **SQL Server** có quyền tạo database. Không cần cài Node.js hoặc Docker để chạy ứng dụng.
 
 ```powershell
-git clone https://github.com/Anhtuan2005/E-Lectrical--Commerce-.git
-cd E-Lectrical--Commerce-
+git clone https://github.com/Anhtuan2005/cnpm.git
+cd cnpm
 dotnet restore EcommerceApp.sln
 dotnet tool restore
 
@@ -125,7 +135,7 @@ Project test nằm tại [`test/test-cases/EcommerceApp.Tests`](test/test-cases/
 dotnet test test/test-cases/EcommerceApp.Tests/EcommerceApp.Tests.csproj
 ```
 
-Nếu dùng SQL Server khác, đặt `TECHVORA_TEST_SQLSERVER` thành connection string của server test trước khi chạy. Sau khi sắp xếp lại repo, **110/110 test backend** pass ngày 07/10/2026; lần chạy smoke test trình duyệt gần nhất trước đó đạt **22/22**. Bộ test bao gồm phạm vi Sprint 2, checkout/voucher, phí vận chuyển, mua ngay, tranh chấp tồn kho, callback thanh toán, phân quyền và luồng yêu cầu hỗ trợ đến trang đơn hàng admin. [Lệnh, kết quả và mã test tiêu biểu](docs/user-guide/backend-tests.md) giúp kiểm chứng; [workflow CI](.github/workflows/portfolio-tests.yml) được cấu hình để chạy bộ test trên SQL Server 2022.
+Nếu dùng SQL Server khác, đặt `TECHVORA_TEST_SQLSERVER` thành connection string của server test trước khi chạy. Ngày 14/10/2026, **110/110 test backend** và **22/22 smoke test trình duyệt** pass trên máy local với database demo riêng. Bộ test bao gồm phạm vi Sprint 2, checkout/voucher, phí vận chuyển, mua ngay, tranh chấp tồn kho, callback thanh toán, phân quyền và luồng yêu cầu hỗ trợ đến trang đơn hàng admin. [Lệnh, kết quả và mã test tiêu biểu](docs/user-guide/backend-tests.md) giúp kiểm chứng; [workflow CI](.github/workflows/portfolio-tests.yml) được cấu hình để chạy bộ test trên SQL Server 2022.
 
 ## Cấu hình tùy chọn
 
