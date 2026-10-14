@@ -2,6 +2,8 @@
 
 **Mục tiêu đề xuất để nhóm xác nhận:** mở luồng so sánh, thanh toán trực tuyến, xử lý đơn, giao hàng, đánh giá và hậu mãi trên nền Sprint 1. Bản chạy mặc định hiện đặt `Release:ActiveSprint=2`. Nhóm dự kiến báo cáo vào **21/10/2026**; ngày bắt đầu/kết thúc, Story Point, phân công và trạng thái nghiệm thu Sprint 2 chưa được nhóm chốt trong backlog được cung cấp.
 
+**Đối chiếu nhanh:** [bảng đã làm và chưa làm của LAB 4.2](README.md#lab-42--sprint-2).
+
 ## Báo cáo Sprint 1 trước khi lập Sprint 2
 
 Backlog Sprint 1 ghi 10 User Story, 37 Story Point và phân công theo bốn thành viên. Mã hiện tại hỗ trợ demo các luồng Sprint 1; bộ test backend chạy ngày 14/10/2026 đạt 110/110. [Báo cáo Sprint 1](sprint-1.md) nêu các hạn chế về ngày thực tế, Issue, PR review và nghiệm thu lịch sử. Các hạn chế đó cần được giải trình trong phần mở đầu buổi báo cáo Sprint 2.
@@ -64,7 +66,7 @@ Bốn luồng minh họa đã có Issue chờ nhóm chốt: [US-04 #7](https://g
 | --- | --- |
 | Mã Sprint 2 | Có trong repository; các route được mở khi `Release:ActiveSprint=2` theo `Program.cs` và `SprintFeatures.cs`. |
 | Branch/commit theo từng story | Có bốn Issue nháp nhưng chưa có chuỗi Issue → branch → commit → PR chứng minh cho từng story. |
-| PR và review | [PR #6](https://github.com/Anhtuan2005/cnpm/pull/6) chứa hồ sơ Lab 4 và đang mở, chờ thành viên khác review. [PR #1](https://github.com/Anhtuan2005/cnpm/pull/1), [#4](https://github.com/Anhtuan2005/cnpm/pull/4), [#5](https://github.com/Anhtuan2005/cnpm/pull/5) đã merge nhưng API chưa ghi nhận review; [#2](https://github.com/Anhtuan2005/cnpm/pull/2), [#3](https://github.com/Anhtuan2005/cnpm/pull/3) cũng đang mở. |
+| PR và review | [PR #6](https://github.com/Anhtuan2005/cnpm/pull/6) chứa hồ sơ Lab 4, đã merge vào `main` ngày 14/10/2026 nhưng API chưa ghi nhận review. [PR #1](https://github.com/Anhtuan2005/cnpm/pull/1), [#4](https://github.com/Anhtuan2005/cnpm/pull/4), [#5](https://github.com/Anhtuan2005/cnpm/pull/5) cũng đã merge nhưng API chưa ghi nhận review; [#2](https://github.com/Anhtuan2005/cnpm/pull/2), [#3](https://github.com/Anhtuan2005/cnpm/pull/3) còn mở tại lần kiểm tra trước. |
 | GitHub Issues/Project | [#7](https://github.com/Anhtuan2005/cnpm/issues/7)–[#10](https://github.com/Anhtuan2005/cnpm/issues/10) mới được tạo cho bốn luồng minh họa; chưa có Project board hoặc Issue cho tám story còn lại. |
 
 ## Sprint Review và Retrospective để nhóm xác nhận

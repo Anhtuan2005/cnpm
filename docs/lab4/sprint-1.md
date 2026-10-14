@@ -2,6 +2,8 @@
 
 **Sprint Goal từ phạm vi backlog:** khách tìm được điện thoại, quản lý tài khoản/giỏ hàng, đặt đơn COD và xem lại đơn; admin quản lý catalog. Kế hoạch trong backlog nhóm cung cấp: 16/09–27/09/2026. Ngày hoàn thành thực tế cần xác nhận lại trong file gốc.
 
+**Đối chiếu nhanh:** [bảng đã làm và chưa làm của LAB 4.1](README.md#lab-41--sprint-1).
+
 ## Sprint Backlog
 
 `AC` là tiêu chí chấp nhận tóm tắt từ luồng hiện có và kịch bản demo. `Có mã/test hiện tại` chỉ phản ánh repository ngày 14/10/2026; không xác nhận User Story đã Done tại ngày kết thúc Sprint.

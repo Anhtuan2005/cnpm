@@ -4,7 +4,7 @@
 
 `ASP.NET Core 8 MVC` · `EF Core 8` · `SQL Server` · `Razor` · `JavaScript`
 
-**Khám phá dự án:** [Tiến độ chức năng](#tiến-độ-chức-năng) · [Chạy demo local](#demo-local) · [Kiến trúc](docs/design/architecture.md) · [Kịch bản demo](docs/user-guide/demo.md) · [Bằng chứng kiểm thử](docs/user-guide/backend-tests.md)
+**Khám phá dự án:** [Tiến độ chức năng](#tiến-độ-chức-năng) · [Bảng đã làm/chưa làm Lab 4](docs/lab4/README.md#bảng-đối-chiếu-đã-làm-và-chưa-làm) · [Chạy demo local](#demo-local) · [Kiến trúc](docs/design/architecture.md) · [Kịch bản demo](docs/user-guide/demo.md) · [Bằng chứng kiểm thử](docs/user-guide/backend-tests.md)
 
 | Trang chủ cửa hàng | Quản trị sản phẩm |
 | :---: | :---: |
