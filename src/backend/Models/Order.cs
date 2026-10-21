@@ -54,6 +54,33 @@ public class Order
     public DateTime? RefundRequestedAt { get; set; }
     public DateTime? RefundedAt { get; set; }
 
+    [Required, StringLength(40)]
+    public string RefundReceiptStatus { get; set; } = ReceiptStatuses.Pending;
+    public DateTime? RefundReceiptConfirmedAt { get; set; }
+    [StringLength(500)]
+    public string? RefundReceiptIssue { get; set; }
+    public DateTime? RefundReceiptIssueAt { get; set; }
+    [StringLength(500)]
+    public string? RefundReceiptResolution { get; set; }
+
+    [Required, StringLength(40)]
+    public string CustomerReceiptStatus { get; set; } = ReceiptStatuses.Pending;
+    public DateTime? CustomerReceiptConfirmedAt { get; set; }
+    [StringLength(500)]
+    public string? CustomerReceiptIssue { get; set; }
+    public DateTime? CustomerReceiptIssueAt { get; set; }
+    [StringLength(500)]
+    public string? CustomerReceiptResolution { get; set; }
+    [StringLength(500)]
+    public string? DeliveryProofUrl { get; set; }
+
+    public DateTime? CodSettledAt { get; set; }
+    public decimal? CodSettlementAmount { get; set; }
+    [StringLength(120)]
+    public string? CodSettlementReference { get; set; }
+    [StringLength(256)]
+    public string? CodSettlementConfirmedBy { get; set; }
+
     [StringLength(40)]
     public string? RefundMethod { get; set; }
     [StringLength(120)]
@@ -102,12 +129,20 @@ public class Order
     public string? InvoiceErrorMessage { get; set; }
 
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
+    public ICollection<OrderAssuranceEvent> AssuranceEvents { get; set; } = new List<OrderAssuranceEvent>();
     public ICollection<ReturnWarrantyRequest> ReturnWarrantyRequests { get; set; } = new List<ReturnWarrantyRequest>();
     public ShippingInfo? ShippingInfo { get; set; }
     public VoucherUsage? VoucherUsage { get; set; }
 
     [NotMapped]
     public string? VoucherCode => VoucherUsage?.Voucher?.Code;
+}
+
+public static class ReceiptStatuses
+{
+    public const string Pending = "Chờ khách xác nhận";
+    public const string Confirmed = "Khách đã xác nhận";
+    public const string Issue = "Khách báo có vấn đề";
 }
 
 public static class OrderStatuses

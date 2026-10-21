@@ -2,6 +2,7 @@ var lucideScript = document.getElementById("lucide-script");
 if (lucideScript) lucideScript.addEventListener("load", refreshIcons);
 
 document.addEventListener("DOMContentLoaded", function () {
+  initFlashToasts();
   initNavbar();
   initCatalogFilters();
   initHeroSlider();
@@ -2712,6 +2713,16 @@ function initProfileAddressFill() {
       updateCheckoutShippingFee();
       showToast("Đã điền địa chỉ đã lưu.", "success");
     }
+  });
+}
+
+function initFlashToasts() {
+  document.querySelectorAll("#toast-stack .toast").forEach(function (toast) {
+    window.setTimeout(function () {
+      if (!toast.isConnected) return;
+      toast.classList.add("is-leaving");
+      window.setTimeout(function () { toast.remove(); }, 240);
+    }, 4000);
   });
 }
 

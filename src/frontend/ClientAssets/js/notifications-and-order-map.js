@@ -1,3 +1,13 @@
+function initFlashToasts() {
+  document.querySelectorAll("#toast-stack .toast").forEach(function (toast) {
+    window.setTimeout(function () {
+      if (!toast.isConnected) return;
+      toast.classList.add("is-leaving");
+      window.setTimeout(function () { toast.remove(); }, 240);
+    }, 4000);
+  });
+}
+
 function showToast(message, type) {
   var stack = document.getElementById("toast-stack");
   if (!stack) return;

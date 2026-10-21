@@ -200,6 +200,7 @@ builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IOrderEmailService, OrderEmailService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IOrderAssuranceService, OrderAssuranceService>();
 builder.Services.AddScoped<IShippingService, ShippingService>();
 builder.Services.AddScoped<IShippingFeeService, ShippingFeeService>();
 builder.Services.AddScoped<IInvoiceService, LocalInvoiceService>();

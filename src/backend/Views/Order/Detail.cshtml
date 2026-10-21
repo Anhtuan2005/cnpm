@@ -10,6 +10,10 @@
         ? Model.ReturnWarrantyRequests.OrderByDescending(request => request.CreatedAt).FirstOrDefault()
         : null;
     var canCreateSupportRequest = !isAdminViewer && Model.Status == OrderStatuses.Delivered;
+    var publicAssuranceEvents = Model.AssuranceEvents
+        .Where(entry => entry.Type != OrderAssuranceEventTypes.CodSettled)
+        .OrderByDescending(entry => entry.CreatedAt)
+        .ToList();
     var shippingStatus = Model.ShippingInfo?.Status ?? string.Empty;
     var hasShippingRoute = SprintFeatures.IsEnabled(2) && Model.ShippingInfo is not null &&
         (!string.IsNullOrWhiteSpace(Model.ShippingInfo.TrackingCode) || Model.Status == OrderStatuses.Shipping || Model.Status == OrderStatuses.Delivered);
@@ -190,11 +194,59 @@
                 </dl>
             </section>
 
+            @if (SprintFeatures.IsEnabled(2) && Model.Status == OrderStatuses.Delivered)
+            {
+                <section class="order-panel assurance-panel" aria-labelledby="delivery-receipt-heading">
+                    <div class="assurance-heading">
+                        <span class="assurance-icon"><i data-lucide="package-check" aria-hidden="true"></i></span>
+                        <div><small>GIAO NHẬN</small><h2 id="delivery-receipt-heading">Bạn đã nhận được hàng?</h2></div>
+                    </div>
+                    <p class="assurance-status">@Model.CustomerReceiptStatus</p>
+                    <p class="assurance-copy">Trạng thái “Đã giao” do shop hoặc đơn vị vận chuyển cập nhật. Xác nhận của bạn được lưu riêng.</p>
+                    @if (!string.IsNullOrWhiteSpace(Model.DeliveryProofUrl))
+                    {
+                        <a class="assurance-proof" href="@Model.DeliveryProofUrl" target="_blank" rel="noopener noreferrer">Xem chứng từ giao hàng <i data-lucide="external-link" aria-hidden="true"></i></a>
+                    }
+                    @if (Model.CustomerReceiptConfirmedAt.HasValue)
+                    {
+                        <p class="assurance-copy">Bạn xác nhận lúc @Model.CustomerReceiptConfirmedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm").</p>
+                    }
+                    @if (Model.CustomerReceiptStatus == ReceiptStatuses.Issue)
+                    {
+                        <p class="assurance-alert"><strong>Đang chờ shop kiểm tra:</strong> @Model.CustomerReceiptIssue</p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.CustomerReceiptResolution))
+                    {
+                        <p class="assurance-response"><strong>Shop phản hồi:</strong> @Model.CustomerReceiptResolution</p>
+                    }
+                    @if (Model.CustomerReceiptStatus == ReceiptStatuses.Pending && !isAdminViewer)
+                    {
+                        <form asp-action="DeliveryReceipt" method="post" class="assurance-confirm-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="received" value="true" />
+                            <button class="btn-primary" type="submit">Tôi đã nhận hàng</button>
+                        </form>
+                        <details class="assurance-report">
+                            <summary>Tôi chưa nhận hàng hoặc hàng có vấn đề</summary>
+                            <form asp-action="DeliveryReceipt" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <input type="hidden" name="received" value="false" />
+                                <label for="delivery-issue">Mô tả sự cố để shop kiểm tra</label>
+                                <textarea id="delivery-issue" name="reason" maxlength="500" rows="3" required></textarea>
+                                <button class="btn-ghost danger" type="submit">Gửi báo cáo giao hàng</button>
+                            </form>
+                        </details>
+                    }
+                </section>
+            }
+
             <section class="order-panel">
                 <h2>Thanh toán</h2>
                 <dl class="order-info-list">
                     <div><dt>Phương thức</dt><dd>@Model.PaymentMethod</dd></div>
-                    <div><dt>Trạng thái</dt><dd>@(Model.IsPaid ? "Đã thanh toán" : "Chưa thanh toán")</dd></div>
+                    <div><dt>Trạng thái</dt><dd>@(Model.IsPaid ? Model.PaymentMethod == "COD" ? "Đã thu COD khi giao" : "VNPAY đã thanh toán" : "Chưa thanh toán")</dd></div>
                     @if (SprintFeatures.IsEnabled(2))
                     {
                         @if (!string.IsNullOrWhiteSpace(Model.VoucherCode))
@@ -215,21 +267,77 @@
                         }
                         @if (Model.RefundStatus != RefundStatuses.NotRequired)
                         {
-                            <div><dt>Hoàn tiền</dt><dd>@Model.RefundStatus</dd></div>
+                            <div><dt>Hoàn tiền</dt><dd>@(Model.RefundStatus == RefundStatuses.Refunded ? "Shop đã ghi nhận chuyển tiền hoàn" : Model.RefundStatus)</dd></div>
                         }
                         @if (Model.RefundStatus == RefundStatuses.Refunded)
                         {
-                            <div><dt>Số tiền đã hoàn</dt><dd>@Model.RefundAmount?.ToString("N0") ₫</dd></div>
+                            <div><dt>Số tiền shop ghi nhận chuyển</dt><dd>@Model.RefundAmount?.ToString("N0") ₫</dd></div>
                             <div><dt>Kênh hoàn tiền</dt><dd>@Model.RefundMethod</dd></div>
                             <div><dt>Mã đối soát</dt><dd>@Model.RefundReference</dd></div>
                             @if (Model.RefundedAt.HasValue)
                             {
-                                <div><dt>Ghi nhận hoàn lúc</dt><dd>@Model.RefundedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd></div>
+                                <div><dt>Shop ghi nhận lúc</dt><dd>@Model.RefundedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd></div>
                             }
+                            <div><dt>Khách xác nhận tiền về</dt><dd>@Model.RefundReceiptStatus</dd></div>
                         }
                     }
                 </dl>
             </section>
+
+            @if (SprintFeatures.IsEnabled(2) && Model.RefundStatus == RefundStatuses.Refunded)
+            {
+                <section class="order-panel assurance-panel" aria-labelledby="refund-receipt-heading">
+                    <div class="assurance-heading">
+                        <span class="assurance-icon"><i data-lucide="wallet-cards" aria-hidden="true"></i></span>
+                        <div><small>HOÀN TIỀN</small><h2 id="refund-receipt-heading">Tiền hoàn đã về?</h2></div>
+                    </div>
+                    <p class="assurance-status">@Model.RefundReceiptStatus</p>
+                    <p class="assurance-copy">Shop đã ghi nhận việc chuyển tiền. Hãy kiểm tra tài khoản hoặc biên nhận trước khi xác nhận.</p>
+                    @if (Model.RefundReceiptStatus == ReceiptStatuses.Issue)
+                    {
+                        <p class="assurance-alert"><strong>Đang chờ shop đối soát:</strong> @Model.RefundReceiptIssue</p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.RefundReceiptResolution))
+                    {
+                        <p class="assurance-response"><strong>Shop phản hồi:</strong> @Model.RefundReceiptResolution</p>
+                    }
+                    @if (Model.RefundReceiptStatus == ReceiptStatuses.Pending && !isAdminViewer)
+                    {
+                        <form asp-action="RefundReceipt" method="post" class="assurance-confirm-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="received" value="true" />
+                            <button class="btn-primary" type="submit">Tôi đã nhận tiền hoàn</button>
+                        </form>
+                        <details class="assurance-report">
+                            <summary>Tôi chưa nhận được tiền</summary>
+                            <form asp-action="RefundReceipt" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <input type="hidden" name="received" value="false" />
+                                <label for="refund-issue">Thông tin để shop đối soát</label>
+                                <textarea id="refund-issue" name="reason" maxlength="500" rows="3" required></textarea>
+                                <button class="btn-ghost danger" type="submit">Báo chưa nhận tiền</button>
+                            </form>
+                        </details>
+                    }
+                </section>
+            }
+
+            @if (SprintFeatures.IsEnabled(2) && publicAssuranceEvents.Any())
+            {
+                <section class="order-panel assurance-history">
+                    <h2>Lịch sử xác nhận</h2>
+                    <ol>
+                        @foreach (var entry in publicAssuranceEvents)
+                        {
+                            <li><strong>@entry.Type</strong><time>@entry.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</time>
+                                @if (!string.IsNullOrWhiteSpace(entry.Detail)) { <small>@entry.Detail</small> }
+                            </li>
+                        }
+                    </ol>
+                </section>
+            }
 
             @if (SprintFeatures.IsEnabled(2))
             {

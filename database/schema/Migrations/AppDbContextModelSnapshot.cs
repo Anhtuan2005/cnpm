@@ -428,8 +428,46 @@ namespace EcommerceApp.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<DateTime?>("CodSettledAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("CodSettlementAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("CodSettlementConfirmedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("CodSettlementReference")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("CustomerReceiptConfirmedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CustomerReceiptIssue")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("CustomerReceiptIssueAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CustomerReceiptResolution")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("CustomerReceiptStatus")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)")
+                        .HasDefaultValue("Chờ khách xác nhận");
+
+                    b.Property<string>("DeliveryProofUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<decimal>("DiscountAmount")
                         .HasColumnType("decimal(18,2)");
@@ -522,6 +560,26 @@ namespace EcommerceApp.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<DateTime?>("RefundReceiptConfirmedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RefundReceiptIssue")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("RefundReceiptIssueAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RefundReceiptResolution")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("RefundReceiptStatus")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)")
+                        .HasDefaultValue("Chờ khách xác nhận");
+
                     b.Property<string>("RefundReference")
                         .HasMaxLength(120)
                         .HasColumnType("nvarchar(120)");
@@ -579,6 +637,40 @@ namespace EcommerceApp.Data.Migrations
                     b.HasIndex("PaymentMethod", "IsPaid", "Status", "PaymentExpiresAt");
 
                     b.ToTable("Orders");
+                });
+
+            modelBuilder.Entity("EcommerceApp.Models.OrderAssuranceEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ActorId")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Detail")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId", "CreatedAt");
+
+                    b.ToTable("OrderAssuranceEvents");
                 });
 
             modelBuilder.Entity("EcommerceApp.Models.OrderItem", b =>
@@ -1429,6 +1521,17 @@ namespace EcommerceApp.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("EcommerceApp.Models.OrderAssuranceEvent", b =>
+                {
+                    b.HasOne("EcommerceApp.Models.Order", "Order")
+                        .WithMany("AssuranceEvents")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+                });
+
             modelBuilder.Entity("EcommerceApp.Models.OrderItem", b =>
                 {
                     b.HasOne("EcommerceApp.Models.Order", "Order")
@@ -1733,6 +1836,8 @@ namespace EcommerceApp.Data.Migrations
 
             modelBuilder.Entity("EcommerceApp.Models.Order", b =>
                 {
+                    b.Navigation("AssuranceEvents");
+
                     b.Navigation("Items");
 
                     b.Navigation("ReturnWarrantyRequests");

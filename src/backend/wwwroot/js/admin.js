@@ -288,21 +288,17 @@ function initOrderNotifications() {
     .build();
 
   connection.on("OrderCreated", function (order) {
-    var total = Number(order.totalAmount || 0).toLocaleString("vi-VN") + " ₫";
-    handleNewOrders(
-      1,
-      "Đơn #" + order.code + " mới từ " + order.customerName + ", " + total,
-      order.url
-    );
+    incrementBadge("new-order-badge", 1);
+    lastCheck = Date.now();
   });
   connection.on("ReviewCreated", function (review) {
     incrementBadge("pending-review-badge", 1);
+  });
+  connection.on("AdminNotificationCreated", function (notification) {
     incrementBadge("admin-notification-badge", 1);
-    showAdminToast(
-      "Có đánh giá mới cho sản phẩm #" + review.productId,
-      "info",
-      review.url || "/Admin/Review"
-    );
+    var message = notification.title || "Có thông báo mới";
+    if (notification.message) message += ": " + notification.message;
+    showAdminToast(message, "info", notification.linkUrl);
   });
   connection.onreconnecting(function () {
     realtimeConnected = false;

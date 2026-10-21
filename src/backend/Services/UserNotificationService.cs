@@ -1,6 +1,8 @@
 using EcommerceApp.Data;
+using EcommerceApp.Hubs;
 using EcommerceApp.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace EcommerceApp.Services;
@@ -9,11 +11,19 @@ public class UserNotificationService : IUserNotificationService
 {
     private readonly AppDbContext _db;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IHubContext<AdminNotificationHub> _adminNotificationHub;
+    private readonly ILogger<UserNotificationService> _logger;
 
-    public UserNotificationService(AppDbContext db, UserManager<ApplicationUser> userManager)
+    public UserNotificationService(
+        AppDbContext db,
+        UserManager<ApplicationUser> userManager,
+        IHubContext<AdminNotificationHub> adminNotificationHub,
+        ILogger<UserNotificationService> logger)
     {
         _db = db;
         _userManager = userManager;
+        _adminNotificationHub = adminNotificationHub;
+        _logger = logger;
     }
 
     public async Task CreateAsync(string userId, string title, string message, string type, string? linkUrl = null)
@@ -51,6 +61,24 @@ public class UserNotificationService : IUserNotificationService
         }
 
         await _db.SaveChangesAsync();
+        if (admins.Count == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            await _adminNotificationHub.Clients.Group(AdminNotificationHub.AdminGroup)
+                .SendAsync("AdminNotificationCreated", new AdminNotificationCreatedMessage(
+                    title.Trim(),
+                    message.Trim(),
+                    string.IsNullOrWhiteSpace(type) ? NotificationTypes.System : type.Trim(),
+                    string.IsNullOrWhiteSpace(linkUrl) ? null : linkUrl.Trim()));
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Could not broadcast admin notification {Title}", title);
+        }
     }
 
     public async Task<IReadOnlyList<UserNotification>> GetRecentAsync(string userId, int take = 6)

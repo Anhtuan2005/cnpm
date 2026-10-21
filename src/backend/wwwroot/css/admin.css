@@ -1684,6 +1684,24 @@ input[type="checkbox"] {
   line-height: 1.45;
 }
 
+.admin-assurance-panel { display: grid; align-content: start; gap: 18px; }
+.admin-assurance-block { display: grid; gap: 10px; padding-top: 16px; border-top: 1px solid var(--adm-line); min-width: 0; }
+.admin-assurance-block:first-of-type { padding-top: 0; border-top: 0; }
+.admin-assurance-line { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.admin-assurance-line > strong { color: var(--adm-ink); font-size: 14px; }
+.admin-assurance-block p, .admin-assurance-block a { color: var(--adm-muted); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.admin-assurance-block a { color: var(--adm-accent-ink); font-weight: 750; }
+.admin-assurance-block .stack-form { gap: 8px; }
+.admin-assurance-block input, .admin-assurance-block textarea { width: 100%; min-height: 40px; padding: 9px 11px; border: 1px solid var(--adm-line-strong); border-radius: var(--adm-radius-sm); background: var(--adm-surface); color: var(--adm-ink); }
+.admin-assurance-block textarea { min-height: 84px; resize: vertical; }
+.admin-assurance-block input:focus-visible, .admin-assurance-block textarea:focus-visible { outline: 2px solid var(--adm-accent); outline-offset: 2px; }
+.admin-assurance-block .admin-button { width: fit-content; min-height: 40px; }
+.admin-assurance-issue { padding: 10px 12px; border-radius: var(--adm-radius-sm); background: var(--adm-danger-soft); color: var(--adm-danger) !important; }
+.admin-assurance-history { display: grid; gap: 12px; padding: 2px 0 0; list-style: none; }
+.admin-assurance-history li { display: grid; gap: 2px; padding-left: 12px; border-left: 2px solid var(--adm-line-strong); overflow-wrap: anywhere; }
+.admin-assurance-history strong { color: var(--adm-ink); font-size: 13px; }
+.admin-assurance-history time, .admin-assurance-history small { color: var(--adm-muted); font-size: 12px; line-height: 1.4; }
+
 .admin-specifications {
   min-width: 0;
   margin: 20px 0 8px;

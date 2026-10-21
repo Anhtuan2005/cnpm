@@ -2,6 +2,7 @@ var lucideScript = document.getElementById("lucide-script");
 if (lucideScript) lucideScript.addEventListener("load", refreshIcons);
 
 document.addEventListener("DOMContentLoaded", function () {
+  initFlashToasts();
   initNavbar();
   initCatalogFilters();
   initHeroSlider();

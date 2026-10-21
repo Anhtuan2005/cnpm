@@ -69,6 +69,8 @@ Khách chỉ huỷ đơn chờ thanh toán/chờ xác nhận. Gán vận chuyể
 
 `PaymentExpiresAt` lưu UTC, cố định 15 phút từ checkout. URL VNPAY dùng cùng hạn theo UTC+7. Worker chạy ngay khi khởi động và mỗi 30 giây, lấy tối đa 100 đơn quá hạn rồi khóa/kiểm tra lại từng đơn. Thanh toán, huỷ và hết hạn cùng tranh một khóa; chỉ lần chuyển sang huỷ đầu tiên mới hoàn kho. Callback đến sau hạn tự huỷ trước khi ghi nhận `IsPaid` và `PendingManual`, kể cả khi worker chưa quét. Không đổi `IsPaid` thành false sau hoàn tiền vì đây là lịch sử nhận thanh toán.
 
+`OrderAssuranceService` khoá order và kiểm tra chủ đơn trước khi nhận xác nhận hoặc báo sự cố từ khách. `Order.Status=Đã giao` chỉ là thông tin từ admin/GHN; `CustomerReceiptStatus` là xác nhận riêng của khách. Admin có thể đính kèm liên kết HTTPS tới chứng từ và phản hồi sự cố để mở lại bước xác nhận. Với COD, `IsPaid` thể hiện tiền được thu khi giao; `CodSettledAt` và số tiền/mã đối soát chỉ được ghi khi admin kiểm tra khoản shop thực nhận. Với hoàn tiền, `RefundStatus=Đã hoàn tiền` là ghi nhận shop đã chuyển; `RefundReceiptStatus` theo dõi việc khách xác nhận tiền về hoặc báo chưa nhận. Các thay đổi được ghi vào `OrderAssuranceEvents`; thao tác lặp hoặc sai trạng thái bị từ chối. Chưa có đối soát tự động với GHN, ngân hàng hoặc API hoàn tiền VNPAY, nên các mốc thủ công không phải bằng chứng thanh toán độc lập.
+
 `RevenueQueries` định nghĩa chung cho dashboard, báo cáo và xếp hạng bán chạy: đơn chưa huỷ, không chờ/đã hoàn tiền, và đã trả tiền hoặc đã giao COD. Kỳ thống kê dùng `CreatedAt` UTC; đây là báo cáo bán hàng theo đơn, chưa phải sổ kế toán tiền vào/ra theo ngày đối soát. Thống kê sản phẩm dùng `UnitPrice × Quantity`, chưa phân bổ voucher/phí giao của đơn.
 
 ## Tài khoản và hậu mãi

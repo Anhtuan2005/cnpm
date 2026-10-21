@@ -23,8 +23,10 @@ Trạng thái dưới đây tính theo bản chạy mặc định **Sprint 2** (
 - [x] **Khám phá sản phẩm:** trang chủ, danh mục điện thoại, tìm kiếm, lọc, sắp xếp, phân trang, chi tiết và so sánh sản phẩm.
 - [x] **Tài khoản và mua sắm:** đăng ký, đăng nhập, hồ sơ, danh sách yêu thích, giỏ hàng khách/giỏ hàng tài khoản và mua ngay.
 - [x] **Đặt hàng:** địa chỉ và phí giao hàng, voucher, COD, luồng VNPAY, xác nhận đơn, lịch sử, hủy đơn và mua lại. VNPAY cần cấu hình sandbox để thử thanh toán ngoài hệ thống.
-- [x] **Hậu mãi:** theo dõi giao hàng, thông báo, đánh giá kèm ảnh và gửi yêu cầu đổi trả/bảo hành.
-- [x] **Quản trị:** quản lý danh mục, sản phẩm, banner, tồn kho và đơn hàng; dashboard, xử lý hoàn tiền, hóa đơn/CSV, tích hợp GHN và phản hồi đánh giá công khai. GHN cần thông tin sandbox để gọi dịch vụ ngoài.
+- [x] **Hậu mãi:** theo dõi giao hàng, khách xác nhận đã nhận hàng hoặc báo sự cố, xác nhận đã nhận tiền hoàn hoặc báo chưa nhận; thông báo, đánh giá kèm ảnh và yêu cầu đổi trả/bảo hành.
+- [x] **Quản trị:** quản lý danh mục, sản phẩm, banner, tồn kho và đơn hàng; dashboard, ghi nhận đối soát COD và chuyển tiền hoàn thủ công, phản hồi sự cố, hóa đơn/CSV, tích hợp GHN và phản hồi đánh giá công khai. GHN cần thông tin sandbox để gọi dịch vụ ngoài.
+
+Xác nhận của khách được lưu riêng với trạng thái giao của GHN và ghi nhận chuyển tiền của shop. Admin có thể lưu liên kết HTTPS tới chứng từ giao hàng, mã/số tiền đối soát COD và phản hồi sự cố; mỗi thao tác có lịch sử trên đơn. Các mốc này giúp hai bên đối chiếu, **không phải ký quỹ hay xác minh tự động tiền đã về tài khoản**. Chỉ ghi nhận đối soát COD sau khi kiểm tra sao kê GHN; hoàn tiền VNPAY hiện vẫn làm thủ công bên ngoài ứng dụng.
 
 ### Chưa phát hành — dự kiến làm tiếp
 

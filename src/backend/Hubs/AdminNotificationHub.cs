@@ -33,3 +33,9 @@ public sealed record AdminReviewCreatedMessage(
     int Id,
     int ProductId,
     string Url);
+
+public sealed record AdminNotificationCreatedMessage(
+    string Title,
+    string Message,
+    string Type,
+    string? LinkUrl);

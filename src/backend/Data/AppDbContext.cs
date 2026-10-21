@@ -14,6 +14,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderAssuranceEvent> OrderAssuranceEvents => Set<OrderAssuranceEvent>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Cart> Carts => Set<Cart>();
     public DbSet<CartItem> CartItems => Set<CartItem>();
@@ -154,6 +155,19 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .HasColumnType("decimal(18,2)");
 
         builder.Entity<Order>()
+            .Property(order => order.CodSettlementAmount)
+            .HasColumnType("decimal(18,2)");
+
+        builder.Entity<OrderAssuranceEvent>()
+            .HasOne(entry => entry.Order)
+            .WithMany(order => order.AssuranceEvents)
+            .HasForeignKey(entry => entry.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<OrderAssuranceEvent>()
+            .HasIndex(entry => new { entry.OrderId, entry.CreatedAt });
+
+        builder.Entity<Order>()
             .Property(order => order.TotalAmount)
             .HasColumnType("decimal(18,2)");
 
@@ -169,6 +183,14 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .Property(order => order.RefundStatus)
             .HasMaxLength(40)
             .HasDefaultValue(RefundStatuses.NotRequired);
+
+        builder.Entity<Order>()
+            .Property(order => order.CustomerReceiptStatus)
+            .HasDefaultValue(ReceiptStatuses.Pending);
+
+        builder.Entity<Order>()
+            .Property(order => order.RefundReceiptStatus)
+            .HasDefaultValue(ReceiptStatuses.Pending);
 
         builder.Entity<Order>()
             .Property(order => order.InvoiceStatus)

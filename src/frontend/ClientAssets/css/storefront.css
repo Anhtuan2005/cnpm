@@ -938,6 +938,31 @@ body.order-cancel-open {
   font-size: 20px;
 }
 
+.assurance-panel { display: grid; gap: 12px; }
+.assurance-heading { display: flex; align-items: center; gap: 12px; }
+.assurance-heading h2 { margin: 2px 0 0; font-size: 18px; }
+.assurance-heading small { color: var(--accent); font-size: 11px; font-weight: 850; letter-spacing: .08em; }
+.assurance-icon { display: grid; place-items: center; flex: 0 0 40px; height: 40px; border-radius: 12px; background: var(--accent-light); color: var(--accent); }
+.assurance-status { width: fit-content; padding: 6px 10px; border-radius: 999px; background: var(--bg-soft); color: var(--ink); font-size: 12px; font-weight: 800; }
+.assurance-copy, .assurance-response, .assurance-alert { color: var(--ink-muted); font-size: 13px; line-height: 1.5; }
+.assurance-response, .assurance-alert { padding: 10px 12px; border-radius: 10px; background: var(--bg-soft); overflow-wrap: anywhere; }
+.assurance-alert { color: var(--danger); background: color-mix(in srgb, var(--danger) 8%, var(--bg-card)); }
+.assurance-proof { display: inline-flex; align-items: center; gap: 6px; width: fit-content; color: var(--accent); font-size: 13px; font-weight: 750; }
+.assurance-proof svg { width: 14px; height: 14px; }
+.assurance-confirm-form .btn-primary { width: 100%; min-height: 44px; }
+.assurance-report { border-top: 1px solid var(--line-soft); padding-top: 10px; }
+.assurance-report summary { color: var(--accent); font-size: 13px; font-weight: 750; cursor: pointer; }
+.assurance-report summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.assurance-report form { display: grid; gap: 9px; padding-top: 12px; }
+.assurance-report label { color: var(--ink); font-size: 13px; font-weight: 700; }
+.assurance-report textarea { width: 100%; min-height: 90px; padding: 10px 12px; border: 1px solid var(--line-soft); border-radius: 10px; background: var(--bg-card); color: var(--ink); resize: vertical; }
+.assurance-report textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.assurance-report button { min-height: 44px; }
+.assurance-history ol { display: grid; gap: 12px; padding: 0; list-style: none; }
+.assurance-history li { display: grid; gap: 2px; padding-left: 13px; border-left: 2px solid var(--line-soft); overflow-wrap: anywhere; }
+.assurance-history strong { color: var(--ink); font-size: 13px; }
+.assurance-history time, .assurance-history small { color: var(--ink-muted); font-size: 12px; line-height: 1.45; }
+
 .orders-back {
   display: inline-flex;
   align-items: center;
@@ -1720,7 +1745,9 @@ body.order-cancel-open {
 }
 
 .order-info-list dd {
+  min-width: 0;
   max-width: 210px;
+  overflow-wrap: anywhere;
 }
 
 .order-price-list .grand-total {

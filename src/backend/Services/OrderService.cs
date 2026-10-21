@@ -326,6 +326,7 @@ public class OrderService : IOrderService
             .Include(order => order.ShippingInfo)
             .Include(order => order.VoucherUsage).ThenInclude(usage => usage!.Voucher)
             .Include(order => order.ReturnWarrantyRequests)
+            .Include(order => order.AssuranceEvents)
             .FirstOrDefaultAsync(order => order.Id == id && order.UserId == userId);
     }
 
@@ -398,6 +399,7 @@ public class OrderService : IOrderService
             .Include(order => order.VoucherUsage).ThenInclude(usage => usage!.Voucher)
             .Include(order => order.ReturnWarrantyRequests).ThenInclude(request => request.Items)
             .Include(order => order.ReturnWarrantyRequests).ThenInclude(request => request.Images)
+            .Include(order => order.AssuranceEvents)
             .AsSplitQuery()
             .FirstOrDefaultAsync(order => order.Id == id);
     }
@@ -486,12 +488,21 @@ public class OrderService : IOrderService
                 (current.Status == OrderStatuses.Delivered && string.IsNullOrWhiteSpace(note))) return null;
             current.RefundStatus = RefundStatuses.Refunded;
             current.RefundedAt = DateTime.UtcNow;
+            current.RefundReceiptStatus = ReceiptStatuses.Pending;
+            current.RefundReceiptConfirmedAt = null;
             current.RefundMethod = method;
             current.RefundReference = reference.Trim();
             current.RefundAmount = current.TotalAmount;
             current.RefundConfirmedBy = _httpContextAccessor?.HttpContext?.User.Identity?.Name ?? "Admin";
             current.RefundNote = string.IsNullOrWhiteSpace(note) ? "Admin đã xác nhận hoàn tiền thủ công." : note.Trim();
             current.UpdatedAt = DateTime.UtcNow;
+            current.AssuranceEvents.Add(new OrderAssuranceEvent
+            {
+                Type = OrderAssuranceEventTypes.RefundSent,
+                Detail = $"{current.RefundAmount:N0} ₫ · {current.RefundMethod} · {current.RefundReference}",
+                ActorId = current.RefundConfirmedBy,
+                CreatedAt = current.UpdatedAt
+            });
             await _db.SaveChangesAsync();
             return current;
         });
@@ -500,8 +511,8 @@ public class OrderService : IOrderService
         await _orderEmailService.SendRefundCompletedAsync(order.Id);
         await _notificationService.CreateAsync(
             order.UserId,
-            "Đã ghi nhận hoàn tiền",
-            $"Đơn #DH{order.Id:D4} đã được đánh dấu hoàn tiền.",
+            "Shop đã ghi nhận chuyển tiền hoàn",
+            $"Đơn #DH{order.Id:D4}: vui lòng kiểm tra và xác nhận đã nhận tiền, hoặc báo chưa nhận trong chi tiết đơn.",
             NotificationTypes.Order,
             $"/Order/Detail/{order.Id}");
         return true;

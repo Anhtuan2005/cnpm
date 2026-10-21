@@ -15,6 +15,7 @@ namespace EcommerceApp.Controllers.Admin;
 public class AdminOrderController : Controller
 {
     private readonly IOrderService _orderService;
+    private readonly IOrderAssuranceService _orderAssurance;
     private readonly IShippingService _shippingService;
     private readonly IInvoiceService _invoiceService;
     private readonly AppDbContext _db;
@@ -22,12 +23,14 @@ public class AdminOrderController : Controller
 
     public AdminOrderController(
         IOrderService orderService,
+        IOrderAssuranceService orderAssurance,
         IShippingService shippingService,
         IInvoiceService invoiceService,
         AppDbContext db,
         ILogger<AdminOrderController> logger)
     {
         _orderService = orderService;
+        _orderAssurance = orderAssurance;
         _shippingService = shippingService;
         _invoiceService = invoiceService;
         _db = db;
@@ -103,6 +106,50 @@ public class AdminOrderController : Controller
         return RedirectToAction(nameof(Details), new { id = model.Id });
     }
 
+    [HttpPost("RecordDeliveryProof")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RecordDeliveryProof(int id, string url)
+    {
+        var saved = await _orderAssurance.RecordDeliveryProofAsync(id, User.Identity?.Name ?? "Admin", url);
+        TempData[saved ? "Success" : "Error"] = saved
+            ? "Đã lưu liên kết chứng từ giao hàng."
+            : "Chỉ lưu chứng từ cho đơn đã giao; liên kết phải là HTTPS và tối đa 500 ký tự.";
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    [HttpPost("ResolveDeliveryIssue")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResolveDeliveryIssue(int id, string note)
+    {
+        var saved = await _orderAssurance.ResolveDeliveryIssueAsync(id, User.Identity?.Name ?? "Admin", note);
+        TempData[saved ? "Success" : "Error"] = saved
+            ? "Đã gửi phản hồi. Khách có thể xác nhận lại tình trạng nhận hàng."
+            : "Đơn không có sự cố giao hàng đang chờ xử lý hoặc ghi chú không hợp lệ (tối đa 500 ký tự).";
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    [HttpPost("RecordCodSettlement")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RecordCodSettlement(int id, decimal amount, string reference)
+    {
+        var saved = await _orderAssurance.RecordCodSettlementAsync(id, User.Identity?.Name ?? "Admin", amount, reference);
+        TempData[saved ? "Success" : "Error"] = saved
+            ? "Đã ghi nhận shop nhận tiền COD theo đối soát."
+            : "Chỉ ghi nhận một lần cho đơn COD đã giao. Số tiền phải lớn hơn 0, không vượt tổng đơn và cần mã đối soát.";
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    [HttpPost("ResolveRefundIssue")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResolveRefundIssue(int id, string note)
+    {
+        var saved = await _orderAssurance.ResolveRefundIssueAsync(id, User.Identity?.Name ?? "Admin", note);
+        TempData[saved ? "Success" : "Error"] = saved
+            ? "Đã gửi phản hồi. Khách có thể xác nhận lại khoản hoàn tiền."
+            : "Đơn không có sự cố hoàn tiền đang chờ xử lý hoặc ghi chú không hợp lệ (tối đa 500 ký tự).";
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
     [HttpPost("IssueInvoice")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> IssueInvoice(int id)
@@ -161,7 +208,8 @@ public class AdminOrderController : Controller
         var model = await _orderService.GetOrdersAsync(status, customer, fromDate, toDate, paginate: false);
         var csv = new StringBuilder();
         csv.AppendLine(CsvFormatter.Row("MaDon", "KhachHang", "Email", "TrangThai", "HoanTien", "TongTien", "NgayDat", "VanChuyen", "MaVanDon",
-            "KenhHoanTien", "MaDoiSoat", "SoTienDaHoan", "NguoiXacNhanHoan", "XacNhanHoanLuc"));
+            "KenhHoanTien", "MaDoiSoat", "SoTienDaHoan", "NguoiXacNhanHoan", "XacNhanHoanLuc",
+            "KhachXacNhanNhanHang", "KhachXacNhanNhanTienHoan", "CODShopDoiSoatLuc", "CODShopThucNhan", "MaDoiSoatCOD"));
         foreach (var order in model.Orders)
         {
             csv.AppendLine(CsvFormatter.Row(
@@ -174,7 +222,10 @@ public class AdminOrderController : Controller
                 order.CreatedAt,
                 order.ShippingInfo?.Carrier,
                 order.ShippingInfo?.TrackingCode,
-                order.RefundMethod, order.RefundReference, order.RefundAmount, order.RefundConfirmedBy, order.RefundedAt));
+                order.RefundMethod, order.RefundReference, order.RefundAmount, order.RefundConfirmedBy, order.RefundedAt,
+                order.Status == OrderStatuses.Delivered ? order.CustomerReceiptStatus : null,
+                order.RefundStatus == RefundStatuses.Refunded ? order.RefundReceiptStatus : null,
+                order.CodSettledAt, order.CodSettlementAmount, order.CodSettlementReference));
         }
 
         return File(Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(csv.ToString())).ToArray(), "text/csv", $"don-hang-{DateTime.Now:yyyyMMddHHmm}.csv");

@@ -20,26 +20,30 @@
             <dt>Người nhận</dt><dd>@Model.RecipientName - @Model.RecipientPhone</dd>
             <dt>Địa chỉ</dt><dd>@Model.ShippingAddress</dd>
             <dt>Thanh toán</dt><dd>@Model.PaymentMethod</dd>
-            <dt>Trạng thái thanh toán</dt><dd><span class="admin-pill @(Model.IsPaid ? "success" : "warning")">@(Model.IsPaid ? "Đã thanh toán" : isCod ? "Chưa thu COD" : "Chưa thanh toán")</span></dd>
+            <dt>Trạng thái thanh toán</dt><dd><span class="admin-pill @(Model.IsPaid ? "success" : "warning")">@(Model.IsPaid ? isCod ? "Đã thu COD khi giao" : "VNPAY đã thanh toán" : isCod ? "Chưa thu COD" : "Chưa thanh toán")</span></dd>
             @if (Model.PaidAt.HasValue)
             {
                 <dt>Thanh toán lúc</dt><dd>@Model.PaidAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
             }
-            <dt>Hoàn tiền</dt><dd><span class="admin-pill @(Model.RefundStatus == RefundStatuses.PendingManual ? "warning" : Model.RefundStatus == RefundStatuses.Refunded ? "success" : "")">@refundLabel</span></dd>
+            <dt>Hoàn tiền</dt><dd><span class="admin-pill @(Model.RefundStatus == RefundStatuses.PendingManual || Model.RefundStatus == RefundStatuses.Refunded && Model.RefundReceiptStatus != ReceiptStatuses.Confirmed ? "warning" : Model.RefundStatus == RefundStatuses.Refunded ? "success" : "")">@(Model.RefundStatus == RefundStatuses.Refunded ? "Shop ghi nhận đã chuyển tiền hoàn" : refundLabel)</span></dd>
             @if (Model.RefundRequestedAt.HasValue)
             {
                 <dt>Yêu cầu hoàn</dt><dd>@Model.RefundRequestedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
             }
             @if (Model.RefundedAt.HasValue)
             {
-                <dt>Xác nhận hoàn lúc</dt><dd>@Model.RefundedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+                <dt>Shop ghi nhận chuyển lúc</dt><dd>@Model.RefundedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
             }
             @if (Model.RefundAmount.HasValue)
             {
-                <dt>Số tiền đã hoàn</dt><dd>@Model.RefundAmount.Value.ToString("N0") ₫</dd>
+                <dt>Số tiền shop ghi nhận chuyển</dt><dd>@Model.RefundAmount.Value.ToString("N0") ₫</dd>
                 <dt>Kênh đã hoàn</dt><dd>@Model.RefundMethod</dd>
                 <dt>Mã đối soát</dt><dd>@Model.RefundReference</dd>
                 <dt>Người xác nhận</dt><dd>@Model.RefundConfirmedBy</dd>
+            }
+            @if (Model.RefundStatus == RefundStatuses.Refunded)
+            {
+                <dt>Khách xác nhận tiền về</dt><dd>@Model.RefundReceiptStatus</dd>
             }
             @if (!string.IsNullOrWhiteSpace(Model.RefundNote))
             {
@@ -65,7 +69,7 @@
         @if (canRecordRefund)
         {
             <details class="admin-refund" open="@(Model.RefundStatus == RefundStatuses.PendingManual)">
-                <summary>Ghi nhận khoản đã hoàn thủ công</summary>
+                <summary>Ghi nhận khoản đã chuyển hoàn thủ công</summary>
             <form asp-action="MarkRefunded" method="post" class="stack-form admin-refund-form">
                 <input type="hidden" name="id" value="@Model.Id" />
                 <p class="form-hint">@(isCod ? "Hoàn tiền cho khách bằng chuyển khoản ngân hàng hoặc tiền mặt trước, sau đó lưu thông tin đối soát tại đây." : "Thực hiện hoàn tiền qua VNPAY, chuyển khoản ngân hàng hoặc tiền mặt trước, sau đó lưu thông tin đối soát tại đây.")</p>
@@ -87,13 +91,107 @@
                 <label for="refund-note">Lý do hoàn tiền và ghi chú đối soát@(Model.Status == OrderStatuses.Delivered ? " (bắt buộc)" : "")</label>
                 <textarea id="refund-note" name="note" rows="3" maxlength="500" required="@(Model.Status == OrderStatuses.Delivered)" placeholder="Lý do hoàn tiền và thông tin để đối soát"></textarea>
                 <label class="check-row"><input type="checkbox" name="confirmed" value="true" required /> Tôi xác nhận đã hoàn đủ @Model.TotalAmount.ToString("N0") ₫ cho khách hàng.</label>
-                <button class="admin-button" type="submit">Lưu xác nhận đã hoàn tiền</button>
+                <button class="admin-button" type="submit">Ghi nhận đã chuyển tiền hoàn</button>
             </form>
             </details>
         }
         else if (isCod && !Model.IsPaid && Model.Status != OrderStatuses.Cancelled)
         {
             <p class="form-hint">COD chưa thu tiền nên chưa có khoản để hoàn. Mục ghi nhận hoàn tiền sẽ mở khi đơn đã giao thành công và đã thu tiền.</p>
+        }
+    </div>
+    <div class="admin-panel admin-assurance-panel">
+        <div class="panel-head"><h2>Xác nhận giao dịch</h2></div>
+        @if (Model.Status == OrderStatuses.Delivered)
+        {
+            <div class="admin-assurance-block">
+                <div class="admin-assurance-line"><strong>Khách nhận hàng</strong><span class="admin-pill @(Model.CustomerReceiptStatus == ReceiptStatuses.Issue ? "danger" : Model.CustomerReceiptStatus == ReceiptStatuses.Confirmed ? "success" : "warning")">@Model.CustomerReceiptStatus</span></div>
+                <p>Trạng thái giao thành công và xác nhận của khách được theo dõi riêng.</p>
+                @if (Model.CustomerReceiptConfirmedAt.HasValue)
+                {
+                    <p>Khách xác nhận lúc @Model.CustomerReceiptConfirmedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm").</p>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.DeliveryProofUrl))
+                {
+                    <a href="@Model.DeliveryProofUrl" target="_blank" rel="noopener noreferrer">Xem chứng từ giao hàng</a>
+                }
+                <form asp-action="RecordDeliveryProof" method="post" class="stack-form">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <label for="delivery-proof">Liên kết HTTPS tới chứng từ giao hàng</label>
+                    <input id="delivery-proof" name="url" type="url" value="@Model.DeliveryProofUrl" maxlength="500" required />
+                    <button class="admin-button secondary" type="submit">Lưu chứng từ</button>
+                </form>
+                @if (Model.CustomerReceiptStatus == ReceiptStatuses.Issue)
+                {
+                    <p class="admin-assurance-issue"><strong>Khách báo:</strong> @Model.CustomerReceiptIssue</p>
+                    <form asp-action="ResolveDeliveryIssue" method="post" class="stack-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <label for="delivery-resolution">Phản hồi sau khi kiểm tra</label>
+                        <textarea id="delivery-resolution" name="note" maxlength="500" rows="3" required></textarea>
+                        <button class="admin-button" type="submit">Gửi phản hồi và mở xác nhận lại</button>
+                    </form>
+                }
+            </div>
+        }
+        @if (isCod && Model.Status == OrderStatuses.Delivered)
+        {
+            <div class="admin-assurance-block">
+                <div class="admin-assurance-line"><strong>Tiền COD về shop</strong><span class="admin-pill @(Model.CodSettledAt.HasValue ? "success" : "warning")">@(Model.CodSettledAt.HasValue ? "Shop đã ghi nhận đối soát" : "Chờ đối soát")</span></div>
+                @if (Model.CodSettledAt.HasValue)
+                {
+                    <p>@Model.CodSettlementAmount?.ToString("N0") ₫ · @Model.CodSettlementReference · @Model.CodSettledAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+                }
+                else
+                {
+                    <p>Chỉ ghi nhận sau khi kiểm tra tiền thực nhận và mã phiên đối soát GHN.</p>
+                    <form asp-action="RecordCodSettlement" method="post" class="stack-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <label for="cod-settlement-amount">Số tiền shop thực nhận (₫)</label>
+                        <input id="cod-settlement-amount" name="amount" type="number" min="1" max="@decimal.Truncate(Model.TotalAmount).ToString(System.Globalization.CultureInfo.InvariantCulture)" step="1" required />
+                        <label for="cod-settlement-reference">Mã phiên đối soát / sao kê</label>
+                        <input id="cod-settlement-reference" name="reference" maxlength="120" required />
+                        <button class="admin-button" type="submit">Ghi nhận đã nhận COD</button>
+                    </form>
+                }
+            </div>
+        }
+        @if (Model.RefundStatus == RefundStatuses.Refunded)
+        {
+            <div class="admin-assurance-block">
+                <div class="admin-assurance-line"><strong>Khách nhận tiền hoàn</strong><span class="admin-pill @(Model.RefundReceiptStatus == ReceiptStatuses.Issue ? "danger" : Model.RefundReceiptStatus == ReceiptStatuses.Confirmed ? "success" : "warning")">@Model.RefundReceiptStatus</span></div>
+                @if (Model.RefundReceiptConfirmedAt.HasValue)
+                {
+                    <p>Khách xác nhận lúc @Model.RefundReceiptConfirmedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm").</p>
+                }
+                @if (Model.RefundReceiptStatus == ReceiptStatuses.Issue)
+                {
+                    <p class="admin-assurance-issue"><strong>Khách báo:</strong> @Model.RefundReceiptIssue</p>
+                    <form asp-action="ResolveRefundIssue" method="post" class="stack-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <label for="refund-resolution">Phản hồi sau khi đối soát</label>
+                        <textarea id="refund-resolution" name="note" maxlength="500" rows="3" required></textarea>
+                        <button class="admin-button" type="submit">Gửi phản hồi và mở xác nhận lại</button>
+                    </form>
+                }
+            </div>
+        }
+        @if (Model.AssuranceEvents.Any())
+        {
+            <div class="admin-assurance-block">
+                <strong>Lịch sử xác nhận</strong>
+                <ol class="admin-assurance-history">
+                    @foreach (var entry in Model.AssuranceEvents.OrderByDescending(entry => entry.CreatedAt))
+                    {
+                        <li><strong>@entry.Type</strong><time>@entry.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</time>
+                            @if (!string.IsNullOrWhiteSpace(entry.Detail)) { <small>@entry.Detail</small> }
+                        </li>
+                    }
+                </ol>
+            </div>
         }
     </div>
     <div class="admin-panel">

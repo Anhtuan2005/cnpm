@@ -28,7 +28,7 @@ public static class OrderEmailTemplate
         {
             _ when status == OrderStatuses.Confirmed => "Đơn hàng của bạn đã được xác nhận và đang được chuẩn bị.",
             _ when status == OrderStatuses.Shipping => "Đơn hàng đã được bàn giao cho đơn vị vận chuyển.",
-            _ when status == OrderStatuses.Delivered => "Đơn hàng đã được giao thành công. Cảm ơn bạn đã mua sắm tại Techvora.",
+            _ when status == OrderStatuses.Delivered => "Đơn hàng được ghi nhận giao thành công. Vui lòng mở chi tiết đơn để xác nhận đã nhận hàng hoặc báo sự cố.",
             _ when status == OrderStatuses.Cancelled => "Đơn hàng đã được huỷ theo trạng thái mới nhất.",
             _ => "Đơn hàng của bạn vừa có cập nhật trạng thái."
         };
@@ -53,9 +53,9 @@ public static class OrderEmailTemplate
         return (subject, Layout(
             order,
             "Đã ghi nhận hoàn tiền",
-            "Techvora đã đánh dấu đơn hàng là đã hoàn tiền. Nếu bạn cần đối soát thêm, vui lòng liên hệ bộ phận hỗ trợ.",
+            "Techvora đã ghi nhận việc chuyển tiền hoàn. Vui lòng kiểm tra tài khoản và xác nhận đã nhận tiền trong chi tiết đơn hàng; nếu chưa nhận được, hãy báo sự cố tại đó.",
             "Trạng thái hoàn tiền",
-            order.RefundStatus));
+            "Shop ghi nhận chuyển tiền, chờ khách xác nhận"));
     }
 
     private static string Layout(Order order, string title, string lead, string badgeLabel, string badgeValue)

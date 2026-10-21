@@ -12,6 +12,7 @@ namespace EcommerceApp.Controllers;
 public class OrderController : Controller
 {
     private readonly IOrderService _orderService;
+    private readonly IOrderAssuranceService _orderAssurance;
     private readonly ICartService _cartService;
     private readonly IShippingFeeService _shippingFeeService;
     private readonly IVnpayService _vnpayService;
@@ -23,6 +24,7 @@ public class OrderController : Controller
 
     public OrderController(
         IOrderService orderService,
+        IOrderAssuranceService orderAssurance,
         ICartService cartService,
         IShippingFeeService shippingFeeService,
         IVnpayService vnpayService,
@@ -33,6 +35,7 @@ public class OrderController : Controller
         ILogger<OrderController> logger)
     {
         _orderService = orderService;
+        _orderAssurance = orderAssurance;
         _cartService = cartService;
         _shippingFeeService = shippingFeeService;
         _vnpayService = vnpayService;
@@ -268,6 +271,32 @@ public class OrderController : Controller
         }
 
         return View(order);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [MinimumSprint(2)]
+    public async Task<IActionResult> DeliveryReceipt(int id, bool received, string? reason)
+    {
+        var saved = await _orderAssurance.SetDeliveryReceiptAsync(id,
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!, received, reason);
+        TempData[saved ? "Success" : "Error"] = saved
+            ? received ? "Đã ghi nhận bạn nhận được hàng." : "Đã gửi báo cáo giao hàng để shop kiểm tra."
+            : "Không thể cập nhật. Đơn phải đã giao, đang chờ xác nhận; nếu báo sự cố, hãy nhập lý do tối đa 500 ký tự.";
+        return RedirectToAction(nameof(Detail), new { id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [MinimumSprint(2)]
+    public async Task<IActionResult> RefundReceipt(int id, bool received, string? reason)
+    {
+        var saved = await _orderAssurance.SetRefundReceiptAsync(id,
+            User.FindFirstValue(ClaimTypes.NameIdentifier)!, received, reason);
+        TempData[saved ? "Success" : "Error"] = saved
+            ? received ? "Đã ghi nhận bạn nhận được tiền hoàn." : "Đã báo shop kiểm tra khoản hoàn tiền."
+            : "Không thể cập nhật. Khoản hoàn phải đã được shop ghi nhận, đang chờ xác nhận; nếu báo sự cố, hãy nhập lý do tối đa 500 ký tự.";
+        return RedirectToAction(nameof(Detail), new { id });
     }
 
     [HttpPost]
