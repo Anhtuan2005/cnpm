@@ -31,6 +31,8 @@ public class WishlistController : Controller
         var query = _db.WishlistItems
             .Include(item => item.Product)
             .ThenInclude(product => product!.Category)
+            .Include(item => item.Product)
+            .ThenInclude(product => product!.Images)
             .Where(item => item.UserId == userId);
         if (_catalogScope is not null)
             query = query.Where(item => item.Product != null && item.Product.Category != null

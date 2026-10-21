@@ -12,6 +12,9 @@ public class ProductSpecService : IProductSpecService
 {
     public IReadOnlyList<ProductSpecViewModel> Build(Product product)
     {
+        if (product.PhoneSpecificationsJson is not null && PhoneCatalogScope.IsPhoneSlug(product.Category?.Slug))
+            return PhoneSpecificationFields.Read(product.PhoneSpecificationsJson);
+
         var specs = BuildPresentationSpecs(product).ToList();
         var socket = product.Socket?.ToString().ToUpperInvariant() ?? "Chưa xác định";
         var memory = product.MemoryType?.ToString().ToUpperInvariant() ?? "Chưa xác định";
@@ -45,17 +48,7 @@ public class ProductSpecService : IProductSpecService
 
         if (slug == PhoneCatalogScope.RootSlug || slug.StartsWith("dien-thoai-", StringComparison.Ordinal))
         {
-            return new[]
-            {
-                Spec("Hãng sản xuất", brand),
-                Spec("Bảo hành", "12 tháng"),
-                Spec("Màn hình", "OLED/AMOLED 120Hz"),
-                Spec("Chip xử lý", "Chip di động hiệu năng cao"),
-                Spec("RAM / Bộ nhớ", "8GB-12GB RAM, 128GB-256GB lưu trữ"),
-                Spec("Camera sau", "Camera AI nhiều ống kính"),
-                Spec("Pin và sạc", "Pin dùng cả ngày, hỗ trợ sạc nhanh"),
-                Spec("Hệ điều hành", normalizedName.Contains("iphone") ? "iOS" : "Android")
-            };
+            return PhoneSpecificationFields.Read("{}");
         }
 
         return slug switch
@@ -229,12 +222,24 @@ public class ProductSpecService : IProductSpecService
 
         if (normalizedName.Contains("vivo v30"))
         {
-            return PhoneSpecs("Vivo", "6.78 inch AMOLED cong, 120Hz", "Snapdragon 7 Gen 3", "12GB RAM, 256GB lưu trữ", "Camera 50MP, selfie 50MP", "5000mAh, sạc nhanh 80W");
+            var specs = PhoneSpecs("Vivo", "6.78 inch AMOLED cong, 2800 × 1260, 120Hz", "Snapdragon 7 Gen 3", "12GB RAM, 256GB lưu trữ",
+                "50MP OIS chính, 50MP ultra-wide AF; selfie 50MP AF", "5000mAh, sạc nhanh 80W").ToList();
+            specs.Add(Spec("Camera chính", "50MP OIS"));
+            specs.Add(Spec("Camera trước", "50MP AF"));
+            specs.Add(Spec("Camera telephoto", "Không có"));
+            specs.Add(Spec("Camera góc siêu rộng", "50MP AF"));
+            return specs;
         }
 
         if (normalizedName.Contains("realme 12 pro"))
         {
-            return PhoneSpecs("Realme", "6.7 inch AMOLED cong, 120Hz", "Snapdragon 6 Gen 1", "8GB RAM, 256GB lưu trữ", "50MP OIS, telephoto chân dung", "5000mAh, sạc nhanh 67W");
+            var specs = PhoneSpecs("Realme", "6.7 inch AMOLED cong, 2412 × 1080, 120Hz", "Snapdragon 6 Gen 1", "8GB RAM, 256GB lưu trữ",
+                "50MP OIS chính, 32MP telephoto chân dung 2x, 8MP ultra-wide; selfie 16MP", "5000mAh, sạc nhanh 67W").ToList();
+            specs.Add(Spec("Camera chính", "50MP OIS"));
+            specs.Add(Spec("Camera trước", "16MP"));
+            specs.Add(Spec("Camera telephoto", "32MP, zoom quang học 2x"));
+            specs.Add(Spec("Camera góc siêu rộng", "8MP"));
+            return specs;
         }
 
         if (normalizedName.Contains("google pixel 8"))

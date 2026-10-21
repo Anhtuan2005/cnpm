@@ -279,7 +279,7 @@ public class OrderController : Controller
         var cancelled = await _orderService.CancelUserOrderAsync(id, userId, reason);
         if (!cancelled)
         {
-            TempData["Error"] = "Chỉ có thể huỷ đơn đang chờ thanh toán hoặc chờ xác nhận.";
+            TempData["Error"] = "Chỉ có thể huỷ đơn chưa bàn giao vận chuyển. Lý do huỷ không vượt quá 300 ký tự.";
             return RedirectToAction(nameof(History));
         }
 

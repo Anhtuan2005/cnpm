@@ -49,6 +49,7 @@ public class ProductFormViewModel : IValidatableObject
     [Range(1, int.MaxValue, ErrorMessage = "Vui lòng chọn danh mục")]
     public int CategoryId { get; set; }
     public bool IsFeatured { get; set; }
+    public Dictionary<string, string?> Specifications { get; set; } = new();
     [EnumDataType(typeof(CpuSocket))]
     public CpuSocket? Socket { get; set; }
     [EnumDataType(typeof(MemoryStandard))]
@@ -60,6 +61,14 @@ public class ProductFormViewModel : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        foreach (var (key, value) in Specifications)
+        {
+            if (!Services.PhoneSpecificationFields.All.Any(field => field.Key == key))
+                yield return new ValidationResult("Thông số sản phẩm không hợp lệ", new[] { nameof(Specifications) });
+            else if (value?.Length > 200)
+                yield return new ValidationResult("Thông số không được vượt quá 200 ký tự", new[] { $"Specifications[{key}]" });
+        }
+
         const decimal maxDatabaseAmount = 9_999_999_999_999_999.99m;
         if (Price > maxDatabaseAmount)
         {

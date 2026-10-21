@@ -7,7 +7,7 @@ namespace EcommerceApp.Services;
 
 public class ShippingService : IShippingService
 {
-    private const string GhnCarrierName = "Giao Hàng Nhanh";
+    private const string GhnCarrierName = ShippingCarriers.Ghn;
 
     private readonly AppDbContext _db;
     private readonly IOrderEmailService _orderEmailService;
@@ -29,16 +29,16 @@ public class ShippingService : IShippingService
 
     private async Task<bool> SaveTrackingAsync(int orderId, string? carrier, string? trackingCode, DateTime? estimatedDelivery)
     {
-        if (carrier?.Length > 80 || trackingCode?.Length > 80) return false;
+        if ((!string.IsNullOrWhiteSpace(carrier) && carrier.Trim() != GhnCarrierName) || trackingCode?.Length > 80) return false;
         var order = await DatabaseTransaction.ExecuteAsync<Order?>(_db, async () =>
         {
             var current = await OrderLifecycle.LoadForUpdateAsync(_db, orderId);
             var status = string.IsNullOrWhiteSpace(trackingCode) ? ShippingStatuses.WaitingPickup : ShippingStatuses.InTransit;
             if (current is null || !OrderLifecycle.CanApplyShipment(current, status)) return null;
             current.ShippingInfo ??= new ShippingInfo { OrderId = orderId };
-            current.ShippingInfo.Carrier = string.IsNullOrWhiteSpace(carrier)
-                ? (string.IsNullOrWhiteSpace(current.ShippingInfo.Carrier) ? "Techvora Express" : current.ShippingInfo.Carrier)
-                : carrier.Trim();
+            if (!string.IsNullOrWhiteSpace(current.ShippingInfo.Carrier) && current.ShippingInfo.Carrier != GhnCarrierName)
+                return null;
+            current.ShippingInfo.Carrier = GhnCarrierName;
             current.ShippingInfo.TrackingCode = trackingCode?.Trim() ?? "";
             if (estimatedDelivery.HasValue) current.ShippingInfo.EstimatedDelivery = estimatedDelivery;
             current.ShippingInfo.ShippedAt ??= DateTime.UtcNow;
@@ -66,6 +66,7 @@ public class ShippingService : IShippingService
             current.ShippingInfo.Status = status;
             if (status == ShippingStatuses.Delivered) current.Status = OrderStatuses.Delivered;
             current.UpdatedAt = DateTime.UtcNow;
+            OrderLifecycle.RecordCodCollection(current, current.UpdatedAt);
             await _db.SaveChangesAsync();
             return current;
         });

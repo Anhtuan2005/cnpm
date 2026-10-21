@@ -28,6 +28,8 @@ public class Product
     public bool IsFeatured { get; set; }
     public bool IsDeleted { get; set; }
 
+    public string? PhoneSpecificationsJson { get; set; }
+
     [EnumDataType(typeof(CpuSocket))]
     public CpuSocket? Socket { get; set; }
 

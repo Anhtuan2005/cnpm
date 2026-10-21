@@ -7,6 +7,7 @@ Hồ sơ này dùng cho hai phiếu LAB 4.1 và LAB 4.2 của dự án Techvora.
 | Phiếu LAB 4.1 đã điền | [LAB4.1-Techvora.docx](LAB4.1-Techvora.docx) |
 | Phiếu LAB 4.2 đã điền | [LAB4.2-Techvora.docx](LAB4.2-Techvora.docx) |
 | Backlog, Acceptance Criteria và phân công | [Sprint 1](sprint-1.md#sprint-backlog) · [Sprint 2](sprint-2.md#sprint-backlog) |
+| Kịch bản Planning Poker Sprint 2 | [Kịch bản cho buổi 18/10/2026](planning-poker-sprint-2-2026-10-18.md) |
 | Test report, lỗi và kiểm thử hồi quy | [Sprint 1](sprint-1.md#kiểm-thử-và-lỗi) · [Sprint 2](sprint-2.md#kiểm-thử-và-lỗi) |
 | Kết quả chạy test mới | [110 backend và 22 browser smoke](test-run-2026-10-14.md) |
 | Demo và chạy local | [README dự án](../../README.md#demo-local) · [Kịch bản demo](../user-guide/demo.md) |

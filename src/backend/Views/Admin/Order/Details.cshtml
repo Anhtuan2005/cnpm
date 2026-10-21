@@ -3,6 +3,10 @@
     Layout = "_AdminLayout";
     ViewData["Title"] = $"Đơn hàng #{Model.Id}";
     var hasInvoice = !string.IsNullOrWhiteSpace(Model.InvoiceFkey) && Model.InvoiceStatus != InvoiceStatuses.NotIssued;
+    var canRecordRefund = EcommerceApp.Services.OrderLifecycle.CanRecordManualRefund(Model);
+    var isCod = string.Equals(Model.PaymentMethod, "COD", StringComparison.OrdinalIgnoreCase);
+    var refundLabel = canRecordRefund && Model.RefundStatus == RefundStatuses.NotRequired
+        ? "Chưa ghi nhận hoàn tiền" : Model.RefundStatus;
 }
 
 <section class="admin-grid">
@@ -16,14 +20,26 @@
             <dt>Người nhận</dt><dd>@Model.RecipientName - @Model.RecipientPhone</dd>
             <dt>Địa chỉ</dt><dd>@Model.ShippingAddress</dd>
             <dt>Thanh toán</dt><dd>@Model.PaymentMethod</dd>
-            <dt>Hoàn tiền</dt><dd><span class="admin-pill @(Model.RefundStatus == RefundStatuses.PendingManual ? "warning" : Model.RefundStatus == RefundStatuses.Refunded ? "success" : "")">@Model.RefundStatus</span></dd>
+            <dt>Trạng thái thanh toán</dt><dd><span class="admin-pill @(Model.IsPaid ? "success" : "warning")">@(Model.IsPaid ? "Đã thanh toán" : isCod ? "Chưa thu COD" : "Chưa thanh toán")</span></dd>
+            @if (Model.PaidAt.HasValue)
+            {
+                <dt>Thanh toán lúc</dt><dd>@Model.PaidAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+            }
+            <dt>Hoàn tiền</dt><dd><span class="admin-pill @(Model.RefundStatus == RefundStatuses.PendingManual ? "warning" : Model.RefundStatus == RefundStatuses.Refunded ? "success" : "")">@refundLabel</span></dd>
             @if (Model.RefundRequestedAt.HasValue)
             {
                 <dt>Yêu cầu hoàn</dt><dd>@Model.RefundRequestedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
             }
             @if (Model.RefundedAt.HasValue)
             {
-                <dt>Đã hoàn lúc</dt><dd>@Model.RefundedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+                <dt>Xác nhận hoàn lúc</dt><dd>@Model.RefundedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+            }
+            @if (Model.RefundAmount.HasValue)
+            {
+                <dt>Số tiền đã hoàn</dt><dd>@Model.RefundAmount.Value.ToString("N0") ₫</dd>
+                <dt>Kênh đã hoàn</dt><dd>@Model.RefundMethod</dd>
+                <dt>Mã đối soát</dt><dd>@Model.RefundReference</dd>
+                <dt>Người xác nhận</dt><dd>@Model.RefundConfirmedBy</dd>
             }
             @if (!string.IsNullOrWhiteSpace(Model.RefundNote))
             {
@@ -46,14 +62,38 @@
             </select>
             <button class="admin-button" type="submit">Cập nhật trạng thái</button>
         </form>
-        @if (Model.RefundStatus == RefundStatuses.PendingManual)
+        @if (canRecordRefund)
         {
-            <form asp-action="MarkRefunded" method="post" class="stack-form">
+            <details class="admin-refund" open="@(Model.RefundStatus == RefundStatuses.PendingManual)">
+                <summary>Ghi nhận khoản đã hoàn thủ công</summary>
+            <form asp-action="MarkRefunded" method="post" class="stack-form admin-refund-form">
                 <input type="hidden" name="id" value="@Model.Id" />
-                <label for="refund-note">Ghi chú hoàn tiền thủ công</label>
-                <textarea id="refund-note" name="note" rows="3" placeholder="VD: Đã hoàn qua VNPAY/manual banking, mã đối soát...">@Model.RefundNote</textarea>
-                <button class="admin-button" type="submit">Đánh dấu đã hoàn tiền</button>
+                <p class="form-hint">@(isCod ? "Hoàn tiền cho khách bằng chuyển khoản ngân hàng hoặc tiền mặt trước, sau đó lưu thông tin đối soát tại đây." : "Thực hiện hoàn tiền qua VNPAY, chuyển khoản ngân hàng hoặc tiền mặt trước, sau đó lưu thông tin đối soát tại đây.")</p>
+                <div class="refund-amount">Số tiền ghi nhận hoàn <strong>@Model.TotalAmount.ToString("N0") ₫</strong></div>
+                @if (!string.IsNullOrWhiteSpace(Model.VnpayTransactionId))
+                {
+                    <p class="form-hint">Mã giao dịch thanh toán gốc: @Model.VnpayTransactionId</p>
+                }
+                <label for="refund-method">Kênh đã hoàn tiền</label>
+                <select id="refund-method" name="method" required>
+                    <option value="">Chọn kênh đã hoàn tiền</option>
+                    @foreach (var method in ManualRefundMethods.ForPaymentMethod(Model.PaymentMethod))
+                    {
+                        <option value="@method">@method</option>
+                    }
+                </select>
+                <label for="refund-reference">Mã giao dịch hoàn tiền / mã biên nhận</label>
+                <input id="refund-reference" name="reference" required maxlength="120" autocomplete="off" />
+                <label for="refund-note">Lý do hoàn tiền và ghi chú đối soát@(Model.Status == OrderStatuses.Delivered ? " (bắt buộc)" : "")</label>
+                <textarea id="refund-note" name="note" rows="3" maxlength="500" required="@(Model.Status == OrderStatuses.Delivered)" placeholder="Lý do hoàn tiền và thông tin để đối soát"></textarea>
+                <label class="check-row"><input type="checkbox" name="confirmed" value="true" required /> Tôi xác nhận đã hoàn đủ @Model.TotalAmount.ToString("N0") ₫ cho khách hàng.</label>
+                <button class="admin-button" type="submit">Lưu xác nhận đã hoàn tiền</button>
             </form>
+            </details>
+        }
+        else if (isCod && !Model.IsPaid && Model.Status != OrderStatuses.Cancelled)
+        {
+            <p class="form-hint">COD chưa thu tiền nên chưa có khoản để hoàn. Mục ghi nhận hoàn tiền sẽ mở khi đơn đã giao thành công và đã thu tiền.</p>
         }
     </div>
     <div class="admin-panel">
@@ -65,12 +105,7 @@
         <form asp-action="AssignShipping" method="post" class="stack-form">
             <input type="hidden" name="id" value="@Model.Id" />
             <label for="shipping-carrier">Đơn vị vận chuyển</label>
-            <select id="shipping-carrier" name="carrier">
-                @foreach (var carrier in new[] { "Giao Hàng Nhanh", "Giao Hàng Tiết Kiệm", "Viettel Post", "VNPost" })
-                {
-                    <option value="@carrier" selected="@(Model.ShippingInfo?.Carrier == carrier)">@carrier</option>
-                }
-            </select>
+            <input id="shipping-carrier" name="carrier" value="@ShippingCarriers.Ghn" readonly />
             <label for="tracking-code">Mã vận đơn</label>
             <input id="tracking-code" name="trackingCode" value="@Model.ShippingInfo?.TrackingCode" maxlength="80" />
             <label for="estimated-delivery">Dự kiến giao</label>

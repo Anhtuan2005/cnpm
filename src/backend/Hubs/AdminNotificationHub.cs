@@ -28,3 +28,8 @@ public sealed record AdminOrderCreatedMessage(
     decimal TotalAmount,
     DateTime CreatedAt,
     string Url);
+
+public sealed record AdminReviewCreatedMessage(
+    int Id,
+    int ProductId,
+    string Url);

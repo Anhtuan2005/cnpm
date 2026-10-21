@@ -106,12 +106,15 @@
                                         <button class="btn-primary" type="submit">Thanh toán VNPAY</button>
                                     </form>
                                 }
-                                @if (order.Status == OrderStatuses.AwaitingPayment || order.Status == OrderStatuses.Pending)
+                                @if (EcommerceApp.Services.OrderLifecycle.CanCustomerCancel(order))
                                 {
-                                    <form asp-action="Cancel" method="post">
+                                    <form asp-action="Cancel" method="post" data-order-cancel-form data-order-code="#DH@(order.Id.ToString("D4"))" onsubmit="return confirm('Huỷ đơn hàng #DH@(order.Id.ToString("D4"))?')">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@order.Id" />
-                                        <button class="btn-ghost danger" type="submit" onclick="return confirm('Huỷ đơn hàng #DH@(order.Id.ToString("D4"))?')">Huỷ đơn</button>
+                                        <button class="btn-ghost danger order-cancel-trigger" type="submit">
+                                            <i data-lucide="circle-x" aria-hidden="true"></i>
+                                            Huỷ đơn
+                                        </button>
                                     </form>
                                 }
                             }
@@ -132,6 +135,8 @@
         }
     }
 </section>
+
+<partial name="_OrderCancelDialog" />
 
 @functions {
     private static string StatusClass(string status)

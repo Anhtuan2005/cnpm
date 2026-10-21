@@ -18,11 +18,11 @@ Bảng dưới đây giữ nguyên 12 User Story Sprint 2 mà nhóm gửi. `AC` 
 | US-05 | Cao | Điều chỉnh tồn kho có lịch sử; không ghi đè giao dịch bán đồng thời. | Chưa chốt | Chưa chốt | Có mã ở Sprint 2 |
 | US-10 | Cao | Admin cập nhật trạng thái đơn, hoàn tiền, hóa đơn và CSV; giữ đúng vòng đời đơn. | Chưa chốt | Chưa chốt | Có mã ở Sprint 2 |
 | US-19 | Cao | Khách theo dõi tiến trình giao hàng và xem thông báo của mình. | Chưa chốt | Chưa chốt | Có mã ở Sprint 2 |
-| US-21 | Trung bình | Khách đã mua gửi đánh giá/ảnh hợp lệ; chờ admin duyệt. | Chưa chốt | Chưa chốt | Có mã ở Sprint 2 |
+| US-21 | Trung bình | Khách đã nhận hàng gửi đánh giá/ảnh hợp lệ; đánh giá hiển thị ngay sau khi gửi. | Chưa chốt | Chưa chốt | Có mã ở Sprint 2 |
 | US-23 | Trung bình | Gửi yêu cầu đổi trả/bảo hành trong giới hạn số lượng đã mua; admin xem từ đơn. | Chưa chốt | Chưa chốt | Có mã ở Sprint 2 |
 | US-22 | Trung bình | Dashboard hiển thị số liệu hợp lệ; admin nhận thông báo đơn mới. | Chưa chốt | Chưa chốt | Có mã ở Sprint 2 |
 | US-17 | Trung bình | Tạo, đồng bộ, theo dõi, hủy vận đơn GHN; callback không làm lùi trạng thái. | Chưa chốt | Chưa chốt | Có mã; cần sandbox để demo ngoài |
-| US-24 | Trung bình | Admin duyệt, từ chối hoặc xóa đánh giá theo quyền. | Chưa chốt | Chưa chốt | Có mã ở Sprint 2 |
+| US-24 | Trung bình | Cửa hàng trả lời công khai đánh giá; phản hồi hiển thị dưới đánh giá trên trang sản phẩm. | Cần ước lượng lại | Chưa chốt | Đang thay luồng kiểm duyệt bằng phản hồi hỗ trợ sau mua |
 | US-01 | Cao | Áp voucher hợp lệ; từ chối mã hết lượt/không đủ điều kiện, tránh dùng vượt lượt. | Chưa chốt | Chưa chốt | Có mã ở Sprint 2 |
 
 **Phạm vi báo cáo nên chọn sau khi nhóm chốt:** không nhận mặc định cả 12 story là đã nghiệm thu. Trước 21/10, chọn số story phù hợp năng lực nhóm, ước lượng và phân công; những story chưa được kiểm tra đủ Acceptance Criteria giữ trạng thái `In progress` hoặc `To do`. Có thể dùng US-04, US-15, US-13 và US-01 làm bốn luồng minh họa đầu tiên trong phiếu, rồi mở rộng khi nhóm xác nhận.
@@ -56,6 +56,8 @@ Bốn luồng minh họa đã có Issue chờ nhóm chốt: [US-04 #7](https://g
 
 **Kết quả hồi quy local 14/10/2026:** `dotnet test test/test-cases/EcommerceApp.Tests/EcommerceApp.Tests.csproj --configuration Debug --no-restore --verbosity minimal` → **110 pass, 0 fail, 0 skipped**, khoảng 11 giây chạy test (chưa tính build). `npm run test:smoke` từ `src/frontend/` trên Microsoft Edge và database demo riêng → **22 pass, 0 fail** trong 1,4 phút. [Bằng chứng và cách chạy](../user-guide/backend-tests.md). Không ghi giao dịch sandbox hoặc demo thủ công là `Pass` khi chưa chạy.
 
+**Cập nhật local 20/10/2026:** theo phản hồi về quyền của khách, bỏ bước chờ admin duyệt: đánh giá hợp lệ được công khai ngay. US-24 chuyển thành cửa hàng trả lời công khai để hỗ trợ khách sau mua; story này khác với quyền gửi đánh giá trong US-21. Kết quả **115 pass** được ghi nhận trước lần thay đổi này, nên chưa xác minh luồng phản hồi mới. Các migration `RemoveReviewModeration` và `AddStoreReviewReplies` cần được áp dụng cùng lần cập nhật database tiếp theo.
+
 **Bug Report:** lần chạy backend và browser không phát hiện lỗi mới. Chưa có GitHub Bug Issue được xác minh để điền mã BUG-01/BUG-02; nếu demo thủ công hoặc sandbox phát hiện lỗi, tạo Issue, ghi bước tái hiện, mức độ, commit sửa và kết quả retest.
 
 ## Quản lý phiên bản và minh chứng
@@ -69,7 +71,7 @@ Bốn luồng minh họa đã có Issue chờ nhóm chốt: [US-04 #7](https://g
 
 ## Sprint Review và Retrospective để nhóm xác nhận
 
-- **Demo đề xuất:** so sánh sản phẩm → checkout với voucher và chọn COD/VNPAY → hủy/mua lại → theo dõi giao hàng/đánh giá/yêu cầu hậu mãi → admin xem đơn, dashboard, tồn kho và duyệt review. VNPAY/GHN chỉ demo giao dịch thật khi có sandbox.
+- **Demo đề xuất:** so sánh sản phẩm → checkout với voucher và chọn COD/VNPAY → hủy/mua lại → theo dõi giao hàng, khách gửi đánh giá và admin trả lời công khai → gửi yêu cầu hậu mãi → admin xem đơn, dashboard và tồn kho. VNPAY/GHN chỉ demo giao dịch thật khi có sandbox.
 - **Điều làm tốt có bằng chứng:** mã Sprint 1–2 cùng chạy trong bản mặc định; bộ test SQL Server 110/110 và browser smoke 22/22 pass, gồm callback lặp, tranh chấp tồn kho và hồi quy giỏ/checkout.
 - **Khó khăn cần nhóm xác nhận:** bảng Sprint 2 chưa có người, điểm hoặc ngày; Issue/PR review theo story chưa có; tích hợp ngoài cần sandbox.
 - **Cải tiến đề xuất:** chốt scope/owner/SP trước buổi báo cáo, liên kết PR với Issue, nhờ người khác review và lưu test report của đúng commit được demo.

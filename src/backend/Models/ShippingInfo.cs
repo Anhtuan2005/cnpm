@@ -33,3 +33,8 @@ public static class ShippingStatuses
 
     public static readonly string[] All = { NotAssigned, WaitingPickup, InTransit, Delivered, Delayed, Returned, Cancelled };
 }
+
+public static class ShippingCarriers
+{
+    public const string Ghn = "Giao Hàng Nhanh";
+}

@@ -38,11 +38,11 @@ public static class OrderEmailTemplate
 
     public static (string Subject, string HtmlBody) RefundRequired(Order order)
     {
-        var subject = $"Đơn #DH{order.Id:D4} cần hoàn tiền VNPAY";
+        var subject = $"Đơn #DH{order.Id:D4} cần hoàn tiền";
         return (subject, Layout(
             order,
-            "Đơn VNPAY cần hoàn tiền",
-            "Đơn hàng đã thanh toán qua VNPAY và vừa bị huỷ. Techvora đã ghi nhận yêu cầu hoàn tiền để đội ngũ xử lý thủ công.",
+            "Đơn đã thanh toán cần hoàn tiền",
+            "Đơn hàng đã thanh toán và vừa bị huỷ. Techvora đã ghi nhận yêu cầu hoàn tiền để đội ngũ xử lý thủ công.",
             "Trạng thái hoàn tiền",
             order.RefundStatus));
     }

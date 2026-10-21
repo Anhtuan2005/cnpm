@@ -24,7 +24,7 @@ Trạng thái dưới đây tính theo bản chạy mặc định **Sprint 2** (
 - [x] **Tài khoản và mua sắm:** đăng ký, đăng nhập, hồ sơ, danh sách yêu thích, giỏ hàng khách/giỏ hàng tài khoản và mua ngay.
 - [x] **Đặt hàng:** địa chỉ và phí giao hàng, voucher, COD, luồng VNPAY, xác nhận đơn, lịch sử, hủy đơn và mua lại. VNPAY cần cấu hình sandbox để thử thanh toán ngoài hệ thống.
 - [x] **Hậu mãi:** theo dõi giao hàng, thông báo, đánh giá kèm ảnh và gửi yêu cầu đổi trả/bảo hành.
-- [x] **Quản trị:** quản lý danh mục, sản phẩm, banner, tồn kho và đơn hàng; dashboard, xử lý hoàn tiền, hóa đơn/CSV, tích hợp GHN và duyệt đánh giá. GHN cần thông tin sandbox để gọi dịch vụ ngoài.
+- [x] **Quản trị:** quản lý danh mục, sản phẩm, banner, tồn kho và đơn hàng; dashboard, xử lý hoàn tiền, hóa đơn/CSV, tích hợp GHN và phản hồi đánh giá công khai. GHN cần thông tin sandbox để gọi dịch vụ ngoài.
 
 ### Chưa phát hành — dự kiến làm tiếp
 
@@ -32,7 +32,7 @@ Trạng thái dưới đây tính theo bản chạy mặc định **Sprint 2** (
 - [ ] **Sprint 3:** mở báo cáo doanh thu, phân khúc khách hàng, quản lý người dùng/voucher, màn hình quản trị đổi trả/bảo hành và các trang SEO (`sitemap.xml`, `robots.txt`).
 - [ ] **Giai đoạn sau:** hoàn thiện và phát hành tính năng Build PC, gợi ý cấu hình và xem trước 3D.
 
-Các mục dự kiến đã có **một phần hoặc toàn bộ mã nguồn** nhưng hiện chưa dùng được trong bản mặc định. Route Sprint 3 trả `404`; Build PC được gắn Sprint 4 trong khi cấu hình hiện chỉ cho phép tối đa Sprint 3. Danh sách này thể hiện kế hoạch tiếp theo, không phải cam kết ngày phát hành.
+Các mục dự kiến đã có **một phần hoặc toàn bộ mã nguồn** nhưng chưa được phát hành. Bản chạy hiện giới hạn tối đa Sprint 2 ngay cả khi cấu hình yêu cầu Sprint 3; các route Sprint 3 trở lên trả `404`. Danh sách này thể hiện kế hoạch tiếp theo, không phải cam kết ngày phát hành.
 
 ## Tài liệu dự án
 
@@ -93,7 +93,22 @@ Mở [http://localhost:5009](http://localhost:5009).
 
 `Demo:Enabled` mặc định là `false` và không được phép bật trong môi trường Production. Khi dùng xong, xóa biến demo bằng `Remove-Item Env:Demo__Enabled`.
 
-Để xem luồng chính: so sánh hai điện thoại cùng danh mục, đăng nhập tài khoản khách, áp dụng voucher và đặt hàng COD/VNPAY; sau đó mở lịch sử để hủy/mua lại, theo dõi giao hàng, review hoặc gửi yêu cầu hỗ trợ. Đăng nhập admin để xem dashboard, xử lý đơn, tồn kho, GHN, hóa đơn, CSV và duyệt review. VNPAY/GHN cần thông tin sandbox thật để gọi dịch vụ ngoài; các tình huống callback lặp và tranh chấp tồn kho được kiểm tra bằng integration test.
+Để xem luồng chính: so sánh hai điện thoại cùng danh mục, đăng nhập tài khoản khách, áp dụng voucher và đặt hàng COD/VNPAY; sau đó mở lịch sử để hủy/mua lại, theo dõi giao hàng, gửi đánh giá hoặc yêu cầu hỗ trợ. Đăng nhập admin để xem dashboard, xử lý đơn, tồn kho, GHN, hóa đơn/CSV và phản hồi đánh giá; phản hồi sẽ hiện công khai dưới đánh giá tương ứng. VNPAY/GHN cần thông tin sandbox thật để gọi dịch vụ ngoài; các tình huống callback lặp và tranh chấp tồn kho được kiểm tra bằng integration test.
+
+### Thử VNPAY Sandbox trên máy cá nhân
+
+Lưu Terminal ID và HashSecret từ email VNPAY vào User Secrets, không đưa khóa vào `appsettings.json` hoặc Git. Chạy từ thư mục gốc repository:
+
+```powershell
+dotnet user-secrets set "Vnpay:TmnCode" "<Terminal ID>" --project src/backend/EcommerceApp.csproj
+dotnet user-secrets set "Vnpay:HashSecret" "<HashSecret>" --project src/backend/EcommerceApp.csproj
+dotnet user-secrets set "Vnpay:ReturnUrl" "http://localhost:5009/payment/vnpay-return" --project src/backend/EcommerceApp.csproj
+dotnet run --project src/backend/EcommerceApp.csproj --launch-profile http
+```
+
+Nếu ứng dụng đang chạy, dừng và chạy lại để nạp cấu hình. Đặt đơn bằng tài khoản khách, chọn VNPAY rồi dùng thẻ test do VNPAY cung cấp. Return URL local có thể đưa trình duyệt về ứng dụng và cập nhật đơn. IPN server-to-server **không thể gọi `localhost`**: khi cần kiểm thử IPN, mở ứng dụng qua URL HTTPS công khai và đăng ký `https://<host>/payment/vnpay-ipn` với VNPAY theo [tài liệu tích hợp chính thức](https://sandbox.vnpayment.vn/apis/docs/thanh-toan-pay/pay.html). Chỉ coi tích hợp ngoài đã được xác nhận sau khi hoàn tất một giao dịch Sandbox và kiểm tra trạng thái đơn.
+
+Nếu VNPAY hiển thị `code=71` / “Website này chưa được phê duyệt”, kiểm tra trạng thái Terminal ID trong Merchant Admin Sandbox và liên hệ VNPAY để duyệt terminal. Lỗi này xảy ra ở phía VNPAY trước khi thanh toán, không phải lỗi IPN local. Sau khi được duyệt, tạo đơn mới để thử lại vì đơn VNPAY đang chờ có thời hạn thanh toán 15 phút.
 
 ## Cấu trúc dự án
 

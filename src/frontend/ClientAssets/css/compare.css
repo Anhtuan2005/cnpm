@@ -102,7 +102,7 @@
 .compare-tray-items {
   min-width: 188px;
   display: grid;
-  grid-template-columns: repeat(4, 42px);
+  grid-template-columns: repeat(2, 42px);
   justify-content: center;
   gap: 7px;
 }
@@ -232,12 +232,364 @@ body.compare-tray-visible {
   font-weight: 750;
 }
 
+.compare-verdict {
+  margin-bottom: 22px;
+  padding: 24px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line-soft));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg-card) 89%, var(--accent-light));
+}
+
+.compare-verdict-eyebrow {
+  color: var(--accent-dark);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.compare-needs-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px 12px;
+  margin: 12px 0 18px;
+}
+
+.compare-needs-form > div {
+  display: grid;
+  gap: 6px;
+  max-width: 440px;
+}
+
+.compare-needs-form label {
+  color: var(--ink);
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.compare-needs-form select {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  color: var(--ink);
+  background: var(--bg-card);
+  font: inherit;
+}
+
+.compare-needs-form select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.compare-needs-form .btn-ghost {
+  min-height: 42px;
+}
+
+.compare-needs-form p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.82rem;
+}
+
+.compare-outcome {
+  padding: 19px;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: var(--bg-card);
+}
+
+.compare-outcome.has-winner {
+  border-color: color-mix(in srgb, var(--success) 50%, var(--line-soft));
+  background: color-mix(in srgb, var(--success) 5%, var(--bg-card));
+}
+
+.compare-outcome.is-undetermined {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--line-soft));
+}
+
+.compare-outcome-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.compare-outcome-kicker,
+.compare-verdict-role,
+.compare-method > strong {
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent-dark);
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.compare-outcome.has-winner .compare-outcome-kicker {
+  color: #176b3a;
+}
+
+.compare-outcome-heading h2 {
+  margin: 6px 0 0;
+  color: var(--ink);
+  font-size: clamp(1.25rem, 2vw, 1.65rem);
+  line-height: 1.3;
+}
+
+.compare-outcome.has-winner .compare-outcome-heading h2 {
+  color: #176b3a;
+}
+
+.compare-outcome-stamp {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border: 1px solid color-mix(in srgb, var(--success) 35%, transparent);
+  border-radius: 999px;
+  color: #176b3a;
+  background: color-mix(in srgb, var(--success) 13%, var(--bg-card));
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+}
+
+.compare-outcome-detail {
+  max-width: 75ch;
+  margin: 8px 0 0;
+  color: var(--ink-muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.compare-verdict-products {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0 12px;
+}
+
+.compare-verdict-product {
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid var(--line-soft);
+  border-radius: 9px;
+  background: var(--bg-card);
+}
+
+.compare-verdict-product.is-recommended {
+  border-color: color-mix(in srgb, var(--success) 58%, var(--line-soft));
+  background: color-mix(in srgb, var(--success) 8%, var(--bg-card));
+}
+
+.compare-verdict-product.is-tradeoff {
+  border-color: color-mix(in srgb, var(--warning) 42%, var(--line-soft));
+  background: color-mix(in srgb, var(--warning) 4%, var(--bg-card));
+}
+
+.compare-verdict-product-heading {
+  display: grid;
+  justify-items: start;
+  gap: 7px;
+}
+
+.compare-verdict-role {
+  padding: 4px 7px;
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--line-soft));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg-card));
+}
+
+.compare-verdict-role.is-winner {
+  border-color: color-mix(in srgb, var(--success) 32%, transparent);
+  color: #176b3a;
+  background: color-mix(in srgb, var(--success) 12%, var(--bg-card));
+}
+
+.compare-verdict-role.is-tradeoff {
+  border-color: color-mix(in srgb, var(--warning) 35%, transparent);
+  color: #79520c;
+  background: color-mix(in srgb, var(--warning) 10%, var(--bg-card));
+}
+
+.compare-verdict-product-heading strong {
+  display: block;
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+.compare-verdict-product ul {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.compare-verdict-product li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.compare-verdict-product li > span {
+  min-width: 0;
+}
+
+.compare-verdict-product li > small {
+  flex: 0 0 auto;
+  color: var(--ink-muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.compare-verdict-no-advantage,
+.compare-method > p,
+.compare-verdict > small {
+  display: block;
+  color: var(--ink-muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.compare-verdict-no-advantage {
+  margin: 12px 0 0;
+}
+
+.compare-method {
+  padding: 11px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-soft) 70%, var(--bg-card));
+}
+
+.compare-method > p {
+  margin: 5px 0 0;
+}
+
+.compare-table-hint {
+  display: none;
+}
+
 .compare-table-wrap {
   overflow-x: auto;
   border: 1px solid var(--line-soft);
   border-radius: 8px;
   background: var(--bg-card);
   box-shadow: var(--s-sm);
+}
+
+.compare-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0 0 10px;
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+}
+
+.compare-legend strong {
+  color: var(--ink);
+}
+
+.compare-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.compare-marker-symbol {
+  width: 20px;
+  height: 20px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.compare-marker-symbol.is-advantage {
+  color: #176b3a;
+  background: color-mix(in srgb, var(--success) 15%, var(--bg-card));
+}
+
+.compare-marker-symbol.is-equal,
+.compare-marker-symbol.is-stat {
+  color: var(--accent-dark);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-card));
+}
+
+.compare-value-cell.has-advantage {
+  background: color-mix(in srgb, var(--success) 7%, var(--bg-card));
+}
+
+.compare-value-cell.has-advantage > span:first-child,
+.compare-value-cell.has-advantage > strong:first-child {
+  color: #176b3a;
+  font-weight: 800;
+}
+
+.compare-marker {
+  width: fit-content;
+  max-width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin-top: 7px;
+  padding: 4px 7px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 750;
+  line-height: 1.3;
+}
+
+.compare-marker > span {
+  flex: 0 0 auto;
+  font-weight: 900;
+}
+
+.compare-marker--advantage {
+  border-color: color-mix(in srgb, var(--success) 30%, transparent);
+  color: #176b3a;
+  background: color-mix(in srgb, var(--success) 12%, var(--bg-card));
+}
+
+.compare-marker--weaker,
+.compare-marker--feature-muted {
+  border-color: color-mix(in srgb, var(--warning) 32%, transparent);
+  color: #79520c;
+  background: color-mix(in srgb, var(--warning) 10%, var(--bg-card));
+}
+
+.compare-marker--equal,
+.compare-marker--approximate {
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--line-soft));
+  color: var(--accent-dark);
+  background: color-mix(in srgb, var(--accent) 7%, var(--bg-card));
+}
+
+.compare-marker--stat-higher,
+.compare-marker--stat-lower {
+  border-color: color-mix(in srgb, var(--accent) 20%, var(--line-soft));
+  color: #315f99;
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg-card));
+}
+
+.compare-marker--feature {
+  border-color: color-mix(in srgb, var(--success) 30%, transparent);
+  color: #176b3a;
+  background: color-mix(in srgb, var(--success) 10%, var(--bg-card));
 }
 
 .compare-table {
@@ -457,7 +809,7 @@ body.compare-tray-visible {
 
   .compare-tray-items {
     min-width: 0;
-    grid-template-columns: repeat(4, 38px);
+    grid-template-columns: repeat(2, 38px);
     justify-content: start;
     gap: 6px;
   }
@@ -486,6 +838,42 @@ body.compare-tray-visible {
 
   .compare-page {
     width: calc(100% - 20px);
+  }
+
+  .compare-verdict {
+    padding: 18px;
+  }
+
+  .compare-outcome {
+    padding: 14px;
+  }
+
+  .compare-verdict-products {
+    grid-template-columns: 1fr;
+  }
+
+  .compare-verdict-product li {
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .compare-verdict-product li > small {
+    text-align: left;
+  }
+
+  .compare-needs-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .compare-needs-form > div {
+    max-width: none;
+  }
+
+  .compare-table-hint {
+    display: block;
+    margin: 0 0 8px;
+    color: var(--ink-muted);
+    font-size: 0.78rem;
   }
 
   .compare-summary {
@@ -519,7 +907,7 @@ body.compare-tray-visible {
 
 @media (max-width: 390px) {
   .compare-tray-items {
-    grid-template-columns: repeat(4, 34px);
+    grid-template-columns: repeat(2, 34px);
   }
 
   .compare-tray-slot {

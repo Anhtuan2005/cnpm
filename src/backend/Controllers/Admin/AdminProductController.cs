@@ -99,16 +99,12 @@ public class AdminProductController : Controller
             ImageUrl = imageUrls.FirstOrDefault() ?? product.PrimaryImageUrl,
             ImageUrls = string.Join(Environment.NewLine, imageUrls),
             IsFeatured = product.IsFeatured,
+            Specifications = PhoneSpecificationFields.ToForm(new ProductSpecService().Build(product)),
             Socket = product.Socket,
             MemoryType = product.MemoryType,
             PowerWatts = product.PowerWatts,
             Categories = await _productService.GetCategoriesAsync(),
-            StockLogs = await _db.StockLogs
-                .Include(log => log.ChangedByUser)
-                .Where(log => log.ProductId == product.Id)
-                .OrderByDescending(log => log.ChangedAt)
-                .Take(20)
-                .ToListAsync()
+            StockLogs = await LoadStockLogsAsync(product.Id)
         });
     }
 
@@ -117,6 +113,7 @@ public class AdminProductController : Controller
     public async Task<IActionResult> Edit(int id, ProductFormViewModel model, IFormFile? imageFile, List<IFormFile>? imageFiles)
     {
         model.Id = id;
+        model.StockLogs = await LoadStockLogsAsync(id);
         model.Categories = await _productService.GetCategoriesAsync();
         if (!model.Categories.Any(category => category.Id == model.CategoryId))
         {
@@ -152,6 +149,10 @@ public class AdminProductController : Controller
         TempData["Success"] = "Đã cập nhật sản phẩm.";
         return RedirectToAction(nameof(Index));
     }
+
+    private Task<List<StockLog>> LoadStockLogsAsync(int id) => _db.StockLogs
+        .Include(log => log.ChangedByUser).Where(log => log.ProductId == id)
+        .OrderByDescending(log => log.ChangedAt).ThenByDescending(log => log.Id).ToListAsync();
 
     [HttpPost("Delete/{id:int}")]
     [ValidateAntiForgeryToken]

@@ -37,13 +37,12 @@ test('Sprint 2 storefront supports product comparison without Sprint 3 catalog e
   await expect(page.locator('[data-compare-product]')).not.toHaveCount(0);
 
   const comparableIds = await page.locator('[data-compare-product]').evaluateAll(buttons => {
-    const groups = new Map();
+    const categories = new Map();
     for (const button of buttons) {
       const category = button.dataset.compareCategoryId;
-      if (!groups.has(category)) groups.set(category, []);
-      groups.get(category).push(button.dataset.compareProduct);
+      if (!categories.has(category)) categories.set(category, button.dataset.compareProduct);
     }
-    return [...groups.values()].find(ids => ids.length >= 2)?.slice(0, 2) || [];
+    return [...categories.values()].slice(0, 2);
   });
   expect(comparableIds).toHaveLength(2);
   for (const id of comparableIds) {
@@ -53,6 +52,8 @@ test('Sprint 2 storefront supports product comparison without Sprint 3 catalog e
   await page.locator('[data-compare-open]').click();
   await expect(page).toHaveURL(/\/Product\/Compare\?/i);
   await expect(page.locator('.compare-product')).toHaveCount(2);
+  await expect(page.locator('.compare-verdict')).toBeVisible();
+  await expect(page.locator('[data-compare-tray]')).toBeHidden();
 
   await page.goto('/Product');
   await page.locator('.product-card .card-body').first().click();

@@ -213,6 +213,20 @@
                         {
                             <div><dt>Thanh toán lúc</dt><dd>@Model.PaidAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd></div>
                         }
+                        @if (Model.RefundStatus != RefundStatuses.NotRequired)
+                        {
+                            <div><dt>Hoàn tiền</dt><dd>@Model.RefundStatus</dd></div>
+                        }
+                        @if (Model.RefundStatus == RefundStatuses.Refunded)
+                        {
+                            <div><dt>Số tiền đã hoàn</dt><dd>@Model.RefundAmount?.ToString("N0") ₫</dd></div>
+                            <div><dt>Kênh hoàn tiền</dt><dd>@Model.RefundMethod</dd></div>
+                            <div><dt>Mã đối soát</dt><dd>@Model.RefundReference</dd></div>
+                            @if (Model.RefundedAt.HasValue)
+                            {
+                                <div><dt>Ghi nhận hoàn lúc</dt><dd>@Model.RefundedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd></div>
+                            }
+                        }
                     }
                 </dl>
             </section>
@@ -287,12 +301,15 @@
                                 <button class="btn-primary" type="submit">Thanh toán lại VNPAY</button>
                             </form>
                         }
-                        @if (Model.Status == OrderStatuses.AwaitingPayment || Model.Status == OrderStatuses.Pending)
+                        @if (EcommerceApp.Services.OrderLifecycle.CanCustomerCancel(Model))
                         {
-                            <form asp-action="Cancel" method="post">
+                            <form asp-action="Cancel" method="post" data-order-cancel-form data-order-code="#DH@(Model.Id.ToString("D4"))" onsubmit="return confirm('Huỷ đơn hàng #DH@(Model.Id.ToString("D4"))?')">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@Model.Id" />
-                                <button class="btn-ghost danger" type="submit" onclick="return confirm('Huỷ đơn hàng #DH@(Model.Id.ToString("D4"))?')">Huỷ đơn</button>
+                                <button class="btn-ghost danger order-cancel-trigger" type="submit">
+                                    <i data-lucide="circle-x" aria-hidden="true"></i>
+                                    Huỷ đơn
+                                </button>
                             </form>
                         }
                     </div>
@@ -301,6 +318,8 @@
         </aside>
     </div>
 </section>
+
+<partial name="_OrderCancelDialog" />
 
 @functions {
     private static string StatusClass(string status)

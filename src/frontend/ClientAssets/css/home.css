@@ -1663,11 +1663,46 @@ progress { width: 100%; height: 8px; accent-color: var(--warning); }
 .review-list { display: grid; gap: 14px; margin-top: 18px; }
 .review-item { display: grid; grid-template-columns: 44px 1fr; gap: 12px; padding: 16px; border: 1px solid var(--line-soft); border-radius: var(--r-md); background: var(--bg-card); transition: transform var(--t-base) var(--ease), opacity var(--t-base) var(--ease); }
 .review-item.new { animation: pageIn 0.35s var(--ease) both; }
+.review-copy { min-width: 0; }
 .review-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--accent-light); color: var(--accent-dark); display: grid; place-items: center; font-weight: 700; }
 .review-meta { display: flex; justify-content: space-between; gap: 12px; color: var(--ink-muted); }
 .review-meta strong { color: var(--ink); }
 .review-stars { color: var(--warning); }
 .review-note { color: var(--ink-muted); margin-top: 14px; }
+.review-store-reply { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+.review-store-reply-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--ink); font-size: 0.9rem; }
+.review-store-reply-meta time { color: var(--ink-muted); font-size: 0.8rem; }
+.review-store-reply p { margin: 6px 0 0; color: var(--ink-muted); white-space: pre-wrap; }
+.review-management { display: grid; gap: 10px; margin-top: 10px; }
+.review-action-row { display: flex; flex-wrap: wrap; gap: 14px; }
+.review-action-button { min-height: 32px; padding: 0; border: 0; background: transparent; color: var(--accent-dark); font: inherit; font-weight: 750; cursor: pointer; }
+.review-action-button.is-danger { color: var(--danger); }
+.review-action-button:hover { text-decoration: underline; text-underline-offset: 3px; }
+.review-action-button:focus-visible,
+.review-edit-actions button:focus-visible,
+.review-delete-confirm button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.review-edit-form { display: grid; gap: 10px; margin-top: 2px; padding-top: 14px; border-top: 1px solid var(--line-soft); }
+.review-edit-form[hidden],
+.review-delete-confirm[hidden] { display: none; }
+.review-edit-rating { min-width: 0; margin: 0; padding: 0; border: 0; }
+.review-edit-rating legend,
+.review-edit-label { margin-bottom: 5px; color: var(--ink); font-size: 0.9rem; font-weight: 750; }
+.review-edit-stars { width: fit-content; }
+.review-edit-stars label { font-size: 25px; }
+.review-edit-stars input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; }
+.review-edit-form textarea { width: 100%; min-height: 86px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); background: var(--bg-card); font: inherit; resize: vertical; }
+.review-edit-form textarea:focus { border-color: var(--accent); outline: 2px solid color-mix(in srgb, var(--accent) 20%, transparent); }
+.review-edit-note { color: var(--ink-muted); font-size: 0.84rem; }
+.review-edit-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.review-edit-actions .btn-primary,
+.review-edit-actions .btn-ghost { min-height: 40px; }
+.review-delete-confirm { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 11px 13px; border: 1px solid color-mix(in srgb, var(--danger) 28%, var(--line-soft)); border-radius: 12px; background: color-mix(in srgb, var(--danger) 5%, var(--bg-card)); color: var(--ink); }
+.review-delete-confirm > div { display: flex; flex-wrap: wrap; gap: 10px; }
+.review-delete-confirm button { min-height: 34px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: var(--ink-muted); font: inherit; font-weight: 750; cursor: pointer; }
+.review-delete-confirm .review-delete-yes { color: var(--danger); }
+.review-delete-confirm button:hover { background: color-mix(in srgb, var(--danger) 9%, var(--bg-card)); }
+.review-edit-actions button:disabled,
+.review-delete-confirm button:disabled { cursor: wait; opacity: 0.6; }
 .pdp-admin-note,
 .admin-view-note {
   display: grid;

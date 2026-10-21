@@ -7,13 +7,15 @@
     var comparePath = Url.Action("Compare", "Product") ?? "/Product/Compare";
     var currentIds = Model.Products.Select(item => item.Product.Id).ToList();
     var isAdminViewer = User.IsInRole("Admin");
+    var selectedNeed = Model.Needs.FirstOrDefault(need => need.Id == Model.SelectedNeed);
+    var compareUsesSalePrice = SprintFeatures.IsEnabled(3);
 }
 
 <section class="page-head compare-page-head">
     <div>
         <span class="eyebrow">Techvora Compare</span>
         <h1>So sánh sản phẩm</h1>
-        <p>Đặt các sản phẩm cùng danh mục cạnh nhau để chọn thiết bị phù hợp hơn.</p>
+        <p>Đặt hai điện thoại cạnh nhau, kể cả khác hãng, để chọn máy phù hợp hơn.</p>
     </div>
     <a class="btn-ghost" asp-action="Index">
         <i data-lucide="arrow-left" aria-hidden="true"></i>
@@ -28,13 +30,13 @@
             <span><i data-lucide="git-compare-arrows" aria-hidden="true"></i></span>
             <h2>Chọn ít nhất 2 sản phẩm</h2>
             <p>
-                @if (Model.HasRejectedProducts && !string.IsNullOrWhiteSpace(Model.CategoryName))
+                @if (Model.HasRejectedProducts)
                 {
-                    <text>Chỉ có thể so sánh các sản phẩm cùng danh mục @Model.CategoryName.</text>
+                    <text>Chỉ có thể so sánh sản phẩm cùng loại. Điện thoại có thể khác hãng.</text>
                 }
                 else
                 {
-                    <text>Bạn có thể so sánh tối đa 4 sản phẩm cùng danh mục.</text>
+                    <text>Bạn có thể so sánh 2 điện thoại bất kỳ, kể cả khác hãng.</text>
                 }
             </p>
             <a class="btn-primary" asp-action="Index">Đi đến sản phẩm</a>
@@ -45,13 +47,116 @@
         <div class="compare-summary">
             <div>
                 <strong>@Model.Products.Count sản phẩm đang được so sánh</strong>
-                @if (Model.HasRejectedProducts && !string.IsNullOrWhiteSpace(Model.CategoryName))
+                @if (Model.HasRejectedProducts)
                 {
-                    <span>Đã bỏ qua sản phẩm khác danh mục. Bảng này chỉ so sánh @Model.CategoryName.</span>
+                    <span>Đã bỏ qua sản phẩm khác loại. Điện thoại có thể khác hãng.</span>
                 }
             </div>
             <a asp-action="Index" data-compare-clear-link>Xóa và chọn lại</a>
         </div>
+        <section class="compare-verdict" aria-labelledby="compare-verdict-title">
+            <span class="compare-verdict-eyebrow">Gợi ý lựa chọn</span>
+            <form class="compare-needs-form" method="get" action="@comparePath">
+                @foreach (var item in Model.Products)
+                {
+                    <input type="hidden" name="ids" value="@item.Product.Id" />
+                }
+                <div>
+                    <label for="compareNeed">Bạn ưu tiên điều gì?</label>
+                    <select id="compareNeed" name="need">
+                        @foreach (var need in Model.Needs)
+                        {
+                            <option value="@need.Id" selected="@(need.Id == Model.SelectedNeed)">@need.Label</option>
+                        }
+                    </select>
+                </div>
+                <button class="btn-ghost" type="submit">Cập nhật gợi ý</button>
+                @if (selectedNeed is not null)
+                {
+                    <p>@selectedNeed.Description</p>
+                }
+            </form>
+            <div class="compare-outcome @(Model.Verdict.WinnerProductId.HasValue ? "has-winner" : "is-undetermined")">
+                <div class="compare-outcome-heading">
+                    <div>
+                        <span class="compare-outcome-kicker">WHAT · KẾT LUẬN</span>
+                        <h2 id="compare-verdict-title">@Model.Verdict.Headline</h2>
+                    </div>
+                    @if (Model.Verdict.WinnerProductId.HasValue)
+                    {
+                        <span class="compare-outcome-stamp">NÊN CHỌN</span>
+                    }
+                </div>
+                <p class="compare-outcome-detail">@Model.Verdict.Detail</p>
+                <div class="compare-verdict-products">
+                    @foreach (var item in Model.Products)
+                    {
+                        var isWinner = Model.Verdict.WinnerProductId == item.Product.Id;
+                        var isTradeoff = Model.Verdict.WinnerProductId.HasValue && !isWinner;
+                        var highlights = Model.Verdict.Highlights.Where(advantage => advantage.ProductId == item.Product.Id).ToList();
+                        <article class="compare-verdict-product @(isWinner ? "is-recommended" : "") @(isTradeoff ? "is-tradeoff" : "")">
+                            <div class="compare-verdict-product-heading">
+                                <span class="compare-verdict-role @(isWinner ? "is-winner" : isTradeoff ? "is-tradeoff" : "")">
+                                    @if (isWinner)
+                                    {
+                                        <text>WHY · VÌ SAO NÊN CHỌN</text>
+                                    }
+                                    else if (isTradeoff)
+                                    {
+                                        <text>TRADE-OFF · ĐIỂM ĐÁNH ĐỔI</text>
+                                    }
+                                    else
+                                    {
+                                        <text>ĐIỂM TRỘI</text>
+                                    }
+                                </span>
+                                <strong>@item.Product.Name</strong>
+                            </div>
+                            @if (highlights.Count > 0)
+                            {
+                                <ul>
+                                    @foreach (var highlight in highlights)
+                                    {
+                                        <li>
+                                            <span>@highlight.Text</span>
+                                            <small>@(highlight.Weight >= 4 ? "Ưu tiên cao" : highlight.Weight >= 2 ? "Ưu tiên vừa" : "Tiêu chí bổ trợ")</small>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <p class="compare-verdict-no-advantage">Chưa có ưu thế nổi bật theo nhu cầu này trong dữ liệu hiện có.</p>
+                            }
+                        </article>
+                    }
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.Verdict.Method))
+                {
+                    <div class="compare-method">
+                        <strong>HOW · CÁCH CHẤM</strong>
+                        <p>@Model.Verdict.Method</p>
+                    </div>
+                }
+            </div>
+            <small>
+                @if (Model.SelectedNeed == "camera")
+                {
+                    <text>Camera được so theo thông số phần cứng đã khai báo, không thay thế việc xem ảnh hoặc video chụp thực tế.</text>
+                }
+                else
+                {
+                    <text>Chỉ tính các thông số có thể so sánh rõ ràng; dữ liệu còn thiếu hoặc ghi theo nhiều cấu hình sẽ không được tính.</text>
+                }
+            </small>
+        </section>
+        <p class="compare-table-hint">Vuốt ngang bảng để xem điện thoại còn lại.</p>
+        <p class="compare-legend" aria-label="Chú giải kết quả so sánh">
+            <strong>Chú giải:</strong>
+            <span><i class="compare-marker-symbol is-advantage" aria-hidden="true">↑</i> Có lợi thế ở tiêu chí</span>
+            <span><i class="compare-marker-symbol is-equal" aria-hidden="true">=</i> Thông số ngang nhau</span>
+            <span><i class="compare-marker-symbol is-stat" aria-hidden="true">↕</i> Chỉ khác trị số, chưa kết luận tốt hơn</span>
+        </p>
         <div class="compare-table-wrap">
             <table class="compare-table">
                 <thead>
@@ -61,14 +166,15 @@
                         {
                             var product = item.Product;
                             var remainingIds = currentIds.Where(id => id != product.Id);
-                            var removeUrl = $"{comparePath}?{string.Join("&", remainingIds.Select(id => $"ids={id}"))}";
+                            var removeUrl = $"{comparePath}?{string.Join("&", remainingIds.Select(id => $"ids={id}"))}&need={Uri.EscapeDataString(Model.SelectedNeed)}";
                             <th scope="col">
                                 <article class="compare-product"
                                          data-compare-seed="@product.Id"
                                          data-compare-name="@product.Name"
                                          data-compare-image="@product.PrimaryImageUrl"
                                          data-compare-category-id="@product.CategoryId"
-                                         data-compare-category-name="@product.Category?.Name">
+                                         data-compare-category-name="@product.Category?.Name"
+                                         data-compare-category-slug="@product.Category?.Slug">
                                     <a class="compare-product-image" asp-action="Detail" asp-route-id="@product.Id">
                                         <img src="@product.PrimaryImageUrl" alt="@product.Name" loading="lazy" decoding="async" />
                                     </a>
@@ -97,20 +203,52 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <th scope="row">Danh mục</th>
+                        <th scope="row">Thương hiệu</th>
                         @foreach (var item in Model.Products)
                         {
-                            <td>@(PhoneBrandCatalog.Resolve(item.Product.Name)?.Name ?? item.Product.Category?.Name)</td>
+                            var badges = item.ComparisonBadges.TryGetValue("Thương hiệu", out var brandBadges)
+                                ? brandBadges
+                                : Array.Empty<ProductComparisonBadgeViewModel>();
+                            <td class="compare-value-cell">
+                                <span>@(PhoneBrandCatalog.Resolve(item.Product.Name)?.Name ?? item.Product.Category?.Name)</span>
+                                @foreach (var badge in badges)
+                                {
+                                    <span class="compare-marker compare-marker--@badge.Tone"><span aria-hidden="true">@badge.Symbol</span>@badge.Text</span>
+                                }
+                            </td>
+                        }
+                    </tr>
+                    <tr>
+                        <th scope="row">Giá hiện tại</th>
+                        @foreach (var item in Model.Products)
+                        {
+                            var badges = item.ComparisonBadges.TryGetValue("Giá", out var priceBadges)
+                                ? priceBadges
+                                : Array.Empty<ProductComparisonBadgeViewModel>();
+                            <td class="compare-value-cell @(badges.Any(badge => badge.Tone == "advantage") ? "has-advantage" : "")">
+                                <strong>@((compareUsesSalePrice ? item.Product.SalePrice : item.Product.Price).ToString("N0")) ₫</strong>
+                                @foreach (var badge in badges)
+                                {
+                                    <span class="compare-marker compare-marker--@badge.Tone"><span aria-hidden="true">@badge.Symbol</span>@badge.Text</span>
+                                }
+                            </td>
                         }
                     </tr>
                     <tr>
                         <th scope="row">Tình trạng</th>
                         @foreach (var item in Model.Products)
                         {
+                            var badges = item.ComparisonBadges.TryGetValue("Tình trạng", out var stockBadges)
+                                ? stockBadges
+                                : Array.Empty<ProductComparisonBadgeViewModel>();
                             <td>
                                 <span class="compare-stock @(item.Product.Stock > 0 ? "in-stock" : "out-of-stock")">
                                     @(item.Product.Stock > 0 ? $"Còn {item.Product.Stock} sản phẩm" : "Hết hàng")
                                 </span>
+                                @foreach (var badge in badges)
+                                {
+                                    <span class="compare-marker compare-marker--@badge.Tone"><span aria-hidden="true">@badge.Symbol</span>@badge.Text</span>
+                                }
                             </td>
                         }
                     </tr>
@@ -121,7 +259,16 @@
                             @foreach (var item in Model.Products)
                             {
                                 var hasValue = item.Specs.TryGetValue(label, out var value);
-                                <td class="@(!hasValue ? "compare-not-applicable" : "")">@(hasValue ? value : "Không áp dụng")</td>
+                                var badges = item.ComparisonBadges.TryGetValue(label, out var specBadges)
+                                    ? specBadges
+                                    : Array.Empty<ProductComparisonBadgeViewModel>();
+                                <td class="compare-value-cell @(!hasValue ? "compare-not-applicable" : "") @(badges.Any(badge => badge.Tone == "advantage") ? "has-advantage" : "")">
+                                    <span>@(hasValue ? value : "Không áp dụng")</span>
+                                    @foreach (var badge in badges)
+                                    {
+                                        <span class="compare-marker compare-marker--@badge.Tone"><span aria-hidden="true">@badge.Symbol</span>@badge.Text</span>
+                                    }
+                                </td>
                             }
                         </tr>
                     }

@@ -136,6 +136,23 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(log => log.ChangedByUserId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        builder.Entity<StockLog>()
+            .HasOne(log => log.Order)
+            .WithMany()
+            .HasForeignKey(log => log.OrderId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<StockLog>()
+            .HasIndex(log => new { log.ProductId, log.ChangedAt });
+
+        builder.Entity<StockLog>()
+            .Property(log => log.MovementType)
+            .HasDefaultValue(StockMovementTypes.Manual);
+
+        builder.Entity<Order>()
+            .Property(order => order.RefundAmount)
+            .HasColumnType("decimal(18,2)");
+
         builder.Entity<Order>()
             .Property(order => order.TotalAmount)
             .HasColumnType("decimal(18,2)");

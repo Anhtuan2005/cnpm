@@ -19,7 +19,7 @@ public sealed class SprintFeatureService : ISprintFeatureService
 {
     public SprintFeatureService(IOptions<SprintFeatureOptions> options)
     {
-        ActiveSprint = Math.Clamp(options.Value.ActiveSprint, 1, 3);
+        ActiveSprint = Math.Clamp(options.Value.ActiveSprint, 1, 2);
     }
 
     public int ActiveSprint { get; }

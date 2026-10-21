@@ -40,12 +40,12 @@ public class ProductController : Controller
 
     [HttpGet]
     [MinimumSprint(2)]
-    public async Task<IActionResult> Compare([FromQuery] int[]? ids)
+    public async Task<IActionResult> Compare([FromQuery] int[]? ids, [FromQuery] string? need)
     {
         var requestedIds = (ids ?? Array.Empty<int>())
             .Where(id => id > 0)
             .Distinct()
-            .Take(4)
+            .Take(2)
             .ToList();
 
         var compareQuery = _db.Products
@@ -64,9 +64,9 @@ public class ProductController : Controller
             .Where(productsById.ContainsKey)
             .Select(id => productsById[id])
             .ToList();
-        var categoryId = orderedProducts.FirstOrDefault()?.CategoryId;
-        var comparableProducts = categoryId.HasValue
-            ? orderedProducts.Where(product => product.CategoryId == categoryId.Value).ToList()
+        var firstProduct = orderedProducts.FirstOrDefault();
+        var comparableProducts = firstProduct is not null
+            ? orderedProducts.Where(product => ProductComparisonAdvisor.CanCompare(firstProduct, product)).ToList()
             : new List<Product>();
         var items = comparableProducts
             .Select(product => new ProductCompareItemViewModel
@@ -81,13 +81,19 @@ public class ProductController : Controller
             .SelectMany(item => item.Specs.Keys)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
+        var availableNeeds = ProductComparisonAdvisor.GetAvailableNeeds(items);
+        var selectedNeed = ProductComparisonAdvisor.NormalizeNeed(need, availableNeeds);
+        var useSalePrice = _sprintFeatures.IsEnabled(3);
+        ProductComparisonAdvisor.ApplyComparisonBadges(items, useSalePrice);
 
         return View(new ProductCompareViewModel
         {
             Products = items,
             SpecLabels = labels,
-            CategoryName = comparableProducts.FirstOrDefault()?.Category?.Name,
-            HasRejectedProducts = comparableProducts.Count != orderedProducts.Count
+            HasRejectedProducts = comparableProducts.Count != orderedProducts.Count,
+            Needs = availableNeeds,
+            SelectedNeed = selectedNeed,
+            Verdict = ProductComparisonAdvisor.Build(items, useSalePrice, selectedNeed)
         });
     }
 
@@ -145,7 +151,7 @@ public class ProductController : Controller
             ? await _db.Reviews
                 .Include(review => review.User)
                 .Include(review => review.Images.OrderBy(image => image.SortOrder))
-                .Where(review => review.ProductId == id && review.IsApproved)
+                .Where(review => review.ProductId == id)
                 .OrderByDescending(review => review.CreatedAt)
                 .ToListAsync()
             : new List<Review>();
@@ -159,7 +165,8 @@ public class ProductController : Controller
 
         var hasPurchased = _sprintFeatures.IsEnabled(2) && isAuthenticated && !isAdmin && await _db.Orders
             .AnyAsync(order => order.UserId == userId && order.Status == OrderStatuses.Delivered && order.Items.Any(item => item.ProductId == id));
-        var hasReviewed = _sprintFeatures.IsEnabled(2) && isAuthenticated && await _db.Reviews.AnyAsync(review => review.UserId == userId && review.ProductId == id);
+        var hasReviewed = _sprintFeatures.IsEnabled(2) && isAuthenticated && await _db.Reviews
+            .AnyAsync(review => review.UserId == userId && review.ProductId == id);
 
         var model = new ProductDetailViewModel
         {

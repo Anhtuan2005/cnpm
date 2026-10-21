@@ -173,6 +173,7 @@
 .support-form-grid label,
 .support-description {
   display: grid;
+  align-content: start;
   gap: 6px;
   min-width: 0;
 }
@@ -185,6 +186,67 @@
   color: var(--ink-muted);
 }
 
+.support-form .field-validation-error,
+.support-form [data-support-item-error],
+.support-form [data-support-image-error] {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 6px;
+  padding: 7px 10px;
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, var(--line-soft));
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--danger) 7%, var(--bg-card));
+  color: var(--danger);
+  font-size: .82rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.support-form .field-validation-error::after,
+.support-form [data-support-item-error]::after,
+.support-form [data-support-image-error]::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 16px;
+  width: 10px;
+  height: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--danger) 30%, var(--line-soft));
+  border-left: 1px solid color-mix(in srgb, var(--danger) 30%, var(--line-soft));
+  background: color-mix(in srgb, var(--danger) 7%, var(--bg-card));
+  transform: rotate(45deg);
+}
+
+.support-form [data-valmsg-for] {
+  display: block;
+}
+
+.support-form [data-valmsg-for]:empty,
+.support-form .validation-summary-valid {
+  display: none;
+}
+
+.support-form .support-invalid,
+.support-form .support-invalid:focus,
+.support-form .input-validation-error,
+.support-form .input-validation-error:focus {
+  border-color: color-mix(in srgb, var(--danger) 72%, var(--line-soft));
+  outline-color: var(--danger);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger) 11%, transparent);
+}
+
+.support-form .support-item-list.support-invalid {
+  border-radius: var(--r-sm);
+  outline: 1px solid color-mix(in srgb, var(--danger) 60%, var(--line-soft));
+  outline-offset: 4px;
+}
+
+.support-form .support-type-grid.support-invalid .support-type-option {
+  border-color: color-mix(in srgb, var(--danger) 60%, var(--line-soft));
+}
+
 .support-submit-bar {
   position: sticky;
   bottom: 0;
@@ -195,6 +257,9 @@
   padding: 14px 0 2px;
   background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 0%, transparent), var(--bg) 46%);
 }
+
+.support-form [data-support-item-error][hidden],
+.support-form [data-support-image-error][hidden] { display: none; }
 
 .support-request-list {
   display: grid;

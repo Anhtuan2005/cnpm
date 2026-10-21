@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
   initCartPage();
   initCartSelection();
   initReviewForm();
+  initReviewManagement();
   initReviewImagePreview();
   initVoucher();
   initQuantitySteppers();
@@ -32,6 +33,8 @@ document.addEventListener("DOMContentLoaded", function () {
   initDetailAddToCart();
   initNotificationMenu();
   initOrderRouteMap();
+  initOrderCancelDialog();
+  initSupportRequestValidation();
   initAddressDropdowns();
   initProfileAddressFill();
   initAiChatbot();

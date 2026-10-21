@@ -2,6 +2,7 @@ using EcommerceApp.Data;
 using EcommerceApp.Models;
 using EcommerceApp.Models.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace EcommerceApp.Services;
 
@@ -10,12 +11,14 @@ public class ProductService : IProductService
     private readonly AppDbContext _db;
     private readonly ICatalogScope? _catalogScope;
     private readonly ISprintFeatureService? _sprintFeatures;
+    private readonly IHttpContextAccessor? _httpContextAccessor;
 
-    public ProductService(AppDbContext db, ICatalogScope? catalogScope = null, ISprintFeatureService? sprintFeatures = null)
+    public ProductService(AppDbContext db, ICatalogScope? catalogScope = null, ISprintFeatureService? sprintFeatures = null, IHttpContextAccessor? httpContextAccessor = null)
     {
         _db = db;
         _catalogScope = catalogScope;
         _sprintFeatures = sprintFeatures;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<ProductViewModel> GetPagedProductsAsync(string? search, int? categoryId, decimal? minPrice, decimal? maxPrice, string? sortBy, int page, int pageSize)
@@ -157,6 +160,7 @@ public class ProductService : IProductService
             DiscountPercent = model.DiscountPercent,
             CategoryId = model.CategoryId,
             IsFeatured = model.IsFeatured,
+            PhoneSpecificationsJson = PhoneSpecificationFields.Serialize(model.Specifications),
             Socket = model.Socket,
             MemoryType = model.MemoryType,
             PowerWatts = model.PowerWatts
@@ -165,6 +169,15 @@ public class ProductService : IProductService
         ReplaceProductImages(product, BuildImageUrls(model, imageUrls), removeExisting: false);
 
         _db.Products.Add(product);
+        if (product.Stock > 0)
+        {
+            _db.StockLogs.Add(new StockLog
+            {
+                Product = product, ChangeAmount = product.Stock, QuantityBefore = 0, QuantityAfter = product.Stock,
+                MovementType = StockMovementTypes.Opening, Reason = "Tồn kho khi tạo sản phẩm",
+                ChangedByUserId = _httpContextAccessor?.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier)
+            });
+        }
         await _db.SaveChangesAsync();
 
         await ProductSearchIndex.ReplaceTermsAsync(_db, product.Id);
@@ -196,6 +209,7 @@ public class ProductService : IProductService
             product.DiscountPercent = model.DiscountPercent;
             product.CategoryId = model.CategoryId;
             product.IsFeatured = model.IsFeatured;
+            product.PhoneSpecificationsJson = PhoneSpecificationFields.Serialize(model.Specifications);
             product.Socket = model.Socket;
             product.MemoryType = model.MemoryType;
             product.PowerWatts = model.PowerWatts;
@@ -219,14 +233,8 @@ public class ProductService : IProductService
         {
             if (_catalogScope is not null && !await ScopedProducts(_db.Products).AnyAsync(product => product.Id == id))
                 return false;
-            var updated = await _db.Database.ExecuteSqlInterpolatedAsync($"""
-                UPDATE Products SET Stock = Stock + {change}
-                WHERE Id = {id} AND IsDeleted = 0
-                    AND CAST(Stock AS bigint) + {change} BETWEEN 0 AND 2147483647
-                """);
-            if (updated != 1) return false;
-            _db.StockLogs.Add(new StockLog { ProductId = id, ChangeAmount = change,
-                Reason = reason.Trim(), ChangedByUserId = actorId });
+            if (!await InventoryMovements.ChangeAsync(_db, id, change, StockMovementTypes.Manual, reason.Trim(), actorId))
+                return false;
             await _db.SaveChangesAsync();
             return true;
         });

@@ -2,6 +2,7 @@ using EcommerceApp.Models;
 using EcommerceApp.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace EcommerceApp.Data;
 
@@ -47,6 +48,13 @@ public static class SeedData
             await EnsureBannersAsync(db);
         }
 
+        await BackfillPhoneSpecificationsAsync(db);
+
+        if (sprintFeatures?.IsEnabled(2) == true)
+        {
+            await EnsureVouchersAsync(db);
+        }
+
         if (!demoEnabled) return;
 
         var customerSegmentService = scope.ServiceProvider.GetRequiredService<ICustomerSegmentService>();
@@ -59,7 +67,6 @@ public static class SeedData
 
         if (sprintFeatures?.IsEnabled(2) == true)
         {
-            await EnsureVouchersAsync(db);
             await RemoveIneligibleReviewsAsync(db);
             await EnsureDemoOrdersAsync(db);
         }
@@ -70,6 +77,18 @@ public static class SeedData
             await customerSegmentService.RefreshAsync();
             await EnsureSegmentVouchersAsync(db);
         }
+    }
+
+    private static async Task BackfillPhoneSpecificationsAsync(AppDbContext db)
+    {
+        var products = await new PhoneCatalogScope().Products(db.Products.Include(product => product.Category))
+            .Where(product => product.PhoneSpecificationsJson == null).ToListAsync();
+        var specifications = new ProductSpecService();
+        foreach (var product in products)
+            product.PhoneSpecificationsJson = JsonSerializer.Serialize(specifications.Build(product)
+                .Where(spec => spec.Value != PhoneSpecificationFields.Unknown)
+                .ToDictionary(spec => spec.Label, spec => spec.Value));
+        if (products.Count > 0) await db.SaveChangesAsync();
     }
 
     private static async Task EnsureDemoOrdersAsync(AppDbContext db)
@@ -614,15 +633,25 @@ END");
         var vouchers = new[]
         {
             new Voucher { Code = "WELCOME10", Type = VoucherType.Percent, Value = 10, MinOrderAmount = 500000, MaxDiscount = 150000, UsageLimit = 200, StartDate = now.AddDays(-7), EndDate = now.AddMonths(3), IsActive = true },
-            new Voucher { Code = "FREESHIP", Type = VoucherType.FixedAmount, Value = 30000, MinOrderAmount = 300000, MaxDiscount = 30000, UsageLimit = 300, StartDate = now.AddDays(-7), EndDate = now.AddMonths(2), IsActive = true },
-            new Voucher { Code = "SALE20", Type = VoucherType.Percent, Value = 20, MinOrderAmount = 1000000, MaxDiscount = 200000, UsageLimit = 150, StartDate = now.AddDays(-7), EndDate = now.AddMonths(1), IsActive = true }
+            new Voucher { Code = "SAVE50K", Type = VoucherType.FixedAmount, Value = 50000, MinOrderAmount = 500000, MaxDiscount = 50000, UsageLimit = 200, StartDate = now.AddDays(-7), EndDate = now.AddMonths(3), IsActive = true }
         };
 
         foreach (var voucher in vouchers)
         {
-            if (!await db.Vouchers.AnyAsync(row => row.Code == voucher.Code))
+            var existingVoucher = await db.Vouchers.FirstOrDefaultAsync(row => row.Code == voucher.Code);
+            if (existingVoucher is null)
             {
                 db.Vouchers.Add(voucher);
+                continue;
+            }
+
+            if (voucher.Code == "WELCOME10"
+                && existingVoucher.IsActive
+                && existingVoucher.EndDate <= now
+                && existingVoucher.UsedCount < existingVoucher.UsageLimit)
+            {
+                existingVoucher.StartDate = now;
+                existingVoucher.EndDate = now.AddMonths(3);
             }
         }
 

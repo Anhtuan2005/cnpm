@@ -6,6 +6,7 @@ function initProductCompare() {
   var itemsRoot = tray ? tray.querySelector("[data-compare-items]") : null;
   var clearButton = tray ? tray.querySelector("[data-compare-clear]") : null;
   var openLink = tray ? tray.querySelector("[data-compare-open]") : null;
+  var onComparePage = !!document.querySelector(".compare-page");
 
   function normalize(items) {
     if (!Array.isArray(items)) return [];
@@ -19,8 +20,10 @@ function initProductCompare() {
       item.image = String(item.image || "/images/placeholder.svg");
       item.categoryId = Number(item.categoryId) || 0;
       item.categoryName = String(item.categoryName || "danh mục này");
+      item.categorySlug = String(item.categorySlug || "");
+      if (!item.categorySlug && /^điện thoại(?:\s|$)/i.test(item.categoryName)) item.categorySlug = "dien-thoai";
       return true;
-    }).slice(0, 4);
+    }).slice(0, 2);
   }
 
   function readSelection() {
@@ -38,7 +41,8 @@ function initProductCompare() {
       name: element.dataset.compareName,
       image: element.dataset.compareImage,
       categoryId: element.dataset.compareCategoryId,
-      categoryName: element.dataset.compareCategoryName
+      categoryName: element.dataset.compareCategoryName,
+      categorySlug: element.dataset.compareCategorySlug
     };
   }));
   if (seeded.length > 0) selected = seeded;
@@ -57,10 +61,20 @@ function initProductCompare() {
     return "/Product/Compare?" + params.toString();
   }
 
+  function isPhoneCategory(slug) {
+    slug = String(slug || "").toLowerCase();
+    return slug === "dien-thoai" || slug.indexOf("dien-thoai-") === 0;
+  }
+
+  function canCompare(first, categoryId, categorySlug) {
+    return first.categoryId === categoryId ||
+      (isPhoneCategory(first.categorySlug) && isPhoneCategory(categorySlug));
+  }
+
   function renderItems() {
     if (!itemsRoot) return;
     itemsRoot.replaceChildren();
-    for (var index = 0; index < 4; index++) {
+    for (var index = 0; index < 2; index++) {
       var item = selected[index];
       if (!item) {
         var empty = document.createElement("span");
@@ -100,14 +114,13 @@ function initProductCompare() {
     });
 
     if (!tray) return;
-    tray.hidden = selected.length === 0;
-    document.body.classList.toggle("compare-tray-visible", selected.length > 0);
+    tray.hidden = onComparePage || selected.length === 0;
+    document.body.classList.toggle("compare-tray-visible", !onComparePage && selected.length > 0);
     if (count) count.textContent = String(selected.length);
     if (hint) {
-      var categoryName = selected[0] ? selected[0].categoryName : "";
       hint.textContent = selected.length < 2
-        ? "Chọn thêm trong " + categoryName
-        : "Cùng danh mục " + categoryName;
+        ? "Chọn thêm một điện thoại bất kỳ"
+        : "Sẵn sàng so sánh hai điện thoại";
     }
     if (openLink) {
       var disabled = selected.length < 2;
@@ -128,13 +141,14 @@ function initProductCompare() {
       var existingIndex = selected.findIndex(function (item) { return item.id === id; });
       if (existingIndex >= 0) {
         selected.splice(existingIndex, 1);
-      } else if (selected.length >= 4) {
-        showToast("Bạn chỉ có thể so sánh tối đa 4 sản phẩm.", "error");
+      } else if (selected.length >= 2) {
+        showToast("Bạn chỉ có thể so sánh 2 sản phẩm.", "error");
         return;
       } else {
         var categoryId = Number(button.dataset.compareCategoryId);
-        if (selected.length > 0 && selected[0].categoryId !== categoryId) {
-          showToast("Chỉ có thể so sánh sản phẩm cùng danh mục " + selected[0].categoryName + ".", "error");
+        var categorySlug = String(button.dataset.compareCategorySlug || "");
+        if (selected.length > 0 && !canCompare(selected[0], categoryId, categorySlug)) {
+          showToast("Chỉ có thể so sánh các sản phẩm cùng loại.", "error");
           return;
         }
         selected.push({
@@ -142,7 +156,8 @@ function initProductCompare() {
           name: button.dataset.compareName || "Sản phẩm",
           image: button.dataset.compareImage || "/images/placeholder.svg",
           categoryId: categoryId,
-          categoryName: button.dataset.compareCategoryName || "danh mục này"
+          categoryName: button.dataset.compareCategoryName || "danh mục này",
+          categorySlug: categorySlug
         });
       }
       writeSelection();

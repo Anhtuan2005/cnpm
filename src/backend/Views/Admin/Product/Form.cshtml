@@ -84,6 +84,21 @@
         @Html.ValidationMessage("imageFiles")
         <small class="form-hint">Chọn tối đa 8 ảnh. Ảnh upload sẽ được nén WebP và nối vào cuối thư viện.</small>
 
+        <fieldset class="admin-specifications">
+            <legend>Thông số điện thoại</legend>
+            <p class="form-hint">Nhập đúng cấu hình đang bán. Để trống thông tin chưa xác minh; thông số sẽ được dùng trên trang chi tiết và khi so sánh.</p>
+            <div class="admin-spec-grid">
+                @foreach (var field in EcommerceApp.Services.PhoneSpecificationFields.All)
+                {
+                    <div class="admin-spec-field">
+                        <label for="spec-@field.Key">@field.Label</label>
+                        <input id="spec-@field.Key" name="Specifications[@field.Key]" value="@Model.Specifications.GetValueOrDefault(field.Key)" maxlength="200" placeholder="VD: @field.Example" />
+                        @Html.ValidationMessage($"Specifications[{field.Key}]")
+                    </div>
+                }
+            </div>
+        </fieldset>
+
         <label class="check-row"><input asp-for="IsFeatured" /> Sản phẩm nổi bật</label>
         <button class="admin-button" type="submit">Lưu sản phẩm</button>
     </form>
@@ -102,21 +117,30 @@
         </form>
     </section>
     <section class="admin-panel narrow">
-        <div class="panel-head"><h2>Lịch sử điều chỉnh kho thủ công</h2></div>
+        <div class="panel-head"><div><h2>Lịch sử nhập xuất kho</h2><p class="form-hint">Bao gồm tạo sản phẩm, điều chỉnh thủ công, đặt hàng và hoàn kho khi hủy đơn. Các bản ghi cũ chưa lưu số dư sẽ hiển thị dấu —.</p></div></div>
+        <div class="admin-stock-history">
         <table class="admin-table">
-            <thead><tr><th>Thời gian</th><th>Thay đổi</th><th>Lý do</th><th>Người cập nhật</th></tr></thead>
+            <thead><tr><th>Thời gian</th><th>Loại biến động</th><th>Thay đổi</th><th>Trước → Sau</th><th>Đơn hàng</th><th>Lý do</th><th>Người thực hiện</th></tr></thead>
             <tbody>
                 @foreach (var log in Model.StockLogs)
                 {
                     <tr>
                         <td>@log.ChangedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@log.MovementType</td>
                         <td>@(log.ChangeAmount > 0 ? "+" : "")@log.ChangeAmount</td>
+                        <td>@(log.QuantityBefore?.ToString() ?? "—") → @(log.QuantityAfter?.ToString() ?? "—")</td>
+                        <td>@if (log.OrderId.HasValue) { <a href="/Admin/Order/@log.OrderId">#@log.OrderId</a> } else { <text>—</text> }</td>
                         <td>@log.Reason</td>
-                        <td>@(log.ChangedByUser?.FullName ?? "Admin")</td>
+                        <td>@(log.ChangedByUser?.FullName ?? "Không ghi nhận")</td>
                     </tr>
+                }
+                @if (!Model.StockLogs.Any())
+                {
+                    <tr><td colspan="7">Chưa có biến động kho được ghi nhận.</td></tr>
                 }
             </tbody>
         </table>
+        </div>
     </section>
 }
 

@@ -29,6 +29,8 @@
     "ClientAssets/js/checkout.js",
     "ClientAssets/js/product-detail.js",
     "ClientAssets/js/address.js",
-    "ClientAssets/js/notifications-and-order-map.js"
+    "ClientAssets/js/notifications-and-order-map.js",
+    "ClientAssets/js/order-cancel.js",
+    "ClientAssets/js/support-request-validation.js"
   ]
 }

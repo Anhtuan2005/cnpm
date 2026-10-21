@@ -1684,6 +1684,97 @@ input[type="checkbox"] {
   line-height: 1.45;
 }
 
+.admin-specifications {
+  min-width: 0;
+  margin: 20px 0 8px;
+  padding: 20px;
+  border: 1px solid var(--adm-line);
+  border-radius: var(--adm-radius);
+  background: var(--adm-surface-muted);
+}
+
+.admin-specifications legend {
+  padding: 0 8px;
+  color: var(--adm-ink);
+  font-size: 17px;
+  font-weight: 750;
+}
+
+.admin-spec-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.admin-spec-field {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+}
+
+.admin-stock-history {
+  max-height: 480px;
+  overflow: auto;
+}
+
+.admin-stock-history table {
+  min-width: 880px;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-refund {
+  margin-top: 20px;
+  border: 1px solid var(--adm-line);
+  border-radius: var(--adm-radius);
+  background: var(--adm-surface-muted);
+}
+
+.admin-refund > summary {
+  padding: 18px 20px;
+  font-weight: 760;
+  cursor: pointer;
+  color: var(--adm-ink);
+}
+
+.admin-refund > summary:focus-visible {
+  outline: 2px solid var(--adm-accent);
+  outline-offset: 2px;
+  border-radius: var(--adm-radius);
+}
+
+.admin-refund-form {
+  padding: 0 20px 20px;
+}
+
+.refund-amount {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 13px;
+  color: var(--adm-muted);
+}
+
+.refund-amount strong {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  color: var(--adm-ink);
+}
+
+.admin-refund-form .check-row {
+  min-height: 44px;
+}
+
+@media (max-width: 640px) {
+  .admin-spec-grid { grid-template-columns: minmax(0, 1fr); }
+  .admin-specifications, .admin-refund > summary { padding: 16px; }
+  .admin-refund-form { padding: 0 16px 16px; }
+}
+
 .check-row {
   display: inline-flex;
   align-items: center;

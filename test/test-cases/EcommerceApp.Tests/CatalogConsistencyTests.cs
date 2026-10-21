@@ -12,6 +12,27 @@ namespace EcommerceApp.Tests;
 public sealed partial class OrderPaymentTests
 {
     [Fact]
+    public async Task Dashboard_low_stock_only_counts_phone_catalog_products()
+    {
+        await using var scope = fixture.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var service = CreateService(scope.ServiceProvider, new PhoneCatalogScope());
+        var before = await service.GetDashboardAsync();
+        var suffix = Guid.NewGuid().ToString("N");
+        var phone = new Product { Name = "000-phone-" + suffix, Description = "Phone", Price = 1_000_000, Stock = 0,
+            Category = new Category { Name = "Điện thoại", Slug = "dien-thoai-" + suffix } };
+        var cpu = new Product { Name = "000-cpu-" + suffix, Description = "CPU", Price = 1_000_000, Stock = 0,
+            Category = new Category { Name = "CPU", Slug = "cpu-" + suffix } };
+        db.Products.AddRange(phone, cpu);
+        await db.SaveChangesAsync();
+
+        var dashboard = await service.GetDashboardAsync();
+        Assert.Equal(before.LowStockCount + 1, dashboard.LowStockCount);
+        Assert.Contains(dashboard.LowStockProducts, product => product.Id == phone.Id);
+        Assert.DoesNotContain(dashboard.LowStockProducts, product => product.Id == cpu.Id);
+    }
+
+    [Fact]
     public async Task Stale_product_form_cannot_restore_sold_stock_or_overwrite_another_edit()
     {
         var (productId, users) = await SeedCartsAsync(10, 1);
@@ -56,7 +77,13 @@ public sealed partial class OrderPaymentTests
         Assert.False(await products.AdjustStockAsync(productId, int.MaxValue, "Overflow", users[0]));
         await Assert.ThrowsAsync<DbUpdateException>(() => products.AdjustStockAsync(productId, 2, "Rollback", "missing-user"));
         Assert.Equal(5, await db.Products.Where(p => p.Id == productId).Select(p => p.Stock).SingleAsync());
-        var log = Assert.Single(await db.StockLogs.AsNoTracking().Where(l => l.ProductId == productId).ToListAsync());
+        var movements = await db.StockLogs.AsNoTracking().Where(l => l.ProductId == productId).ToListAsync();
+        Assert.Equal(2, movements.Count);
+        Assert.All(movements, movement => Assert.Equal(movement.QuantityAfter, movement.QuantityBefore + movement.ChangeAmount));
+        var log = Assert.Single(movements, movement => movement.MovementType == StockMovementTypes.Manual);
+        var sale = Assert.Single(movements, movement => movement.MovementType == StockMovementTypes.Sale);
+        Assert.Equal(-1, sale.ChangeAmount);
+        Assert.NotNull(sale.OrderId);
         Assert.Equal(4, log.ChangeAmount);
         Assert.Equal(users[0], log.ChangedByUserId);
     }

@@ -46,7 +46,7 @@ public class AdminShippingController : Controller
         var updated = await _shippingService.UpdateTrackingAsync(orderId, carrier, trackingCode);
         TempData[updated ? "Success" : "Error"] = updated
             ? $"Đã cập nhật mã vận đơn cho đơn #{orderId}."
-            : "Đơn phải được xác nhận và đủ điều kiện giao hàng. Mã vận đơn và tên đơn vị vận chuyển tối đa 80 ký tự.";
+            : "Chỉ hỗ trợ vận chuyển GHN. Đơn phải đủ điều kiện giao hàng; mã vận đơn tối đa 80 ký tự.";
 
         return RedirectToAction(nameof(Index));
     }

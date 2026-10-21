@@ -171,6 +171,12 @@
                                 <input type="hidden" name="returnUrl" value="@returnUrl" />
                                 <button class="admin-button secondary" type="submit">Đồng bộ</button>
                             </form>
+                            <form action="/Admin/Shipping/GhnCancel" method="post" data-confirm="Huỷ vận đơn GHN của đơn #@order.Id?">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="orderId" value="@order.Id" />
+                                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                <button class="admin-button danger" type="submit">Huỷ GHN</button>
+                            </form>
                         </td>
                     </tr>
                 }
@@ -391,7 +397,8 @@
                         <form action="/Admin/Shipping/UpdateTracking" method="post" class="inline-tracking-form">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="orderId" value="@order.Id" />
-                            <input name="carrier" value="@order.ShippingInfo?.Carrier" placeholder="Đơn vị vận chuyển" aria-label="Đơn vị vận chuyển cho đơn #@order.Id" />
+                            <input type="hidden" name="carrier" value="@ShippingCarriers.Ghn" />
+                            <strong>GHN</strong>
                             <input name="trackingCode" value="@order.ShippingInfo?.TrackingCode" placeholder="Nhập mã rồi Enter" aria-label="Mã vận đơn cho đơn #@order.Id" autocomplete="off" />
                             <button class="admin-button" type="submit">Lưu</button>
                         </form>

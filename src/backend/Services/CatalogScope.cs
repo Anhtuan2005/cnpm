@@ -36,12 +36,14 @@ public sealed class PhoneCatalogScope : ICatalogScope
     public IQueryable<Category> Categories(IQueryable<Category> query) =>
         query.Where(category => category.Slug == RootSlug || category.Slug.StartsWith(SlugPrefix));
 
-    public bool IsPhoneCategory(string? slug) =>
+    public static bool IsPhoneSlug(string? slug) =>
         string.Equals(slug, RootSlug, StringComparison.OrdinalIgnoreCase)
         || (slug?.StartsWith(SlugPrefix, StringComparison.OrdinalIgnoreCase) ?? false);
 
+    public bool IsPhoneCategory(string? slug) => IsPhoneSlug(slug);
+
     public bool IsPhoneCategoryName(string? name) =>
-        IsPhoneCategory(SlugGenerator.Generate(name ?? string.Empty));
+        IsPhoneSlug(SlugGenerator.Generate(name ?? string.Empty));
 
     public bool IsPhoneBanner(Banner banner)
     {

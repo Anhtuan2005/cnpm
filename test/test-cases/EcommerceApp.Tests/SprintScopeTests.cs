@@ -3,11 +3,22 @@ using EcommerceApp.Controllers;
 using EcommerceApp.Controllers.Admin;
 using EcommerceApp.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Options;
 
 namespace EcommerceApp.Tests;
 
 public class SprintScopeTests
 {
+    [Fact]
+    public void Release_stays_within_sprints_one_and_two_even_if_config_requests_three()
+    {
+        var features = new SprintFeatureService(Options.Create(new SprintFeatureOptions { ActiveSprint = 3 }));
+
+        Assert.Equal(2, features.ActiveSprint);
+        Assert.True(features.IsEnabled(2));
+        Assert.False(features.IsEnabled(3));
+    }
+
     [Fact]
     public void Product_comparison_is_available_in_sprint_two()
     {
@@ -152,7 +163,7 @@ public class SprintScopeTests
             (typeof(AdminBannerController), [nameof(AdminBannerController.Index), nameof(AdminBannerController.Create), nameof(AdminBannerController.Edit), nameof(AdminBannerController.Delete)]),
             (typeof(AdminOrderController), [nameof(AdminOrderController.Index), nameof(AdminOrderController.Details), nameof(AdminOrderController.UpdateStatus), nameof(AdminOrderController.MarkRefunded), nameof(AdminOrderController.IssueInvoice), nameof(AdminOrderController.ExportCsv)]),
             (typeof(AdminShippingController), [nameof(AdminShippingController.Index), nameof(AdminShippingController.UpdateStatus), nameof(AdminShippingController.GhnCreate), nameof(AdminShippingController.GhnSync), nameof(AdminShippingController.GhnCancel)]),
-            (typeof(AdminReviewController), [nameof(AdminReviewController.Index), nameof(AdminReviewController.Approve), nameof(AdminReviewController.Reject), nameof(AdminReviewController.Delete)]),
+            (typeof(AdminReviewController), [nameof(AdminReviewController.Index), nameof(AdminReviewController.Reply)]),
             (typeof(AdminDashboardController), [nameof(AdminDashboardController.Index)])
         };
 

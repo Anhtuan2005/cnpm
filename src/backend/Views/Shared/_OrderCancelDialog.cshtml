@@ -1,0 +1,18 @@
+<dialog class="order-cancel-dialog" data-order-cancel-dialog aria-labelledby="orderCancelTitle" aria-describedby="orderCancelDescription">
+    <div class="order-cancel-dialog-inner">
+        <button class="order-cancel-close" type="button" data-order-cancel-close aria-label="Đóng hộp thoại">
+            <i data-lucide="x" aria-hidden="true"></i>
+        </button>
+        <span class="order-cancel-symbol" aria-hidden="true"><i data-lucide="package-x"></i></span>
+        <span class="order-cancel-kicker">Xác nhận thay đổi đơn hàng</span>
+        <h2 id="orderCancelTitle">Huỷ đơn hàng <span data-order-cancel-code></span>?</h2>
+        <p id="orderCancelDescription">Đơn hàng sẽ ngừng được xử lý sau khi huỷ. Bạn không thể hoàn tác thao tác này.</p>
+        <div class="order-cancel-dialog-actions">
+            <button class="order-cancel-keep" type="button" data-order-cancel-close autofocus>Giữ đơn hàng</button>
+            <button class="order-cancel-confirm" type="button" data-order-cancel-confirm>
+                <i data-lucide="circle-x" aria-hidden="true"></i>
+                Xác nhận huỷ
+            </button>
+        </div>
+    </div>
+</dialog>

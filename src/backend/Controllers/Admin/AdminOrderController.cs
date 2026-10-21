@@ -1,5 +1,6 @@
 using EcommerceApp.Data;
 using EcommerceApp.Models;
+using EcommerceApp.Models.ViewModels;
 using EcommerceApp.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -81,19 +82,25 @@ public class AdminOrderController : Controller
         var updated = await _shippingService.AssignAsync(id, carrier, trackingCode, estimatedDelivery);
         TempData[updated ? "Success" : "Error"] = updated
             ? "Đã gán thông tin vận chuyển."
-            : "Không thể gán vận chuyển. Đơn phải được xác nhận, VNPAY phải đã thanh toán; tên đơn vị và mã vận đơn tối đa 80 ký tự.";
+            : "Chỉ hỗ trợ vận chuyển GHN. Đơn phải được xác nhận, VNPAY phải đã thanh toán; mã vận đơn tối đa 80 ký tự.";
         return RedirectToAction(nameof(Details), new { id });
     }
 
     [HttpPost("MarkRefunded")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> MarkRefunded(int id, string? note)
+    public async Task<IActionResult> MarkRefunded(ManualRefundConfirmationViewModel model)
     {
-        var updated = await _orderService.MarkManualRefundCompletedAsync(id, note);
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = string.Join(" ", ModelState.Values.SelectMany(value => value.Errors)
+                .Select(error => error.ErrorMessage).Distinct());
+            return RedirectToAction(nameof(Details), new { id = model.Id });
+        }
+        var updated = await _orderService.MarkManualRefundCompletedAsync(model.Id, model.Method, model.Reference, model.Note);
         TempData[updated ? "Success" : "Error"] = updated
-            ? "Đã ghi nhận hoàn tiền thủ công cho đơn VNPAY."
-            : "Đơn hàng không ở trạng thái cần hoàn tiền thủ công.";
-        return RedirectToAction(nameof(Details), new { id });
+            ? "Đã ghi nhận khoản hoàn tiền thủ công và thông tin đối soát."
+            : "Không thể ghi nhận: đơn phải đã thanh toán, đã giao hoặc đã hủy và đang chờ hoàn; chưa được hoàn trước đó. Vui lòng kiểm tra kênh hoàn, mã biên nhận và lý do hoàn tiền cho đơn đã giao.";
+        return RedirectToAction(nameof(Details), new { id = model.Id });
     }
 
     [HttpPost("IssueInvoice")]
@@ -153,7 +160,8 @@ public class AdminOrderController : Controller
     {
         var model = await _orderService.GetOrdersAsync(status, customer, fromDate, toDate, paginate: false);
         var csv = new StringBuilder();
-        csv.AppendLine(CsvFormatter.Row("MaDon", "KhachHang", "Email", "TrangThai", "HoanTien", "TongTien", "NgayDat", "VanChuyen", "MaVanDon"));
+        csv.AppendLine(CsvFormatter.Row("MaDon", "KhachHang", "Email", "TrangThai", "HoanTien", "TongTien", "NgayDat", "VanChuyen", "MaVanDon",
+            "KenhHoanTien", "MaDoiSoat", "SoTienDaHoan", "NguoiXacNhanHoan", "XacNhanHoanLuc"));
         foreach (var order in model.Orders)
         {
             csv.AppendLine(CsvFormatter.Row(
@@ -165,7 +173,8 @@ public class AdminOrderController : Controller
                 order.TotalAmount,
                 order.CreatedAt,
                 order.ShippingInfo?.Carrier,
-                order.ShippingInfo?.TrackingCode));
+                order.ShippingInfo?.TrackingCode,
+                order.RefundMethod, order.RefundReference, order.RefundAmount, order.RefundConfirmedBy, order.RefundedAt));
         }
 
         return File(Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(csv.ToString())).ToArray(), "text/csv", $"don-hang-{DateTime.Now:yyyyMMddHHmm}.csv");

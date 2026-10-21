@@ -166,13 +166,13 @@ public sealed partial class OrderPaymentTests(SqlServerFixture fixture)
         RecipientName = "Test customer", RecipientPhone = "0900000000", Province = "Hồ Chí Minh", District = "Quận 1"
     };
 
-    private static OrderService CreateService(IServiceProvider services)
+    private static OrderService CreateService(IServiceProvider services, ICatalogScope? catalogScope = null)
     {
         var db = services.GetRequiredService<AppDbContext>();
         var crossSell = new CrossSellService(db);
         return new OrderService(db, new CartService(db, crossSell), new ShippingFeeService(),
             Mock.Of<IOrderEmailService>(), Mock.Of<ICustomerSegmentService>(), crossSell,
-            Mock.Of<IUserNotificationService>(), Hub(), NullLogger<OrderService>.Instance);
+            Mock.Of<IUserNotificationService>(), Hub(), NullLogger<OrderService>.Instance, catalogScope: catalogScope);
     }
 
     private static PaymentController CreatePaymentController(IServiceProvider services, Order order, Mock<IOrderEmailService> email)

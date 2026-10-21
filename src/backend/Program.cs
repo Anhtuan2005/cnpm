@@ -17,7 +17,7 @@ using System.IO.Compression;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
-var activeSprint = Math.Clamp(builder.Configuration.GetValue("Release:ActiveSprint", 1), 1, 3);
+var activeSprint = Math.Clamp(builder.Configuration.GetValue("Release:ActiveSprint", 1), 1, 2);
 
 var viCulture = CultureInfo.GetCultureInfo("vi-VN");
 CultureInfo.DefaultThreadCurrentCulture = viCulture;

@@ -6,6 +6,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
+using System.Security.Claims;
 
 namespace EcommerceApp.Services;
 
@@ -22,8 +23,9 @@ public class OrderService : IOrderService
     private readonly ILogger<OrderService> _logger;
     private readonly ISprintFeatureService? _sprintFeatures;
     private readonly ICatalogScope? _catalogScope;
+    private readonly IHttpContextAccessor? _httpContextAccessor;
 
-    public OrderService(AppDbContext db, ICartService cartService, IShippingFeeService shippingFeeService, IOrderEmailService orderEmailService, ICustomerSegmentService customerSegmentService, ICrossSellService crossSellService, IUserNotificationService notificationService, IHubContext<AdminNotificationHub> adminNotificationHub, ILogger<OrderService> logger, ISprintFeatureService? sprintFeatures = null, ICatalogScope? catalogScope = null)
+    public OrderService(AppDbContext db, ICartService cartService, IShippingFeeService shippingFeeService, IOrderEmailService orderEmailService, ICustomerSegmentService customerSegmentService, ICrossSellService crossSellService, IUserNotificationService notificationService, IHubContext<AdminNotificationHub> adminNotificationHub, ILogger<OrderService> logger, ISprintFeatureService? sprintFeatures = null, ICatalogScope? catalogScope = null, IHttpContextAccessor? httpContextAccessor = null)
     {
         _db = db;
         _cartService = cartService;
@@ -36,6 +38,7 @@ public class OrderService : IOrderService
         _logger = logger;
         _sprintFeatures = sprintFeatures;
         _catalogScope = catalogScope;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<Order> CreateOrderAsync(string userId, CheckoutViewModel model, string sessionId)
@@ -207,11 +210,8 @@ public class OrderService : IOrderService
 
             foreach (var item in checkoutItems)
             {
-                var affected = await _db.Database.ExecuteSqlRawAsync(
-                    "UPDATE Products SET Stock = Stock - {0} WHERE Id = {1} AND Stock >= {0} AND IsDeleted = 0",
-                    item.Quantity,
-                    item.ProductId);
-                if (affected == 0)
+                if (!await InventoryMovements.ChangeAsync(_db, item.ProductId, -item.Quantity,
+                    StockMovementTypes.Sale, "Đặt hàng", userId, order))
                 {
                     throw new InvalidOperationException($"Sản phẩm '{item.Product?.Name ?? "không xác định"}' vừa hết hàng. Vui lòng cập nhật giỏ hàng.");
                 }
@@ -423,10 +423,12 @@ public class OrderService : IOrderService
             var oldStatus = order.Status;
             var oldRefundStatus = order.RefundStatus;
             if (status == OrderStatuses.Cancelled)
-                await OrderLifecycle.CancelAsync(_db, order, "Đơn hàng bị huỷ bởi admin.", DateTime.UtcNow);
+                await OrderLifecycle.CancelAsync(_db, order, "Đơn hàng bị huỷ bởi admin.", DateTime.UtcNow,
+                    _httpContextAccessor?.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier));
             else
                 order.Status = status;
             order.UpdatedAt = DateTime.UtcNow;
+            OrderLifecycle.RecordCodCollection(order, order.UpdatedAt);
 
             if (status == OrderStatuses.Shipping && order.ShippingInfo is not null && string.IsNullOrWhiteSpace(order.ShippingInfo.Status))
             {
@@ -472,15 +474,22 @@ public class OrderService : IOrderService
         return confirmed;
     }
 
-    public async Task<bool> MarkManualRefundCompletedAsync(int id, string? note)
+    public async Task<bool> MarkManualRefundCompletedAsync(int id, string method, string reference, string? note)
     {
-        if (note?.Length > 500) return false;
+        if (!ManualRefundMethods.All.Contains(method) || string.IsNullOrWhiteSpace(reference) || reference.Trim().Length > 120 || note?.Length > 500)
+            return false;
         var order = await DatabaseTransaction.ExecuteAsync<Order?>(_db, async () =>
         {
             var current = await OrderLifecycle.LoadForUpdateAsync(_db, id);
-            if (current is null || current.RefundStatus != RefundStatuses.PendingManual) return null;
+            if (current is null || !OrderLifecycle.CanRecordManualRefund(current) ||
+                !ManualRefundMethods.ForPaymentMethod(current.PaymentMethod).Contains(method) ||
+                (current.Status == OrderStatuses.Delivered && string.IsNullOrWhiteSpace(note))) return null;
             current.RefundStatus = RefundStatuses.Refunded;
             current.RefundedAt = DateTime.UtcNow;
+            current.RefundMethod = method;
+            current.RefundReference = reference.Trim();
+            current.RefundAmount = current.TotalAmount;
+            current.RefundConfirmedBy = _httpContextAccessor?.HttpContext?.User.Identity?.Name ?? "Admin";
             current.RefundNote = string.IsNullOrWhiteSpace(note) ? "Admin đã xác nhận hoàn tiền thủ công." : note.Trim();
             current.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
@@ -505,17 +514,18 @@ public class OrderService : IOrderService
             var order = await _db.Orders
                 .FromSqlInterpolated($"SELECT * FROM Orders WITH (UPDLOCK, ROWLOCK) WHERE Id = {id} AND UserId = {userId}")
                 .Include(row => row.Items)
+                .Include(row => row.ShippingInfo)
                 .FirstOrDefaultAsync();
-            if (order is null || order.Status is not (OrderStatuses.AwaitingPayment or OrderStatuses.Pending))
+            if (order is null || !OrderLifecycle.CanCustomerCancel(order) || reason?.Trim().Length > 300)
             {
                 return null;
             }
 
             var oldRefundStatus = order.RefundStatus;
             var cancellationReason = string.IsNullOrWhiteSpace(reason)
-                ? "Khách hàng hủy đơn trước khi xác nhận."
+                ? "Khách hàng hủy đơn trước khi bàn giao vận chuyển."
                 : reason.Trim();
-            await OrderLifecycle.CancelAsync(_db, order, cancellationReason, DateTime.UtcNow);
+            await OrderLifecycle.CancelAsync(_db, order, cancellationReason, DateTime.UtcNow, userId);
 
             await _db.SaveChangesAsync();
             return (order, oldRefundStatus);
@@ -597,9 +607,13 @@ public class OrderService : IOrderService
         var monthOrders = await _db.Orders.CountAsync(order => order.CreatedAt >= startOfMonth);
         var yearOrders = await _db.Orders.CountAsync(order => order.CreatedAt >= startOfYear);
 
+        var catalogProducts = _db.Products.IgnoreQueryFilters();
+        if (_catalogScope is not null) catalogProducts = _catalogScope.Products(catalogProducts);
+        var catalogProductIds = catalogProducts.Select(product => product.Id);
         var topProducts = await _db.OrderItems
             .IgnoreQueryFilters()
             .Include(item => item.Product)
+            .Where(item => catalogProductIds.Contains(item.ProductId))
             .WithRecognizedRevenue()
             .GroupBy(item => item.Product!.Name)
             .Select(group => new TopProductViewModel
@@ -718,9 +732,15 @@ public class OrderService : IOrderService
             .ThenByDescending(product => product.AgeDays)
             .ToList();
 
-        var lowStockProducts = await _db.Products
+        IQueryable<Product> lowStockQuery = _db.Products;
+        if (_catalogScope is not null)
+        {
+            lowStockQuery = _catalogScope.Products(lowStockQuery);
+        }
+        lowStockQuery = lowStockQuery.Where(product => product.Stock <= 5);
+
+        var lowStockProducts = await lowStockQuery
             .Include(product => product.Category)
-            .Where(product => product.Stock <= 5)
             .OrderBy(product => product.Stock)
             .ThenBy(product => product.Name)
             .Take(10)
@@ -736,7 +756,7 @@ public class OrderService : IOrderService
             PendingOrdersCount = await _db.Orders.CountAsync(order => order.Status == OrderStatuses.Pending),
             AwaitingPaymentCount = await _db.Orders.CountAsync(order => order.Status == OrderStatuses.AwaitingPayment),
             ManualRefundCount = await _db.Orders.CountAsync(order => order.RefundStatus == RefundStatuses.PendingManual),
-            LowStockCount = await _db.Products.CountAsync(product => product.Stock <= 5),
+            LowStockCount = await lowStockQuery.CountAsync(),
             PriceReviewCount = priceReviewCandidates.Count,
             OrdersByStatus = await _db.Orders.GroupBy(order => order.Status).ToDictionaryAsync(group => group.Key, group => group.Count()),
             PeriodMetrics = new[]

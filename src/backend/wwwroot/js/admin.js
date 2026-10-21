@@ -295,6 +295,15 @@ function initOrderNotifications() {
       order.url
     );
   });
+  connection.on("ReviewCreated", function (review) {
+    incrementBadge("pending-review-badge", 1);
+    incrementBadge("admin-notification-badge", 1);
+    showAdminToast(
+      "Có đánh giá mới cho sản phẩm #" + review.productId,
+      "info",
+      review.url || "/Admin/Review"
+    );
+  });
   connection.onreconnecting(function () {
     realtimeConnected = false;
   });

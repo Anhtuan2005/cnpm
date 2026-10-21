@@ -1,10 +1,15 @@
 @using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
+@inject EcommerceApp.Data.AppDbContext Db
 @inject EcommerceApp.Services.IUserNotificationService NotificationService
 @{
     var adminUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
     var adminUnreadCount = !SprintFeatures.IsEnabled(2) || string.IsNullOrWhiteSpace(adminUserId)
         ? 0
         : await NotificationService.GetUnreadCountAsync(adminUserId);
+    var pendingReviewCount = SprintFeatures.IsEnabled(2)
+        ? await Db.Reviews.CountAsync(review => review.StoreReply == null || review.StoreReply == "")
+        : 0;
     var adminHome = SprintFeatures.IsEnabled(2) ? "/Admin/Dashboard" : "/Admin/Product";
 }
 <!DOCTYPE html>
@@ -43,7 +48,7 @@
             @if (SprintFeatures.IsEnabled(2))
             {
                 <a class="adm-nav-item" href="/Admin/Shipping"><i class="bi bi-truck"></i><span>Vận chuyển</span></a>
-                <a class="adm-nav-item" href="/Admin/Review"><i class="bi bi-star-half"></i><span>Review</span></a>
+                <a class="adm-nav-item" href="/Admin/Review"><i class="bi bi-chat-left-text"></i><span>Phản hồi đánh giá</span><em id="pending-review-badge" aria-label="@pendingReviewCount đánh giá chưa phản hồi">@(pendingReviewCount > 0 ? pendingReviewCount.ToString() : string.Empty)</em></a>
             }
             @if (SprintFeatures.IsEnabled(3))
             {

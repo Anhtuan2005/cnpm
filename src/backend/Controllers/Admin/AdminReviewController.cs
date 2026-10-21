@@ -1,20 +1,24 @@
 using EcommerceApp.Data;
+using EcommerceApp.Models;
+using EcommerceApp.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace EcommerceApp.Controllers.Admin;
 
-[EcommerceApp.Services.MinimumSprint(2)]
+[MinimumSprint(2)]
 [Authorize(Roles = "Admin")]
 [Route("Admin/Review")]
 public class AdminReviewController : Controller
 {
     private readonly AppDbContext _db;
+    private readonly IUserNotificationService? _notificationService;
 
-    public AdminReviewController(AppDbContext db)
+    public AdminReviewController(AppDbContext db, IUserNotificationService? notificationService = null)
     {
         _db = db;
+        _notificationService = notificationService;
     }
 
     [HttpGet("")]
@@ -29,42 +33,38 @@ public class AdminReviewController : Controller
         return View("~/Views/Admin/Review/Index.cshtml", reviews);
     }
 
-    [HttpPost("Approve/{id:int}")]
+    [HttpPost("Reply/{id:int}")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Approve(int id)
+    public async Task<IActionResult> Reply(int id, string? reply)
     {
         var review = await _db.Reviews.FindAsync(id);
-        if (review is not null)
+        if (review is null)
         {
-            review.IsApproved = true;
-            await _db.SaveChangesAsync();
+            return NotFound();
         }
-        return RedirectToAction(nameof(Index));
-    }
 
-    [HttpPost("Reject/{id:int}")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Reject(int id)
-    {
-        var review = await _db.Reviews.FindAsync(id);
-        if (review is not null)
+        var content = reply?.Trim();
+        if (string.IsNullOrWhiteSpace(content) || content.Length > 500)
         {
-            review.IsApproved = false;
-            await _db.SaveChangesAsync();
+            TempData["Error"] = "Phản hồi cần có nội dung và không vượt quá 500 ký tự.";
+            return RedirectToAction(nameof(Index));
         }
-        return RedirectToAction(nameof(Index));
-    }
 
-    [HttpPost("Delete/{id:int}")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var review = await _db.Reviews.FindAsync(id);
-        if (review is not null)
+        var firstReply = string.IsNullOrWhiteSpace(review.StoreReply);
+        review.StoreReply = content;
+        review.StoreRepliedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        if (firstReply && _notificationService is not null)
         {
-            _db.Reviews.Remove(review);
-            await _db.SaveChangesAsync();
+            await _notificationService.CreateAsync(
+                review.UserId,
+                "Cửa hàng đã phản hồi đánh giá",
+                "Techvora đã phản hồi đánh giá sản phẩm của bạn.",
+                NotificationTypes.Review,
+                $"/Product/Detail/{review.ProductId}");
         }
+
+        TempData["Success"] = "Đã đăng phản hồi công khai cho đánh giá.";
         return RedirectToAction(nameof(Index));
     }
 }

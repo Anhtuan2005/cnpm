@@ -24,7 +24,7 @@ public class ReturnWarrantyRequestCreateViewModel
     public string Reason { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Vui lòng mô tả tình trạng sản phẩm")]
-    [MinLength(20, ErrorMessage = "Mô tả cần ít nhất 20 ký tự")]
+    [MinLength(20, ErrorMessage = "Mô tả chưa đủ 20 ký tự")]
     [StringLength(1200)]
     public string Description { get; set; } = string.Empty;
 

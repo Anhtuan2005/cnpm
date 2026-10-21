@@ -507,9 +507,24 @@ namespace EcommerceApp.Data.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
 
+                    b.Property<decimal?>("RefundAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("RefundConfirmedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("RefundMethod")
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
                     b.Property<string>("RefundNote")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("RefundReference")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
 
                     b.Property<DateTime?>("RefundRequestedAt")
                         .HasColumnType("datetime2");
@@ -670,6 +685,9 @@ namespace EcommerceApp.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(180)
                         .HasColumnType("nvarchar(180)");
+
+                    b.Property<string>("PhoneSpecificationsJson")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("PowerWatts")
                         .HasColumnType("int");
@@ -952,14 +970,18 @@ namespace EcommerceApp.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsApproved")
-                        .HasColumnType("bit");
-
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
                     b.Property<int>("Rating")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("StoreRepliedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("StoreReply")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -1058,7 +1080,23 @@ namespace EcommerceApp.Data.Migrations
                     b.Property<string>("ChangedByUserId")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("MovementType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)")
+                        .HasDefaultValue("Điều chỉnh thủ công");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("int");
+
                     b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("QuantityAfter")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("QuantityBefore")
                         .HasColumnType("int");
 
                     b.Property<string>("Reason")
@@ -1070,7 +1108,9 @@ namespace EcommerceApp.Data.Migrations
 
                     b.HasIndex("ChangedByUserId");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("ProductId", "ChangedAt");
 
                     b.ToTable("StockLogs");
                 });
@@ -1567,6 +1607,11 @@ namespace EcommerceApp.Data.Migrations
                         .HasForeignKey("ChangedByUserId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("EcommerceApp.Models.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("EcommerceApp.Models.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
@@ -1574,6 +1619,8 @@ namespace EcommerceApp.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("ChangedByUser");
+
+                    b.Navigation("Order");
 
                     b.Navigation("Product");
                 });

@@ -15,6 +15,8 @@ public interface IImageStorageService
         int quality = 82,
         long maxBytes = 8 * 1024 * 1024,
         CancellationToken cancellationToken = default);
+
+    Task DeleteUploadedFileAsync(string? imageUrl, string subfolder, CancellationToken cancellationToken = default);
 }
 
 public class ImageStorageService : IImageStorageService
@@ -32,6 +34,49 @@ public class ImageStorageService : IImageStorageService
     public ImageStorageService(IWebHostEnvironment environment)
     {
         _environment = environment;
+    }
+
+    public Task DeleteUploadedFileAsync(string? imageUrl, string subfolder, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (string.IsNullOrWhiteSpace(imageUrl))
+        {
+            return Task.CompletedTask;
+        }
+
+        var safeFolder = string.Concat(subfolder
+            .Trim()
+            .ToLowerInvariant()
+            .Where(character => char.IsLetterOrDigit(character) || character is '-' or '_'));
+        if (string.IsNullOrWhiteSpace(safeFolder))
+        {
+            return Task.CompletedTask;
+        }
+
+        var urlPath = imageUrl.Split('?', '#')[0];
+        var expectedPrefix = $"/uploads/{safeFolder}/";
+        if (!urlPath.StartsWith(expectedPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return Task.CompletedTask;
+        }
+
+        var webRoot = _environment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+        var uploadRoot = Path.GetFullPath(Path.Combine(webRoot, "uploads", safeFolder));
+        var uploadRootPrefix = uploadRoot.EndsWith(Path.DirectorySeparatorChar)
+            ? uploadRoot
+            : uploadRoot + Path.DirectorySeparatorChar;
+        var filePath = Path.GetFullPath(Path.Combine(webRoot, urlPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar)));
+        if (!filePath.StartsWith(uploadRootPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return Task.CompletedTask;
+        }
+
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
+
+        return Task.CompletedTask;
     }
 
     public async Task<string?> SaveAsWebpAsync(
@@ -131,4 +176,5 @@ public class ImageStorageService : IImageStorageService
             return $"/uploads/{safeFolder}/{fileName}";
         }
     }
+
 }

@@ -54,7 +54,7 @@ public sealed partial class OrderPaymentTests
     }
 
     [Fact]
-    public async Task Concurrent_bulk_confirmation_and_cancellation_preserve_stock_and_only_one_winner()
+    public async Task Concurrent_bulk_confirmation_and_customer_cancellation_leave_the_order_cancelled_once()
     {
         var (productId, users) = await SeedCartsAsync(2, 1);
         int orderId;
@@ -65,13 +65,14 @@ public sealed partial class OrderPaymentTests
         var confirm = CreateService(confirming.ServiceProvider).ConfirmPendingOrdersAsync(new[] { orderId, orderId });
         var cancel = CreateService(cancelling.ServiceProvider).CancelUserOrderAsync(orderId, users[0], "Test");
         await Task.WhenAll(confirm, cancel);
-        var cancelled = await cancel;
-        Assert.Equal(1, await confirm + (cancelled ? 1 : 0));
+        Assert.True(await cancel);
+        Assert.InRange(await confirm, 0, 1);
         await using var verify = fixture.Services.CreateAsyncScope();
         var db = verify.ServiceProvider.GetRequiredService<AppDbContext>();
-        Assert.Equal(cancelled ? OrderStatuses.Cancelled : OrderStatuses.Confirmed,
+        Assert.Equal(OrderStatuses.Cancelled,
             await db.Orders.Where(o => o.Id == orderId).Select(o => o.Status).SingleAsync());
-        Assert.Equal(cancelled ? 2 : 1, await db.Products.Where(p => p.Id == productId).Select(p => p.Stock).SingleAsync());
+        Assert.Equal(2, await db.Products.Where(p => p.Id == productId).Select(p => p.Stock).SingleAsync());
+        Assert.Single(await db.StockLogs.Where(log => log.OrderId == orderId && log.MovementType == StockMovementTypes.Cancellation).ToListAsync());
         Assert.Equal(0, await CreateService(verify.ServiceProvider).ConfirmPendingOrdersAsync(new[] { orderId }));
     }
 
@@ -185,7 +186,10 @@ public sealed partial class OrderPaymentTests
         async Task<bool> CompleteAsync()
         {
             await using var scope = fixture.Services.CreateAsyncScope();
-            return await CreateService(scope.ServiceProvider).MarkManualRefundCompletedAsync(order.Id, "Refund test");
+            var service = CreateService(scope.ServiceProvider);
+            Assert.False(await service.MarkManualRefundCompletedAsync(order.Id, ManualRefundMethods.BankTransfer, " ", null));
+            Assert.False(await service.MarkManualRefundCompletedAsync(order.Id, "Unsupported channel", "REF-TEST", null));
+            return await service.MarkManualRefundCompletedAsync(order.Id, ManualRefundMethods.BankTransfer, "REF-TEST", "Refund test");
         }
         Assert.Single(await Task.WhenAll(CompleteAsync(), CompleteAsync()), completed => completed);
         await using var verify = fixture.Services.CreateAsyncScope();
@@ -193,6 +197,10 @@ public sealed partial class OrderPaymentTests
         Assert.True(saved.IsPaid);
         Assert.Equal(RefundStatuses.Refunded, saved.RefundStatus);
         Assert.NotNull(saved.RefundedAt);
+        Assert.Equal(order.TotalAmount, saved.RefundAmount);
+        Assert.Equal(ManualRefundMethods.BankTransfer, saved.RefundMethod);
+        Assert.Equal("REF-TEST", saved.RefundReference);
+        Assert.Equal("Admin", saved.RefundConfirmedBy);
     }
 
     [Fact]
@@ -210,7 +218,7 @@ public sealed partial class OrderPaymentTests
         await using var cancelling = fixture.Services.CreateAsyncScope();
         var shipping = new ShippingService(assigning.ServiceProvider.GetRequiredService<AppDbContext>(),
             Mock.Of<IOrderEmailService>(), Mock.Of<IUserNotificationService>());
-        var assign = shipping.AssignAsync(orderId, "Carrier", "tracking", null);
+        var assign = shipping.AssignAsync(orderId, ShippingCarriers.Ghn, "tracking", null);
         var cancel = CreateService(cancelling.ServiceProvider).UpdateStatusAsync(orderId, OrderStatuses.Cancelled);
         Assert.Single(await Task.WhenAll(assign, cancel), succeeded => succeeded);
         var cancelled = await cancel;
