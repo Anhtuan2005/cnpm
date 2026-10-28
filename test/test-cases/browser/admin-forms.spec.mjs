@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './playwright.mjs';
 import { signInDemo } from './auth.mjs';
 
 let storageState;

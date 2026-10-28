@@ -1,4 +1,4 @@
-name: Backend tests
+name: Sprint 1-2 integration
 
 on:
   push:
@@ -9,7 +9,8 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # Keep the runner compatible with the locked Playwright version.
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
       sqlserver:
@@ -29,9 +30,62 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/frontend/package-lock.json
+      - name: Install frontend dependencies and verify served assets
+        working-directory: src/frontend
+        run: |
+          npm ci
+          npm run check:assets
       - run: dotnet test test/test-cases/EcommerceApp.Tests/EcommerceApp.Tests.csproj --configuration Release --logger trx --results-directory TestResults
+      - name: Install browser
+        working-directory: src/frontend
+        run: npx playwright install --with-deps chromium
+      - name: Start Sprint 2 with an isolated demo database
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          ConnectionStrings__DefaultConnection: Server=localhost,1433;Database=TechvoraBrowserTests;User Id=sa;Password=Techvora_Test_Only123!;TrustServerCertificate=True
+          Database__MigrateOnStartup: 'true'
+          Demo__Enabled: 'true'
+          Email__Enabled: 'false'
+          Release__ActiveSprint: '2'
+        run: |
+          mkdir -p artifacts/ci
+          dotnet run --project src/backend/EcommerceApp.csproj --configuration Release --no-build --no-launch-profile --urls http://127.0.0.1:5017 > artifacts/ci/app.log 2>&1 &
+          echo $! > artifacts/ci/app.pid
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:5017/ > /dev/null; then
+              break
+            fi
+            if ! kill -0 "$(cat artifacts/ci/app.pid)" 2>/dev/null; then
+              cat artifacts/ci/app.log
+              exit 1
+            fi
+            sleep 2
+          done
+          curl --fail --silent http://127.0.0.1:5017/ > /dev/null
+      - name: Run browser integration and regression tests
+        working-directory: src/frontend
+        env:
+          TECHVORA_SMOKE_URL: http://127.0.0.1:5017
+          PLAYWRIGHT_CHANNEL: chromium
+          PLAYWRIGHT_JSON_OUTPUT_FILE: ../../artifacts/ci/browser-results.json
+        run: npm run test:smoke -- --reporter=list,json
+      - name: Stop demo server
+        if: always()
+        run: |
+          if [ -f artifacts/ci/app.pid ]; then
+            kill "$(cat artifacts/ci/app.pid)" 2>/dev/null || true
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: backend-test-results
-          path: TestResults/*.trx
+          name: sprint12-test-results
+          path: |
+            TestResults/*.trx
+            artifacts/ci/*.log
+            artifacts/ci/*results.json
+            artifacts/browser/

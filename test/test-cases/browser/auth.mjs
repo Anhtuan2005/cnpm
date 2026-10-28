@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+import { expect } from './playwright.mjs';
 
 // Reuse each demo session within a worker so the suite does not exhaust the
 // application's real login rate limit (5 attempts per IP in 10 minutes).

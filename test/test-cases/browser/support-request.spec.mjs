@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './playwright.mjs';
 import { signInDemo } from './auth.mjs';
 
 test('Sprint 2 support request reaches the admin order without a Sprint 3 route', async ({ page }) => {

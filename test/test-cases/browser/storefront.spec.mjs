@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './playwright.mjs';
 import { signInDemo } from './auth.mjs';
 
 test('Sprint 2 storefront exposes Sprint 2 routes and keeps later routes unavailable', async ({ page }) => {
