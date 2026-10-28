@@ -1,5 +1,7 @@
 # Lab 4 – Phát triển và kiểm thử Sprint 1–2
 
+**Hồ sơ lịch sử Lab 4:** các mô tả trạng thái bên dưới phản ánh lần lập trước. Ngày 28/10/2026, PR #6 đã merge và đủ 12 issue Sprint 2 đã đóng. Xem [tổng kết Sprint 2 cập nhật](sprint-2.md), [hồ sơ Buổi 7](../buoi7/README.md) và [Test Report mới](../../test/TestReport.md) với 132 backend, 26 browser.
+
 Hồ sơ này dùng cho hai phiếu LAB 4.1 và LAB 4.2 của dự án Techvora. Bản chạy mặc định của repository mở đến Sprint 2. Báo cáo Sprint 2 dự kiến vào **thứ Tư, 21/10/2026** theo thông tin nhóm cung cấp ngày 14/10/2026.
 
 | Nội dung | Minh chứng |
@@ -9,7 +11,8 @@ Hồ sơ này dùng cho hai phiếu LAB 4.1 và LAB 4.2 của dự án Techvora.
 | Backlog, Acceptance Criteria và phân công | [Sprint 1](sprint-1.md#sprint-backlog) · [Sprint 2](sprint-2.md#sprint-backlog) |
 | Kịch bản Planning Poker Sprint 2 | [Kịch bản cho buổi 18/10/2026](planning-poker-sprint-2-2026-10-18.md) |
 | Test report, lỗi và kiểm thử hồi quy | [Sprint 1](sprint-1.md#kiểm-thử-và-lỗi) · [Sprint 2](sprint-2.md#kiểm-thử-và-lỗi) |
-| Kết quả chạy test mới | [110 backend và 22 browser smoke](test-run-2026-10-14.md) |
+| Kết quả chạy test mới | [132 backend và 26 browser smoke ngày 28/10](../../test/TestReport.md) |
+| Kết quả lịch sử Lab 4 | [110 backend và 22 browser smoke ngày 14/10](test-run-2026-10-14.md) |
 | Demo và chạy local | [README dự án](../../README.md#demo-local) · [Kịch bản demo](../user-guide/demo.md) |
 | Kiến trúc và kết quả test cũ | [Kiến trúc](../design/architecture.md) · [Bằng chứng test](../user-guide/backend-tests.md) |
 

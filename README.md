@@ -2,39 +2,15 @@
 
 **Theo dõi tiến độ:** [Mở bảng GitHub Project](https://github.com/users/Anhtuan2005/projects/1) · [Milestone Sprint 1](https://github.com/Anhtuan2005/cnpm/milestone/1) · [Sprint 2](https://github.com/Anhtuan2005/cnpm/milestone/2) · [Sprint 3](https://github.com/Anhtuan2005/cnpm/milestone/3).
 
-Project có **10 User Story đã làm**, **12 đang hoàn thiện** và **8 dự kiến**. Bảng cho biết trạng thái theo Sprint Backlog; danh sách chức năng bên dưới cho biết chức năng nào có trong bản chạy mặc định.
-
 **Cửa hàng điện thoại từ lúc chọn máy đến khi theo dõi đơn hàng.** Khách có thể so sánh sản phẩm, đặt mua và gửi yêu cầu hậu mãi; nhân viên quản lý danh mục, tồn kho và đơn hàng trên cùng một hệ thống.
 
 `ASP.NET Core 8 MVC` · `EF Core 8` · `SQL Server` · `Razor` · `JavaScript`
 
-**Khám phá dự án:** [Tiến độ chức năng](#tiến-độ-chức-năng) · [Chạy demo local](#demo-local) · [Kiến trúc](docs/design/architecture.md) · [Kịch bản demo](docs/user-guide/demo.md) · [Bằng chứng kiểm thử](docs/user-guide/backend-tests.md)
+**Khám phá dự án:** [Chạy demo local](#demo-local) · [Kiến trúc](docs/design/architecture.md) · [Kịch bản demo](docs/user-guide/demo.md) · [Bằng chứng kiểm thử](docs/user-guide/backend-tests.md)
 
 | Trang chủ cửa hàng | Quản trị sản phẩm |
 | :---: | :---: |
 | ![Trang chủ Techvora với dữ liệu demo](docs/design/screenshots/home.png) | ![Trang quản trị sản phẩm Techvora với dữ liệu demo](docs/design/screenshots/admin.png) |
-
-## Tiến độ chức năng
-
-Trạng thái dưới đây tính theo bản chạy mặc định **Sprint 2** (`Release:ActiveSprint=2`). Có mã nguồn trong repository chưa đồng nghĩa với việc chức năng đã được phát hành cho người dùng.
-
-### Đã làm — sử dụng được trong bản mặc định
-
-- [x] **Khám phá sản phẩm:** trang chủ, danh mục điện thoại, tìm kiếm, lọc, sắp xếp, phân trang, chi tiết và so sánh sản phẩm.
-- [x] **Tài khoản và mua sắm:** đăng ký, đăng nhập, hồ sơ, danh sách yêu thích, giỏ hàng khách/giỏ hàng tài khoản và mua ngay.
-- [x] **Đặt hàng:** địa chỉ và phí giao hàng, voucher, COD, luồng VNPAY, xác nhận đơn, lịch sử, hủy đơn và mua lại. VNPAY cần cấu hình sandbox để thử thanh toán ngoài hệ thống.
-- [x] **Hậu mãi:** theo dõi giao hàng, khách xác nhận đã nhận hàng hoặc báo sự cố, xác nhận đã nhận tiền hoàn hoặc báo chưa nhận; thông báo, đánh giá kèm ảnh và yêu cầu đổi trả/bảo hành.
-- [x] **Quản trị:** quản lý danh mục, sản phẩm, banner, tồn kho và đơn hàng; dashboard, ghi nhận đối soát COD và chuyển tiền hoàn thủ công, phản hồi sự cố, hóa đơn/CSV, tích hợp GHN và phản hồi đánh giá công khai. GHN cần thông tin sandbox để gọi dịch vụ ngoài.
-
-Xác nhận của khách được lưu riêng với trạng thái giao của GHN và ghi nhận chuyển tiền của shop. Admin có thể lưu liên kết HTTPS tới chứng từ giao hàng, mã/số tiền đối soát COD và phản hồi sự cố; mỗi thao tác có lịch sử trên đơn. Các mốc này giúp hai bên đối chiếu, **không phải ký quỹ hay xác minh tự động tiền đã về tài khoản**. Chỉ ghi nhận đối soát COD sau khi kiểm tra sao kê GHN; hoàn tiền VNPAY hiện vẫn làm thủ công bên ngoài ứng dụng.
-
-### Chưa phát hành — dự kiến làm tiếp
-
-- [ ] **Sprint 3:** hoàn thiện và mở các chức năng khuyến mãi, gợi ý sản phẩm cá nhân hóa, bán kèm, nhắc giỏ hàng bỏ quên và trợ lý AI.
-- [ ] **Sprint 3:** mở báo cáo doanh thu, phân khúc khách hàng, quản lý người dùng/voucher, màn hình quản trị đổi trả/bảo hành và các trang SEO (`sitemap.xml`, `robots.txt`).
-- [ ] **Giai đoạn sau:** hoàn thiện và phát hành tính năng Build PC, gợi ý cấu hình và xem trước 3D.
-
-Các mục dự kiến đã có **một phần hoặc toàn bộ mã nguồn** nhưng chưa được phát hành. Bản chạy hiện giới hạn tối đa Sprint 2 ngay cả khi cấu hình yêu cầu Sprint 3; các route Sprint 3 trở lên trả `404`. Danh sách này thể hiện kế hoạch tiếp theo, không phải cam kết ngày phát hành.
 
 ## Tài liệu dự án
 
@@ -45,6 +21,7 @@ Các mục dự kiến đã có **một phần hoặc toàn bộ mã nguồn** n
 | Hướng dẫn | [Kịch bản demo](docs/user-guide/demo.md) và [bằng chứng kiểm thử](docs/user-guide/backend-tests.md) |
 | Quản lý cấu hình | [Hồ sơ Lab 3](docs/lab3/README.md) |
 | Tiến độ Sprint 1–2 | [Hồ sơ Lab 4 và phiếu thực hành](docs/lab4/README.md) |
+| Tích hợp và chuẩn bị Sprint 3 | [Báo cáo Buổi 7](docs/buoi7/README.md), [Test Report](test/TestReport.md) và [kế hoạch Sprint 3](docs/buoi7/sprint-3-plan.md) |
 
 **Tài liệu gốc Tuần 1–2 chưa có trong repository.** `docs/requirements/` hiện chỉ có trang hướng dẫn đặt tài liệu; `docs/design/` đã có sơ đồ kiến trúc và ảnh minh họa. Khi có bản gốc, đặt yêu cầu vào `docs/requirements/` và thiết kế vào `docs/design/`. Repo hiện chưa có video demo hoặc URL triển khai công khai.
 
@@ -156,7 +133,7 @@ Project test nằm tại [`test/test-cases/EcommerceApp.Tests`](test/test-cases/
 dotnet test test/test-cases/EcommerceApp.Tests/EcommerceApp.Tests.csproj
 ```
 
-Nếu dùng SQL Server khác, đặt `TECHVORA_TEST_SQLSERVER` thành connection string của server test trước khi chạy. Ngày 14/10/2026, **110/110 test backend** và **22/22 smoke test trình duyệt** pass trên máy local với database demo riêng. Bộ test bao gồm phạm vi Sprint 2, checkout/voucher, phí vận chuyển, mua ngay, tranh chấp tồn kho, callback thanh toán, phân quyền và luồng yêu cầu hỗ trợ đến trang đơn hàng admin. [Lệnh, kết quả và mã test tiêu biểu](docs/user-guide/backend-tests.md) giúp kiểm chứng; [workflow CI](.github/workflows/portfolio-tests.yml) được cấu hình để chạy bộ test trên SQL Server 2022.
+Nếu dùng SQL Server khác, đặt `TECHVORA_TEST_SQLSERVER` thành connection string của server test trước khi chạy. Ngày 28/10/2026, **132/132 test backend** và **26/26 smoke test trình duyệt** pass trên máy local với database demo riêng; [Test Report Buổi 7](test/TestReport.md) ghi input, kết quả và bước chạy lại. Bộ test bao gồm phạm vi Sprint 2, checkout/voucher, phí vận chuyển, mua ngay, tranh chấp tồn kho, callback thanh toán, phân quyền và luồng yêu cầu hỗ trợ đến trang đơn hàng admin. [Lệnh, kết quả và mã test tiêu biểu](docs/user-guide/backend-tests.md) giúp kiểm chứng; [workflow CI](.github/workflows/portfolio-tests.yml) chạy backend trên SQL Server 2022, kiểm tra asset và browser trên Chromium.
 
 ## Cấu hình tùy chọn
 
