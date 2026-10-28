@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './playwright.mjs';
 import { fileURLToPath } from 'node:url';
 import { signInDemo } from './auth.mjs';
 

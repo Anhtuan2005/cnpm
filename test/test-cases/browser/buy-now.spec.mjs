@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './playwright.mjs';
 import { signInDemo as login } from './auth.mjs';
 
 test('buy now opens a direct checkout without changing the cart count', async ({ page }) => {

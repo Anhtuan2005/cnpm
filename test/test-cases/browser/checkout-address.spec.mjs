@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './playwright.mjs';
 import { signInDemo } from './auth.mjs';
 
 // Match the v1 address API contract while keeping CI independent of its uptime.

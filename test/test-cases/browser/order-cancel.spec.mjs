@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './playwright.mjs';
 import { signInDemo } from './auth.mjs';
 
 test('confirmation sends one cancellation only after explicit approval', async ({ page }) => {

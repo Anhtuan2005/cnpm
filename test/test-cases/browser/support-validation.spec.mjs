@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './playwright.mjs';
 
 test('invalid support request points to each field and clears errors after correction', async ({ page }) => {
   await page.goto('/');
