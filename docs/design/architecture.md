@@ -13,7 +13,10 @@ flowchart LR
     Services --> Integrations[VNPAY / GHN / SMTP / Gemini]
     Services --> SignalR[SignalR]
     SignalR --> Browser
-    Services --> Engine[SmartPcBuildEngine]
+    Services --> Offers[Voucher / CrossSell / BuyNow]
+    Services --> Recovery[Nhắc giỏ và gợi ý]
+    Services --> Images[SkiaSharp WebP]
+    Services -. Sprint 4 chưa mở .-> Engine[SmartPcBuildEngine]
 ```
 
 ## ERD rút gọn
@@ -85,7 +88,15 @@ Khách chỉ huỷ đơn chờ thanh toán/chờ xác nhận. Gán vận chuyể
 
 Các file `Search`, `Compatibility`, `Profiles` chia tìm kiếm, quy tắc/điểm số và cấu hình mục tiêu. Socket/RAM chỉ lấy từ metadata. Thiếu dữ liệu thì cảnh báo; điểm workload, dự trù nguồn khi thiếu dữ liệu và airflow vẫn là heuristic.
 
-## Asset và demo
+## Phạm vi bản phát hành Lab 6
+
+Bản 1.0.0 mở tối đa Sprint 3 bằng cùng hàm chuẩn hóa trong `SprintFeatureService` và startup. Voucher/nhóm khách nối checkout; BuyNowService kiểm tra phụ kiện đủ điều kiện rồi giữ riêng giỏ mua ngay; báo cáo đối chiếu đơn/hoàn tiền. Job nhắc giỏ chỉ đăng ký khi Sprint 3 hoạt động. Quay về Sprint 2 cần khởi động lại; dữ liệu giữ nguyên, route/menu/job tương ứng tắt. Build PC trong mã chưa thuộc phiên bản này.
+
+`ImageStorageService` dùng SkiaSharp 3.119.4 và native assets Linux: kiểm tra format thực JPG/PNG/WebP, giới hạn 40 triệu pixel trước giải mã, xoay theo EXIF, resize và xuất WebP từ bitmap mới. Metadata EXIF/XMP của file tải lên không được chuyển sang đầu ra. File upload phát sinh lúc chạy nằm ngoài gói phát hành.
+
+Script release chạy `dotnet publish`, kiểm tra file cấm, tạo ZIP cùng manifest/SHA256. CI giải nén gói, xác minh hash rồi chạy browser trên DLL publish với SQL Server demo riêng. Môi trường `Demo` không nạp User Secrets Development. Gói framework-dependent cần ASP.NET Core Runtime 8 và SQL Server; database được migrate bằng migration đã biên dịch trong ứng dụng. Gói không kèm dữ liệu nghiệp vụ hoặc thông tin tích hợp ngoài.
+
+## Tài nguyên giao diện và dữ liệu demo
 
 CSS/JS theo chức năng trong `ClientAssets`, thứ tự trong manifest. Script Node sinh bản đầy đủ/minify; giữ các hàm global đang được Razor gọi. CI kiểm tra source và output.
 

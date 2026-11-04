@@ -2,6 +2,8 @@
 
 **Theo dõi tiến độ:** [Mở bảng GitHub Project](https://github.com/users/Anhtuan2005/projects/1) · [Milestone Sprint 1](https://github.com/Anhtuan2005/cnpm/milestone/1) · [Sprint 2](https://github.com/Anhtuan2005/cnpm/milestone/2) · [Sprint 3](https://github.com/Anhtuan2005/cnpm/milestone/3).
 
+**Bản bàn giao Lab 6:** [Release v1.0.0](https://github.com/Anhtuan2005/cnpm/releases/tag/v1.0.0) · [Cài đặt gói đã build](docs/lab6/install-guide.md) · [Hồ sơ nghiệm thu](docs/lab6/README.md).
+
 **Cửa hàng điện thoại và phụ kiện từ lúc chọn máy đến khi theo dõi đơn hàng.** Khách có thể so sánh điện thoại, mua phụ kiện có ưu đãi theo máy, đặt hàng và gửi yêu cầu hậu mãi; nhân viên quản lý danh mục, tồn kho và đơn hàng trên cùng một hệ thống.
 
 `ASP.NET Core 8 MVC` · `EF Core 8` · `SQL Server` · `Razor` · `JavaScript`
@@ -23,6 +25,7 @@
 | Tiến độ Sprint 1–2 | [Hồ sơ Lab 4 và phiếu thực hành](docs/lab4/README.md) |
 | Tích hợp và chuẩn bị Sprint 3 | [Báo cáo Buổi 7](docs/buoi7/README.md), [Test Report](test/TestReport.md) và [kế hoạch Sprint 3](docs/buoi7/sprint-3-plan.md) |
 | Sprint 3 đã triển khai | [Chức năng, cấu hình và kịch bản demo](docs/user-guide/sprint-3.md) |
+| Hoàn thiện và đóng gói Lab 6 | [Báo cáo](docs/lab6/README.md), [tổng kết 3 Sprint](docs/lab6/final-report.md), [cài đặt](docs/lab6/install-guide.md), [nghiệm thu](docs/lab6/acceptance.md) |
 
 **Tài liệu gốc Tuần 1–2 chưa có trong repository.** `docs/requirements/` hiện chỉ có trang hướng dẫn đặt tài liệu; `docs/design/` đã có sơ đồ kiến trúc và ảnh minh họa. Khi có bản gốc, đặt yêu cầu vào `docs/requirements/` và thiết kế vào `docs/design/`. Repo hiện chưa có video demo hoặc URL triển khai công khai.
 
@@ -134,9 +137,9 @@ Project test nằm tại [`test/test-cases/EcommerceApp.Tests`](test/test-cases/
 dotnet test test/test-cases/EcommerceApp.Tests/EcommerceApp.Tests.csproj
 ```
 
-Nếu dùng SQL Server khác, đặt `TECHVORA_TEST_SQLSERVER` thành connection string của server test trước khi chạy. Ngày 28/10/2026, **132/132 test backend** và **26/26 smoke test trình duyệt** pass trên máy local với database demo riêng; [Test Report Buổi 7](test/TestReport.md) ghi input, kết quả và bước chạy lại. Bộ test bao gồm phạm vi Sprint 2, checkout/voucher, phí vận chuyển, mua ngay, tranh chấp tồn kho, callback thanh toán, phân quyền và luồng yêu cầu hỗ trợ đến trang đơn hàng admin. [Lệnh, kết quả và mã test tiêu biểu](docs/user-guide/backend-tests.md) giúp kiểm chứng; [workflow CI](.github/workflows/portfolio-tests.yml) chạy backend trên SQL Server 2022, kiểm tra asset và browser trên Chromium.
+Nếu dùng SQL Server khác, đặt `TECHVORA_TEST_SQLSERVER` thành connection string của server test trước khi chạy. Đợt Lab 6 ngày 04/11/2026 đạt **157/157 backend** sau sửa dependency và kiểm tra ảnh. [Test Report Lab 6](docs/lab6/TestReport.md) ghi kết quả browser của gói phát hành, giới hạn và liên kết CI. [Minh chứng Buổi 7](test/TestReport.md) và [Sprint 3 ngày 29/10](test/evidence/sprint3-2026-10-29.json) được giữ theo thời điểm lịch sử.
 
-Ngày 29/10/2026, bản Sprint 3 đạt **143/143 backend**, **28/28 browser ở Sprint 2** và **28/28 browser ở Sprint 3**; kiểm tra riêng báo cáo sau chỉnh giao diện mobile cũng pass. [Bằng chứng kiểm thử Sprint 3](test/evidence/sprint3-2026-10-29.json) ghi từng test và giới hạn xác nhận dịch vụ ngoài. CI đã thêm matrix Sprint 2/3; các số trên là kết quả local.
+[CI](.github/workflows/portfolio-tests.yml) dùng SQL Server 2022, kiểm tra asset và chạy browser ở cả Sprint 2/3 trên gói đã publish/giải nén. Bản release có manifest và SHA256, không kèm upload hoặc cấu hình máy build.
 
 ## Cấu hình tùy chọn
 

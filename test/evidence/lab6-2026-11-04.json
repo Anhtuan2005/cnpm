@@ -1,0 +1,1983 @@
+{
+  "date": "2026-11-04",
+  "timezone": "Asia/Saigon",
+  "codeCommits": {
+    "sprint3": "42fcead8440de950520752fba2633fb1332127a5",
+    "dependenciesAndPackaging": "b705b181f549050849f8eb50475b650a10ade6c1",
+    "browserCdnFixture": "de77cb7df47dba8ec257767b56d4a1652704563e"
+  },
+  "backend": {
+    "total": 157,
+    "passed": 157,
+    "failed": 0,
+    "skipped": 0,
+    "sourceSha256": "def6a347d17b1549c46cf00de2fcc5562fe1fbfc6b31f1f44050d456e761da79",
+    "tests": [
+      {
+        "name": "EcommerceApp.Tests.AdminAuditTests.Deleting_voucher_preserves_used_history_and_deletes_unused_vouchers(used: False)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0121399"
+      },
+      {
+        "name": "EcommerceApp.Tests.AdminAuditTests.Deleting_voucher_preserves_used_history_and_deletes_unused_vouchers(used: True)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0856967"
+      },
+      {
+        "name": "EcommerceApp.Tests.AdminAuditTests.Invalid_banner_sort_returns_bad_request_without_changing_order",
+        "outcome": "Passed",
+        "duration": "00:00:00.0360040"
+      },
+      {
+        "name": "EcommerceApp.Tests.AdminAuditTests.Repeated_quick_category_creation_produces_unique_slugs",
+        "outcome": "Passed",
+        "duration": "00:00:00.0263334"
+      },
+      {
+        "name": "EcommerceApp.Tests.AdminAuditTests.Voucher_preview_rejects_amounts_outside_database_limits(amount: \"-1\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0081137"
+      },
+      {
+        "name": "EcommerceApp.Tests.AdminAuditTests.Voucher_preview_rejects_amounts_outside_database_limits(amount: \"79228162514264337593543950335\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0223708"
+      },
+      {
+        "name": "EcommerceApp.Tests.BootstrapTests.Production_rejects_accidentally_enabled_demo_mode",
+        "outcome": "Passed",
+        "duration": "00:00:00.0026134"
+      },
+      {
+        "name": "EcommerceApp.Tests.BootstrapTests.Production_startup_does_not_create_demo_admin_or_catalog",
+        "outcome": "Passed",
+        "duration": "00:00:00.1152622"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Abandoned_cart_scan_creates_one_private_offer_and_notification_per_cart_version_without_fake_email_delivery",
+        "outcome": "Passed",
+        "duration": "00:00:00.4988466"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Accessory_bundle_requires_its_phone_and_checkout_persists_discount_stock_and_counts",
+        "outcome": "Passed",
+        "duration": "00:00:00.5902394"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Accessory_catalog_seed_replaces_phone_bundles_and_preserves_administrator_overrides",
+        "outcome": "Passed",
+        "duration": "00:00:00.3271144"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Admin_cannot_skip_or_reverse_fulfilment_or_cancel_delivered_stock",
+        "outcome": "Passed",
+        "duration": "00:00:00.1804229"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Admin_phone_specs_survive_saving_and_renaming_without_inventing_missing_values",
+        "outcome": "Passed",
+        "duration": "00:00:00.0754284"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Admin_status_update_works_with_retry_enabled",
+        "outcome": "Passed",
+        "duration": "00:00:00.1587145"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Both_category_routes_preserve_products_and_order_history_including_soft_deleted_products(alternate: False, deleted: False)",
+        "outcome": "Passed",
+        "duration": "00:00:00.1523282"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Both_category_routes_preserve_products_and_order_history_including_soft_deleted_products(alternate: False, deleted: True)",
+        "outcome": "Passed",
+        "duration": "00:00:00.1786894"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Both_category_routes_preserve_products_and_order_history_including_soft_deleted_products(alternate: True, deleted: False)",
+        "outcome": "Passed",
+        "duration": "00:00:00.1444278"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Both_category_routes_preserve_products_and_order_history_including_soft_deleted_products(alternate: True, deleted: True)",
+        "outcome": "Passed",
+        "duration": "00:00:00.1865889"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Buy_now_creates_the_requested_order_without_changing_existing_cart_quantity",
+        "outcome": "Passed",
+        "duration": "00:00:00.1258569"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Buy_now_quotes_and_orders_discounted_accessories_without_modifying_the_saved_cart",
+        "outcome": "Passed",
+        "duration": "00:00:00.3212011"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Buy_now_rejects_unavailable_or_ineligible_addons_before_creating_an_order(condition: \"deleted\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0568593"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Buy_now_rejects_unavailable_or_ineligible_addons_before_creating_an_order(condition: \"disabled\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0861038"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Buy_now_rejects_unavailable_or_ineligible_addons_before_creating_an_order(condition: \"expired\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.2003356"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Buy_now_rejects_unavailable_or_ineligible_addons_before_creating_an_order(condition: \"future\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.1415023"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Buy_now_rejects_unavailable_or_ineligible_addons_before_creating_an_order(condition: \"out-of-stock\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0566075"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Buy_now_rejects_unavailable_or_ineligible_addons_before_creating_an_order(condition: \"second-phone\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.1275295"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Buy_now_rejects_unavailable_or_ineligible_addons_before_creating_an_order(condition: \"sprint-two\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0607236"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Buy_now_rejects_unavailable_or_ineligible_addons_before_creating_an_order(condition: \"wrong-phone\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0886596"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Callback_checks_deadline_even_before_expiry_worker_runs(expired: False)",
+        "outcome": "Passed",
+        "duration": "00:00:00.1727559"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Callback_checks_deadline_even_before_expiry_worker_runs(expired: True)",
+        "outcome": "Passed",
+        "duration": "00:00:00.1646686"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Cart_rejects_overflow_and_nonpositive_additions_without_changing_existing_quantity(quantity: -1)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0832928"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Cart_rejects_overflow_and_nonpositive_additions_without_changing_existing_quantity(quantity: 0)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0716479"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Cart_rejects_overflow_and_nonpositive_additions_without_changing_existing_quantity(quantity: 2147483647)",
+        "outcome": "Passed",
+        "duration": "00:00:00.1071085"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Chat_falls_back_to_real_in_stock_phones_with_brand_and_budget_filters(providerFails: False)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0277772"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Chat_falls_back_to_real_in_stock_phones_with_brand_and_budget_filters(providerFails: True)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0822625"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Checkout_rejects_invalid_quantity_from_cart_provider_before_writing_anything(quantity: -1)",
+        "outcome": "Passed",
+        "duration": "00:00:00.1476197"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Checkout_rejects_invalid_quantity_from_cart_provider_before_writing_anything(quantity: 0)",
+        "outcome": "Passed",
+        "duration": "00:00:00.1007625"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Checkout_with_retry_enabled_commits_order_stock_and_cart_together",
+        "outcome": "Passed",
+        "duration": "00:00:00.1638351"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Cod_delivery_records_collection_through_every_delivery_path(path: \"admin\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.1961986"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Cod_delivery_records_collection_through_every_delivery_path(path: \"ghn\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.2566587"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Cod_delivery_records_collection_through_every_delivery_path(path: \"manual-shipping\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.1624378"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Cod_settlement_requires_delivery_and_records_actual_amount_once",
+        "outcome": "Passed",
+        "duration": "00:00:00.1683492"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Completed_return_cannot_reopen_or_return_the_same_unit_again",
+        "outcome": "Passed",
+        "duration": "00:00:00.3085441"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Concurrent_bulk_confirmation_and_customer_cancellation_leave_the_order_cancelled_once",
+        "outcome": "Passed",
+        "duration": "00:00:00.1805183"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Concurrent_cancellation_restores_inventory_once",
+        "outcome": "Passed",
+        "duration": "00:00:00.1320195"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Concurrent_manual_refund_confirmation_records_one_completion",
+        "outcome": "Passed",
+        "duration": "00:00:00.1850288"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Concurrent_payment_callbacks_apply_once_including_payment_after_cancellation(cancelled: False)",
+        "outcome": "Passed",
+        "duration": "00:00:00.1771733"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Concurrent_payment_callbacks_apply_once_including_payment_after_cancellation(cancelled: True)",
+        "outcome": "Passed",
+        "duration": "00:00:00.1621058"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Concurrent_return_requests_cannot_exceed_the_purchased_quantity",
+        "outcome": "Passed",
+        "duration": "00:00:00.2146117"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Confirmed_customer_order_can_be_cancelled_and_logs_stock_restoration_exactly_once",
+        "outcome": "Passed",
+        "duration": "00:00:00.1834975"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Customer_cancellation_and_shipping_assignment_cannot_both_win",
+        "outcome": "Passed",
+        "duration": "00:00:00.1706100"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Customer_delivery_report_is_audited_and_can_be_reopened_only_by_admin",
+        "outcome": "Passed",
+        "duration": "00:00:00.1713169"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Customer_refund_report_does_not_count_as_customer_receipt",
+        "outcome": "Passed",
+        "duration": "00:00:00.2187589"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Dashboard_and_report_exclude_cancelled_pending_refund_and_refunded_orders",
+        "outcome": "Passed",
+        "duration": "00:00:00.3332744"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Dashboard_low_stock_only_counts_phone_catalog_products",
+        "outcome": "Passed",
+        "duration": "00:00:00.2759963"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Database_blocks_cascading_deletion_even_when_controller_guards_are_bypassed(deleteCategory: False)",
+        "outcome": "Passed",
+        "duration": "00:00:00.1653446"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Database_blocks_cascading_deletion_even_when_controller_guards_are_bypassed(deleteCategory: True)",
+        "outcome": "Passed",
+        "duration": "00:00:00.1176223"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Database_rejects_nonpositive_cart_and_order_quantities(quantity: -1)",
+        "outcome": "Passed",
+        "duration": "00:00:00.1149528"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Database_rejects_nonpositive_cart_and_order_quantities(quantity: 0)",
+        "outcome": "Passed",
+        "duration": "00:00:00.1173604"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Delivered_cod_refund_requires_reason_and_receipt_and_does_not_restock_or_refund_twice",
+        "outcome": "Passed",
+        "duration": "00:00:00.2542513"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Expiry_cancellation_and_late_payment_race_release_stock_once_and_require_refund",
+        "outcome": "Passed",
+        "duration": "00:00:00.1768758"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Expiry_worker_preserves_unexpired_orders_and_expires_unpaid_orders_once",
+        "outcome": "Passed",
+        "duration": "00:00:00.2111847"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Flash_sale_only_contains_available_discounted_phones_before_counting_and_paging",
+        "outcome": "Passed",
+        "duration": "00:00:00.2499716"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.GHN_duplicate_and_out_of_order_callbacks_do_not_regress_delivery_or_repeat_email",
+        "outcome": "Passed",
+        "duration": "00:00:00.2618163"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Last_voucher_use_is_atomic_across_customers",
+        "outcome": "Passed",
+        "duration": "00:00:00.2327357"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Manual_and_GHN_shipping_cannot_resurrect_cancelled_or_ship_unpaid_orders(cancelled: False)",
+        "outcome": "Passed",
+        "duration": "00:00:00.1375026"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Manual_and_GHN_shipping_cannot_resurrect_cancelled_or_ship_unpaid_orders(cancelled: True)",
+        "outcome": "Passed",
+        "duration": "00:00:00.1525225"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Out_of_stock_quantity_update_removes_line_instead_of_saving_zero",
+        "outcome": "Passed",
+        "duration": "00:00:00.1278558"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Price_filters_use_displayed_sale_price_including_rounding(price: 123, discount: 0, expected: 123)",
+        "outcome": "Passed",
+        "duration": "00:00:00.2099975"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Price_filters_use_displayed_sale_price_including_rounding(price: 2000000, discount: 50, expected: 1000000)",
+        "outcome": "Passed",
+        "duration": "00:00:00.1363290"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Price_filters_use_displayed_sale_price_including_rounding(price: 201, discount: 50, expected: 101)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0688052"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Recommendations_include_old_catalog_fallback_without_using_another_accounts_session_history",
+        "outcome": "Passed",
+        "duration": "00:00:00.3864117"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Recovery_batches_move_past_processed_carts",
+        "outcome": "Passed",
+        "duration": "00:00:00.7200504"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Refunded_or_cancelled_orders_do_not_grant_VIP_but_valid_sales_still_do",
+        "outcome": "Passed",
+        "duration": "00:00:00.1117482"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Rejected_requests_release_capacity_and_completed_warranty_allows_future_support",
+        "outcome": "Passed",
+        "duration": "00:00:00.3196754"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Report_and_csv_reconcile_discount_shipping_refunds_and_date_boundaries",
+        "outcome": "Passed",
+        "duration": "00:00:00.3373556"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Shipping_assignment_and_admin_cancellation_cannot_both_win",
+        "outcome": "Passed",
+        "duration": "00:00:00.2287525"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Sprint_one_cart_flows_into_sprint_two_voucher_delivery_review_and_support",
+        "outcome": "Passed",
+        "duration": "00:00:01.2662074"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Sprint_three_admin_voucher_cross_sell_checkout_and_support_form_one_persisted_flow",
+        "outcome": "Passed",
+        "duration": "00:00:00.7247224"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Stale_product_form_cannot_restore_sold_stock_or_overwrite_another_edit",
+        "outcome": "Passed",
+        "duration": "00:00:00.9802268"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Stock_adjustment_and_checkout_both_apply_and_log_failure_rolls_back_adjustment",
+        "outcome": "Passed",
+        "duration": "00:00:00.1507571"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Support_request_notification_opens_an_order_available_in_sprint_two",
+        "outcome": "Passed",
+        "duration": "00:00:00.2925141"
+      },
+      {
+        "name": "EcommerceApp.Tests.OrderPaymentTests.Two_customers_competing_for_last_item_create_exactly_one_order",
+        "outcome": "Passed",
+        "duration": "00:00:00.2817090"
+      },
+      {
+        "name": "EcommerceApp.Tests.PasswordResetTests.Concurrent_use_of_one_token_has_exactly_one_winner",
+        "outcome": "Passed",
+        "duration": "00:00:00.1872373"
+      },
+      {
+        "name": "EcommerceApp.Tests.PasswordResetTests.Expired_link_cannot_change_password",
+        "outcome": "Passed",
+        "duration": "00:00:00.1394385"
+      },
+      {
+        "name": "EcommerceApp.Tests.PasswordResetTests.Rejected_password_preserves_existing_password_and_unused_token",
+        "outcome": "Passed",
+        "duration": "00:00:00.1270947"
+      },
+      {
+        "name": "EcommerceApp.Tests.PasswordResetTests.Successful_reset_invalidates_token_and_other_outstanding_links",
+        "outcome": "Passed",
+        "duration": "00:00:00.1822104"
+      },
+      {
+        "name": "EcommerceApp.Tests.PaymentDeadlineTests.Retrying_payment_keeps_original_deadline_and_uses_Vietnam_time",
+        "outcome": "Passed",
+        "duration": "00:00:00.0235053"
+      },
+      {
+        "name": "EcommerceApp.Tests.PortfolioQualityTests.Account_inputs_match_database_length_limits",
+        "outcome": "Passed",
+        "duration": "00:00:00.0003995"
+      },
+      {
+        "name": "EcommerceApp.Tests.PortfolioQualityTests.Csv_formatter_escapes_quotes_uses_invariant_numbers_and_blocks_formulas",
+        "outcome": "Passed",
+        "duration": "00:00:00.0012114"
+      },
+      {
+        "name": "EcommerceApp.Tests.PortfolioQualityTests.Shipping_fee_is_calculated_by_delivery_zone_for_phone_orders",
+        "outcome": "Passed",
+        "duration": "00:00:00.0236982"
+      },
+      {
+        "name": "EcommerceApp.Tests.PortfolioQualityTests.Slug_generator_preserves_vietnamese_words(input: \"  Máy tính -- để bàn  \", expected: \"may-tinh-de-ban\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0001123"
+      },
+      {
+        "name": "EcommerceApp.Tests.PortfolioQualityTests.Slug_generator_preserves_vietnamese_words(input: \"CPU Intel® Core™ i5\", expected: \"cpu-intel-core-i5\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0001985"
+      },
+      {
+        "name": "EcommerceApp.Tests.PortfolioQualityTests.Slug_generator_preserves_vietnamese_words(input: \"Điện thoại & Phụ kiện\", expected: \"dien-thoai-phu-kien\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0002057"
+      },
+      {
+        "name": "EcommerceApp.Tests.PortfolioQualityTests.Voucher_rejects_invalid_admin_input(voucher: Voucher { Code = \"WELCOME10\", CustomerSegment = null, CustomerSegmentId = null, EndDate = 2026-11-03T03:52:25.8738705Z, Id = 0, ··· }, property: \"EndDate\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0001263"
+      },
+      {
+        "name": "EcommerceApp.Tests.PortfolioQualityTests.Voucher_rejects_invalid_admin_input(voucher: Voucher { Code = \"WELCOME10\", CustomerSegment = null, CustomerSegmentId = null, EndDate = 2026-11-05T03:52:25.8675476Z, Id = 0, ··· }, property: \"Value\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0102516"
+      },
+      {
+        "name": "EcommerceApp.Tests.PortfolioQualityTests.Voucher_rejects_invalid_admin_input(voucher: Voucher { Code = \"WELCOME10\", CustomerSegment = null, CustomerSegmentId = null, EndDate = 2026-11-05T03:52:25.8727258Z, Id = 0, ··· }, property: \"Value\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0013768"
+      },
+      {
+        "name": "EcommerceApp.Tests.PortfolioQualityTests.Voucher_rejects_invalid_admin_input(voucher: Voucher { Code = \"WELCOME10\", CustomerSegment = null, CustomerSegmentId = null, EndDate = 2026-11-05T03:52:25.8738196Z, Id = 0, ··· }, property: \"UsageLimit\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0000829"
+      },
+      {
+        "name": "EcommerceApp.Tests.ProductComparisonAdvisorTests.Ambiguous_spec_ranges_do_not_create_a_winner",
+        "outcome": "Passed",
+        "duration": "00:00:00.0006080"
+      },
+      {
+        "name": "EcommerceApp.Tests.ProductComparisonAdvisorTests.Available_phone_is_recommended_when_the_other_is_out_of_stock",
+        "outcome": "Passed",
+        "duration": "00:00:00.0006646"
+      },
+      {
+        "name": "EcommerceApp.Tests.ProductComparisonAdvisorTests.Phones_from_different_brand_categories_are_comparable",
+        "outcome": "Passed",
+        "duration": "00:00:00.0001736"
+      },
+      {
+        "name": "EcommerceApp.Tests.ProductComparisonAdvisorTests.Price_only_recommendation_is_conditional",
+        "outcome": "Passed",
+        "duration": "00:00:00.0002590"
+      },
+      {
+        "name": "EcommerceApp.Tests.ProductComparisonAdvisorTests.Recommendation_identifies_price_and_measurable_advantages_across_brands",
+        "outcome": "Passed",
+        "duration": "00:00:00.0383265"
+      },
+      {
+        "name": "EcommerceApp.Tests.ProductSpecificationTests.Product_create_and_update_persist_component_metadata",
+        "outcome": "Passed",
+        "duration": "00:00:00.0602582"
+      },
+      {
+        "name": "EcommerceApp.Tests.RegistrationValidationDataTests.Registration_model_matches_test_data(item: REG-01)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0117823"
+      },
+      {
+        "name": "EcommerceApp.Tests.RegistrationValidationDataTests.Registration_model_matches_test_data(item: REG-02)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0005033"
+      },
+      {
+        "name": "EcommerceApp.Tests.RegistrationValidationDataTests.Registration_model_matches_test_data(item: REG-03)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0000282"
+      },
+      {
+        "name": "EcommerceApp.Tests.RegistrationValidationDataTests.Registration_model_matches_test_data(item: REG-04)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0001319"
+      },
+      {
+        "name": "EcommerceApp.Tests.RegistrationValidationDataTests.Registration_model_matches_test_data(item: REG-05)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0000450"
+      },
+      {
+        "name": "EcommerceApp.Tests.RegistrationValidationDataTests.Registration_model_matches_test_data(item: REG-06)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0000310"
+      },
+      {
+        "name": "EcommerceApp.Tests.ReviewManagementTests.Customer_review_is_published_immediately_and_store_can_reply",
+        "outcome": "Passed",
+        "duration": "00:00:00.1097528"
+      },
+      {
+        "name": "EcommerceApp.Tests.SmartPcBuildTests.Build_preserves_required_components_and_total_matches_selected_prices",
+        "outcome": "Passed",
+        "duration": "00:00:00.0018595"
+      },
+      {
+        "name": "EcommerceApp.Tests.SmartPcBuildTests.Deleted_and_sold_out_components_are_excluded",
+        "outcome": "Passed",
+        "duration": "00:00:00.0002966"
+      },
+      {
+        "name": "EcommerceApp.Tests.SmartPcBuildTests.Different_memory_standards_are_reported_as_incompatible",
+        "outcome": "Passed",
+        "duration": "00:00:00.0004935"
+      },
+      {
+        "name": "EcommerceApp.Tests.SmartPcBuildTests.Different_sockets_are_reported_as_incompatible(cpu: Am4, board: Am5)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0008323"
+      },
+      {
+        "name": "EcommerceApp.Tests.SmartPcBuildTests.Different_sockets_are_reported_as_incompatible(cpu: Lga1200, board: Lga1700)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0005255"
+      },
+      {
+        "name": "EcommerceApp.Tests.SmartPcBuildTests.Missing_socket_data_is_unknown_even_when_name_contains_Intel",
+        "outcome": "Passed",
+        "duration": "00:00:00.0005773"
+      },
+      {
+        "name": "EcommerceApp.Tests.SmartPcBuildTests.Psu_capacity_comes_from_specification_instead_of_its_name",
+        "outcome": "Passed",
+        "duration": "00:00:00.0383325"
+      },
+      {
+        "name": "EcommerceApp.Tests.SmartPcBuildTests.Structured_socket_data_overrides_misleading_product_names",
+        "outcome": "Passed",
+        "duration": "00:00:00.0005325"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Actions_keep_their_intended_sprint_boundaries",
+        "outcome": "Passed",
+        "duration": "00:00:00.0005068"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Customer_only_areas_exclude_admin_accounts",
+        "outcome": "Passed",
+        "duration": "00:00:00.0002371"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Order_history_has_paging_without_an_extra_status_filter",
+        "outcome": "Passed",
+        "duration": "00:00:00.0085717"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Product_comparison_is_available_in_sprint_two",
+        "outcome": "Passed",
+        "duration": "00:00:00.0003021"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Release_supports_sprint_three_and_rollback_without_enabling_future_sprints(configured: -1, expected: 1)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0000030"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Release_supports_sprint_three_and_rollback_without_enabling_future_sprints(configured: 1, expected: 1)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0000094"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Release_supports_sprint_three_and_rollback_without_enabling_future_sprints(configured: 2, expected: 2)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0000041"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Release_supports_sprint_three_and_rollback_without_enabling_future_sprints(configured: 3, expected: 3)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0002616"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Release_supports_sprint_three_and_rollback_without_enabling_future_sprints(configured: 4, expected: 3)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0029404"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Removed_catalog_extras_are_not_part_of_the_product_service",
+        "outcome": "Passed",
+        "duration": "00:00:00.0001075"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Required_sprint_two_user_story_actions_are_present",
+        "outcome": "Passed",
+        "duration": "00:00:00.0056992"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Sprint_one_admin_catalog_management_is_available",
+        "outcome": "Passed",
+        "duration": "00:00:00.0035427"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Sprint_one_order_read_pages_are_available(actionName: \"Confirmation\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0001487"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Sprint_one_order_read_pages_are_available(actionName: \"Detail\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0042041"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Sprint_one_order_read_pages_are_available(actionName: \"History\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0000196"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Sprint_two_controllers_are_guarded_at_sprint_two_and_later_features_remain_guarded",
+        "outcome": "Passed",
+        "duration": "00:00:00.0011153"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Sprint_two_information_pages_are_guarded_at_sprint_two(actionName: \"About\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0000219"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Sprint_two_information_pages_are_guarded_at_sprint_two(actionName: \"BuyingGuide\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0000272"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Sprint_two_information_pages_are_guarded_at_sprint_two(actionName: \"Careers\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0000224"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Sprint_two_information_pages_are_guarded_at_sprint_two(actionName: \"Faq\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0000226"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Sprint_two_information_pages_are_guarded_at_sprint_two(actionName: \"Privacy\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0002138"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Sprint_two_information_pages_are_guarded_at_sprint_two(actionName: \"Returns\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0038568"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Sprint_two_information_pages_are_guarded_at_sprint_two(actionName: \"Terms\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0000276"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Sprint_two_information_pages_are_guarded_at_sprint_two(actionName: \"Warranty\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0000224"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Sprint_two_order_actions_are_guarded_at_sprint_two(actionName: \"Cancel\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0003158"
+      },
+      {
+        "name": "EcommerceApp.Tests.SprintScopeTests.Sprint_two_order_actions_are_guarded_at_sprint_two(actionName: \"Reorder\")",
+        "outcome": "Passed",
+        "duration": "00:00:00.0002014"
+      },
+      {
+        "name": "EcommerceApp.Tests.TransactionRetryTests.Transient_failure_after_save_retries_with_fresh_entities_and_no_duplicate_rows",
+        "outcome": "Passed",
+        "duration": "00:00:00.0197391"
+      },
+      {
+        "name": "EcommerceApp.Tests.UploadValidationTests.Corrupted_png_returns_a_validation_error_instead_of_an_image_decoder_exception",
+        "outcome": "Passed",
+        "duration": "00:00:00.0026187"
+      },
+      {
+        "name": "EcommerceApp.Tests.UploadValidationTests.Valid_image_is_resized_oriented_encoded_and_deletable(rotate: False)",
+        "outcome": "Passed",
+        "duration": "00:00:00.1012433"
+      },
+      {
+        "name": "EcommerceApp.Tests.UploadValidationTests.Valid_image_is_resized_oriented_encoded_and_deletable(rotate: True)",
+        "outcome": "Passed",
+        "duration": "00:00:00.0067229"
+      },
+      {
+        "name": "EcommerceApp.Tests.UserAccessTests.Admin_cannot_lock_or_demote_self_and_cannot_act_after_losing_role",
+        "outcome": "Passed",
+        "duration": "00:00:00.2213675"
+      },
+      {
+        "name": "EcommerceApp.Tests.UserAccessTests.Lock_and_unlock_revoke_old_cookies_and_only_new_login_is_accepted",
+        "outcome": "Passed",
+        "duration": "00:00:00.2347216"
+      },
+      {
+        "name": "EcommerceApp.Tests.UserAccessTests.Lockout_invalidates_current_session_even_when_the_stamp_has_not_changed",
+        "outcome": "Passed",
+        "duration": "00:00:00.0938051"
+      },
+      {
+        "name": "EcommerceApp.Tests.UserAccessTests.Two_admins_cannot_revoke_each_other_concurrently(lockAccounts: False)",
+        "outcome": "Passed",
+        "duration": "00:00:00.2123278"
+      },
+      {
+        "name": "EcommerceApp.Tests.UserAccessTests.Two_admins_cannot_revoke_each_other_concurrently(lockAccounts: True)",
+        "outcome": "Passed",
+        "duration": "00:00:00.2066004"
+      },
+      {
+        "name": "EcommerceApp.Tests.VnpayServiceTests.Callback_accepts_a_signed_payment_and_rejects_a_changed_amount",
+        "outcome": "Passed",
+        "duration": "00:00:00.0219779"
+      },
+      {
+        "name": "EcommerceApp.Tests.VnpayServiceTests.Payment_url_uses_the_configured_terminal_and_a_valid_checksum",
+        "outcome": "Passed",
+        "duration": "00:00:00.0016068"
+      },
+      {
+        "name": "EcommerceApp.Tests.WishlistImageTests.Wishlist_cards_use_the_saved_product_image",
+        "outcome": "Passed",
+        "duration": "00:00:00.1069124"
+      }
+    ]
+  },
+  "browserSprint2": {
+    "total": 33,
+    "passed": 29,
+    "skipped": 4,
+    "failed": 0,
+    "sourceSha256": "422205e56d2700082197b7c5fc89e9fadd03d50cf355e8e6cc2e4ce63c296701",
+    "tests": [
+      {
+        "name": "admin can edit an accessory without entering phone specifications",
+        "file": "accessory-admin.spec.mjs",
+        "outcome": "skipped",
+        "results": [
+          {
+            "status": "skipped",
+            "durationMs": 1355
+          }
+        ]
+      },
+      {
+        "name": "Sprint 2 order administration is available",
+        "file": "admin-forms.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 816
+          }
+        ]
+      },
+      {
+        "name": "banner upload without a URL reaches the server and shows a file validation error",
+        "file": "admin-forms.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 796
+          }
+        ]
+      },
+      {
+        "name": "product upload without image URLs shows upload validation rather than blocking the form",
+        "file": "admin-forms.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 941
+          }
+        ]
+      },
+      {
+        "name": "buy now can skip accessory offers and checkout without changing the cart count",
+        "file": "buy-now.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 3280
+          }
+        ]
+      },
+      {
+        "name": "buy now selects discounted accessories, preserves them after validation, and leaves the cart untouched",
+        "file": "buy-now.spec.mjs",
+        "outcome": "skipped",
+        "results": [
+          {
+            "status": "skipped",
+            "durationMs": 815
+          }
+        ]
+      },
+      {
+        "name": "buy now continues directly when offers cannot be loaded",
+        "file": "buy-now.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 2084
+          }
+        ]
+      },
+      {
+        "name": "Sprint 2 mobile checkout shows voucher and both payment options",
+        "file": "buy-now.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 917
+          }
+        ]
+      },
+      {
+        "name": "quantity reflects the stock limit returned by the server",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 998
+          }
+        ]
+      },
+      {
+        "name": "pending quantity changes block conflicting mutations and checkout",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1902
+          }
+        ]
+      },
+      {
+        "name": "failed quantity requests restore the last confirmed value and allow retry",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 852
+          }
+        ]
+      },
+      {
+        "name": "blank quantity input does not remove a cart item",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 944
+          }
+        ]
+      },
+      {
+        "name": "cart API rejects malformed quantities without deleting or changing the item",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1019
+          }
+        ]
+      },
+      {
+        "name": "removing an item refreshes the remaining Sprint 1 price and selected total",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1196
+          }
+        ]
+      },
+      {
+        "name": "removing the final item shows the empty cart and survives reload",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 2046
+          }
+        ]
+      },
+      {
+        "name": "checkout can select a district and ward in Ben Tre",
+        "file": "checkout-address.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1689
+          }
+        ]
+      },
+      {
+        "name": "checkout restores the selected address after server validation",
+        "file": "checkout-address.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1683
+          }
+        ]
+      },
+      {
+        "name": "Sprint 2 checkout contains COD, VNPAY and voucher fields",
+        "file": "checkout-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 707
+          }
+        ]
+      },
+      {
+        "name": "an older shipping response cannot overwrite the latest selected address",
+        "file": "checkout-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 804
+          }
+        ]
+      },
+      {
+        "name": "US-30 suggests discounted compatible accessories and restores retail price without the phone",
+        "file": "cross-sell.spec.mjs",
+        "outcome": "skipped",
+        "results": [
+          {
+            "status": "skipped",
+            "durationMs": 674
+          }
+        ]
+      },
+      {
+        "name": "Flash Sale keeps only discounted phones through sorting, search, brands and paging links",
+        "file": "flash-sale.spec.mjs",
+        "outcome": "skipped",
+        "results": [
+          {
+            "status": "skipped",
+            "durationMs": 642
+          }
+        ]
+      },
+      {
+        "name": "customer delivery report is visible to admin and can be confirmed after a response",
+        "file": "order-assurance.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 3878
+          }
+        ]
+      },
+      {
+        "name": "refund receipt report alerts the open admin page and can be resolved for customer confirmation",
+        "file": "order-assurance.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 11978
+          }
+        ]
+      },
+      {
+        "name": "confirmation sends one cancellation only after explicit approval",
+        "file": "order-cancel.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1726
+          }
+        ]
+      },
+      {
+        "name": "Sprint 3 health, menus, chatbot and admin boundaries follow the release configuration",
+        "file": "sprint-three.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 626
+          }
+        ]
+      },
+      {
+        "name": "Sprint 3 admin pages, report filters, CSV and voucher form work in the browser",
+        "file": "sprint-three.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 651
+          }
+        ]
+      },
+      {
+        "name": "storefront exposes the configured sprint and keeps future routes unavailable",
+        "file": "storefront.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1542
+          }
+        ]
+      },
+      {
+        "name": "Sprint 2 storefront supports product comparison without Sprint 3 catalog extras",
+        "file": "storefront.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1768
+          }
+        ]
+      },
+      {
+        "name": "admin storefront is read-only without customer-only controls",
+        "file": "storefront.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1174
+          }
+        ]
+      },
+      {
+        "name": "customer can access the required order history without extra filters",
+        "file": "storefront.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 517
+          }
+        ]
+      },
+      {
+        "name": "mobile catalog fits the viewport",
+        "file": "storefront.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 342
+          }
+        ]
+      },
+      {
+        "name": "support request reaches the admin order and can be resolved in Sprint 3",
+        "file": "support-request.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 15336
+          }
+        ]
+      },
+      {
+        "name": "invalid support request points to each field and clears errors after correction",
+        "file": "support-validation.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1165
+          }
+        ]
+      }
+    ]
+  },
+  "browserSprint3": {
+    "total": 33,
+    "passed": 33,
+    "skipped": 0,
+    "failed": 0,
+    "sourceSha256": "2f11c70a2647c48f1499a8593e27b348775c3360675956d5bfaec1c94b343e07",
+    "tests": [
+      {
+        "name": "admin can edit an accessory without entering phone specifications",
+        "file": "accessory-admin.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 3437
+          }
+        ]
+      },
+      {
+        "name": "Sprint 2 order administration is available",
+        "file": "admin-forms.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 646
+          }
+        ]
+      },
+      {
+        "name": "banner upload without a URL reaches the server and shows a file validation error",
+        "file": "admin-forms.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 556
+          }
+        ]
+      },
+      {
+        "name": "product upload without image URLs shows upload validation rather than blocking the form",
+        "file": "admin-forms.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 673
+          }
+        ]
+      },
+      {
+        "name": "buy now can skip accessory offers and checkout without changing the cart count",
+        "file": "buy-now.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 3621
+          }
+        ]
+      },
+      {
+        "name": "buy now selects discounted accessories, preserves them after validation, and leaves the cart untouched",
+        "file": "buy-now.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 3758
+          }
+        ]
+      },
+      {
+        "name": "buy now continues directly when offers cannot be loaded",
+        "file": "buy-now.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1365
+          }
+        ]
+      },
+      {
+        "name": "Sprint 2 mobile checkout shows voucher and both payment options",
+        "file": "buy-now.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 639
+          }
+        ]
+      },
+      {
+        "name": "quantity reflects the stock limit returned by the server",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 788
+          }
+        ]
+      },
+      {
+        "name": "pending quantity changes block conflicting mutations and checkout",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1556
+          }
+        ]
+      },
+      {
+        "name": "failed quantity requests restore the last confirmed value and allow retry",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 568
+          }
+        ]
+      },
+      {
+        "name": "blank quantity input does not remove a cart item",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 646
+          }
+        ]
+      },
+      {
+        "name": "cart API rejects malformed quantities without deleting or changing the item",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 755
+          }
+        ]
+      },
+      {
+        "name": "removing an item refreshes the remaining Sprint 1 price and selected total",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1426
+          }
+        ]
+      },
+      {
+        "name": "removing the final item shows the empty cart and survives reload",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1717
+          }
+        ]
+      },
+      {
+        "name": "checkout can select a district and ward in Ben Tre",
+        "file": "checkout-address.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 942
+          }
+        ]
+      },
+      {
+        "name": "checkout restores the selected address after server validation",
+        "file": "checkout-address.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1224
+          }
+        ]
+      },
+      {
+        "name": "Sprint 2 checkout contains COD, VNPAY and voucher fields",
+        "file": "checkout-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 517
+          }
+        ]
+      },
+      {
+        "name": "an older shipping response cannot overwrite the latest selected address",
+        "file": "checkout-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 558
+          }
+        ]
+      },
+      {
+        "name": "US-30 suggests discounted compatible accessories and restores retail price without the phone",
+        "file": "cross-sell.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 3964
+          }
+        ]
+      },
+      {
+        "name": "Flash Sale keeps only discounted phones through sorting, search, brands and paging links",
+        "file": "flash-sale.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 4381
+          }
+        ]
+      },
+      {
+        "name": "customer delivery report is visible to admin and can be confirmed after a response",
+        "file": "order-assurance.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 3598
+          }
+        ]
+      },
+      {
+        "name": "refund receipt report alerts the open admin page and can be resolved for customer confirmation",
+        "file": "order-assurance.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 5474
+          }
+        ]
+      },
+      {
+        "name": "confirmation sends one cancellation only after explicit approval",
+        "file": "order-cancel.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1733
+          }
+        ]
+      },
+      {
+        "name": "Sprint 3 health, menus, chatbot and admin boundaries follow the release configuration",
+        "file": "sprint-three.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1323
+          }
+        ]
+      },
+      {
+        "name": "Sprint 3 admin pages, report filters, CSV and voucher form work in the browser",
+        "file": "sprint-three.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 7127
+          }
+        ]
+      },
+      {
+        "name": "storefront exposes the configured sprint and keeps future routes unavailable",
+        "file": "storefront.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1474
+          }
+        ]
+      },
+      {
+        "name": "Sprint 2 storefront supports product comparison without Sprint 3 catalog extras",
+        "file": "storefront.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 2162
+          }
+        ]
+      },
+      {
+        "name": "admin storefront is read-only without customer-only controls",
+        "file": "storefront.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1403
+          }
+        ]
+      },
+      {
+        "name": "customer can access the required order history without extra filters",
+        "file": "storefront.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 645
+          }
+        ]
+      },
+      {
+        "name": "mobile catalog fits the viewport",
+        "file": "storefront.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 462
+          }
+        ]
+      },
+      {
+        "name": "support request reaches the admin order and can be resolved in Sprint 3",
+        "file": "support-request.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 13475
+          }
+        ]
+      },
+      {
+        "name": "invalid support request points to each field and clears errors after correction",
+        "file": "support-validation.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1251
+          }
+        ]
+      }
+    ]
+  },
+  "failedRunPreserved": {
+    "total": 33,
+    "passed": 28,
+    "skipped": 4,
+    "failed": 1,
+    "sourceSha256": "e9b9b195cc1243153098b161f20e72f555019f6d871db687e0fd283b0c36521f",
+    "tests": [
+      {
+        "name": "admin can edit an accessory without entering phone specifications",
+        "file": "accessory-admin.spec.mjs",
+        "outcome": "skipped",
+        "results": [
+          {
+            "status": "skipped",
+            "durationMs": 3706
+          }
+        ]
+      },
+      {
+        "name": "Sprint 2 order administration is available",
+        "file": "admin-forms.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 2309
+          }
+        ]
+      },
+      {
+        "name": "banner upload without a URL reaches the server and shows a file validation error",
+        "file": "admin-forms.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1605
+          }
+        ]
+      },
+      {
+        "name": "product upload without image URLs shows upload validation rather than blocking the form",
+        "file": "admin-forms.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 4234
+          }
+        ]
+      },
+      {
+        "name": "buy now can skip accessory offers and checkout without changing the cart count",
+        "file": "buy-now.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 6481
+          }
+        ]
+      },
+      {
+        "name": "buy now selects discounted accessories, preserves them after validation, and leaves the cart untouched",
+        "file": "buy-now.spec.mjs",
+        "outcome": "skipped",
+        "results": [
+          {
+            "status": "skipped",
+            "durationMs": 1960
+          }
+        ]
+      },
+      {
+        "name": "buy now continues directly when offers cannot be loaded",
+        "file": "buy-now.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 3757
+          }
+        ]
+      },
+      {
+        "name": "Sprint 2 mobile checkout shows voucher and both payment options",
+        "file": "buy-now.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 5092
+          }
+        ]
+      },
+      {
+        "name": "quantity reflects the stock limit returned by the server",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1470
+          }
+        ]
+      },
+      {
+        "name": "pending quantity changes block conflicting mutations and checkout",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 3871
+          }
+        ]
+      },
+      {
+        "name": "failed quantity requests restore the last confirmed value and allow retry",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 3346
+          }
+        ]
+      },
+      {
+        "name": "blank quantity input does not remove a cart item",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1204
+          }
+        ]
+      },
+      {
+        "name": "cart API rejects malformed quantities without deleting or changing the item",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 1446
+          }
+        ]
+      },
+      {
+        "name": "removing an item refreshes the remaining Sprint 1 price and selected total",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 2080
+          }
+        ]
+      },
+      {
+        "name": "removing the final item shows the empty cart and survives reload",
+        "file": "cart-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 3613
+          }
+        ]
+      },
+      {
+        "name": "checkout can select a district and ward in Ben Tre",
+        "file": "checkout-address.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 4376
+          }
+        ]
+      },
+      {
+        "name": "checkout restores the selected address after server validation",
+        "file": "checkout-address.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 3967
+          }
+        ]
+      },
+      {
+        "name": "Sprint 2 checkout contains COD, VNPAY and voucher fields",
+        "file": "checkout-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 3125
+          }
+        ]
+      },
+      {
+        "name": "an older shipping response cannot overwrite the latest selected address",
+        "file": "checkout-resilience.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 2819
+          }
+        ]
+      },
+      {
+        "name": "US-30 suggests discounted compatible accessories and restores retail price without the phone",
+        "file": "cross-sell.spec.mjs",
+        "outcome": "skipped",
+        "results": [
+          {
+            "status": "skipped",
+            "durationMs": 4948
+          }
+        ]
+      },
+      {
+        "name": "Flash Sale keeps only discounted phones through sorting, search, brands and paging links",
+        "file": "flash-sale.spec.mjs",
+        "outcome": "skipped",
+        "results": [
+          {
+            "status": "skipped",
+            "durationMs": 8171
+          }
+        ]
+      },
+      {
+        "name": "customer delivery report is visible to admin and can be confirmed after a response",
+        "file": "order-assurance.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 11796
+          }
+        ]
+      },
+      {
+        "name": "refund receipt report alerts the open admin page and can be resolved for customer confirmation",
+        "file": "order-assurance.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 13162
+          }
+        ]
+      },
+      {
+        "name": "confirmation sends one cancellation only after explicit approval",
+        "file": "order-cancel.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 3513
+          }
+        ]
+      },
+      {
+        "name": "Sprint 3 health, menus, chatbot and admin boundaries follow the release configuration",
+        "file": "sprint-three.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 2071
+          }
+        ]
+      },
+      {
+        "name": "Sprint 3 admin pages, report filters, CSV and voucher form work in the browser",
+        "file": "sprint-three.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 5905
+          }
+        ]
+      },
+      {
+        "name": "storefront exposes the configured sprint and keeps future routes unavailable",
+        "file": "storefront.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 12005
+          }
+        ]
+      },
+      {
+        "name": "Sprint 2 storefront supports product comparison without Sprint 3 catalog extras",
+        "file": "storefront.spec.mjs",
+        "outcome": "unexpected",
+        "results": [
+          {
+            "status": "timedOut",
+            "durationMs": 32043
+          }
+        ]
+      },
+      {
+        "name": "admin storefront is read-only without customer-only controls",
+        "file": "storefront.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 6171
+          }
+        ]
+      },
+      {
+        "name": "customer can access the required order history without extra filters",
+        "file": "storefront.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 2556
+          }
+        ]
+      },
+      {
+        "name": "mobile catalog fits the viewport",
+        "file": "storefront.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 4079
+          }
+        ]
+      },
+      {
+        "name": "support request reaches the admin order and can be resolved in Sprint 3",
+        "file": "support-request.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 17149
+          }
+        ]
+      },
+      {
+        "name": "invalid support request points to each field and clears errors after correction",
+        "file": "support-validation.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 10282
+          }
+        ]
+      }
+    ]
+  },
+  "cdnRetest": {
+    "total": 1,
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "sourceSha256": "4997f05f19b628431b96840b1dcd53efa4689f15911671c8bf0afcaa5b4204b5",
+    "tests": [
+      {
+        "name": "Sprint 2 storefront supports product comparison without Sprint 3 catalog extras",
+        "file": "storefront.spec.mjs",
+        "outcome": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 2433
+          }
+        ]
+      }
+    ]
+  },
+  "dependencyAudit": {
+    "before": {
+      "imageSharp": "3.1.12",
+      "pkcs": "8.0.1",
+      "advisories": 8
+    },
+    "after": {
+      "imageEngine": "SkiaSharp 3.119.4",
+      "pkcs": "8.0.2",
+      "reportedAdvisories": 0
+    },
+    "auditSha256": "07587993bfa688c7d1fd2f1b1064b24bdc7edc22a24d62a048c35306c3dd3b15"
+  },
+  "packaging": {
+    "initialPublishUploadCount": 10,
+    "verifiedCandidateFileCount": 146,
+    "localCandidateManifestHasUncommittedChanges": true,
+    "finalReleaseBuiltFromTag": "v1.0.0",
+    "finalZipHashLocation": "Release asset SHA256SUMS.txt",
+    "defaultDatabaseIncluded": false,
+    "uploadsIncluded": false,
+    "localSettingsIncluded": false
+  },
+  "ci": {
+    "url": "https://github.com/Anhtuan2005/cnpm/actions/runs/41769846813",
+    "commit": "b705b181f549050849f8eb50475b650a10ade6c1",
+    "conclusion": "success",
+    "backendPerJob": 157,
+    "browserSprint2": {
+      "passed": 29,
+      "skipped": 4
+    },
+    "browserSprint3": {
+      "passed": 33,
+      "skipped": 0
+    },
+    "runner": "Ubuntu 24.04; SQL Server 2022; Chromium; extracted package"
+  },
+  "limitations": [
+    "Business tests mock optional photo/font/icon CDN assets; address API mocked per-spec.",
+    "Email and payment/shipping providers use stubs where noted; no new live VNPAY/GHN/SMTP acceptance.",
+    "No second physical machine, production deployment or Docker execution claimed.",
+    "Group/PO signoff and individual contribution percentages not invented."
+  ]
+}
