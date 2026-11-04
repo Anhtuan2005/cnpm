@@ -45,12 +45,18 @@ jobs:
           npm ci
           npm run check:assets
       - run: dotnet test test/test-cases/EcommerceApp.Tests/EcommerceApp.Tests.csproj --configuration Release --logger trx --results-directory TestResults
+      - name: Publish, package and verify the release
+        shell: pwsh
+        run: |
+          ./scripts/release/Build-Package.ps1 -OutputDirectory artifacts/ci-package
+          ./scripts/release/Test-Package.ps1 -Package artifacts/ci-package/Techvora-1.0.0.zip -Destination artifacts/ci-extracted
       - name: Install browser
         working-directory: src/frontend
         run: npx playwright install --with-deps chromium
       - name: Start the selected sprint with an isolated demo database
         env:
-          ASPNETCORE_ENVIRONMENT: Development
+          ASPNETCORE_ENVIRONMENT: Demo
+          DOTNET_ENVIRONMENT: Demo
           ConnectionStrings__DefaultConnection: Server=localhost,1433;Database=TechvoraBrowserTests;User Id=sa;Password=Techvora_Test_Only123!;TrustServerCertificate=True
           Database__MigrateOnStartup: 'true'
           Demo__Enabled: 'true'
@@ -59,7 +65,7 @@ jobs:
           Gemini__ApiKey: ''
         run: |
           mkdir -p artifacts/ci
-          dotnet run --project src/backend/EcommerceApp.csproj --configuration Release --no-build --no-launch-profile --urls http://127.0.0.1:5017 > artifacts/ci/app.log 2>&1 &
+          (cd artifacts/ci-extracted/app && exec dotnet EcommerceApp.dll --urls http://127.0.0.1:5017) > artifacts/ci/app.log 2>&1 &
           echo $! > artifacts/ci/app.pid
           for attempt in $(seq 1 60); do
             if curl --fail --silent http://127.0.0.1:5017/ > /dev/null; then
@@ -96,3 +102,4 @@ jobs:
             artifacts/browser/
             artifacts/sprint3/*.png
             artifacts/flash-sale/*.png
+            artifacts/ci-package/SHA256SUMS.txt

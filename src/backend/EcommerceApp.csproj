@@ -8,6 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Runtime data and machine-specific settings never belong in a release. -->
+    <Content Update="wwwroot/uploads/**;appsettings.Development.json;appsettings.Local.json;secrets.json;.env;.env.*" CopyToPublishDirectory="Never" />
+    <Content Remove="App_Data/**;logs/**" />
+    <None Update="App_Data/**;logs/**" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="../../database/schema/Migrations/**/*.cs" Link="Data/Migrations/%(RecursiveDir)%(Filename)%(Extension)" />
     <Compile Include="../../database/seed/SeedData.cs" Link="Data/SeedData.cs" />
   </ItemGroup>
@@ -22,7 +29,9 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.28" />
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+    <PackageReference Include="SkiaSharp" Version="3.119.4" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.4" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="8.0.2" />
   </ItemGroup>
 
 </Project>
