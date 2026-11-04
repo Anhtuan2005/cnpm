@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-29",
+  "timezone": "Asia/Saigon",
+  "backend": {
+    "passed": 146,
+    "total": 146,
+    "failed": 0
+  },
+  "browser": {
+    "startTime": "2026-10-29T09:19:45.413Z",
+    "duration": 25735.577,
+    "expected": 8,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "scope": [
+    "7 accessory products and local illustrations",
+    "Phone/accessory offers only, 10-20 percent bundle discounts",
+    "Model-specific case/glass and declared USB-C/Lightning mappings",
+    "Standalone accessory catalog and administrator editing",
+    "Retail price without the selected phone",
+    "Order prices, stock and cart counts persist correctly",
+    "Restart-safe seed preserves edited stock/prices and disabled offers",
+    "Chat catalog fallback does not suggest the wrong phone case"
+  ],
+  "svgAssetsValidated": 6,
+  "environment": "Windows, SQL Server isolated test database, Microsoft Edge",
+  "externalProviders": "Gemini and SMTP disabled for these checks"
+}

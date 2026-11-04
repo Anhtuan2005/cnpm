@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-29",
+  "timezone": "Asia/Saigon",
+  "environment": "Local Windows; SQL Server; Microsoft Edge; separate demo database",
+  "backend": { "total": 144, "passed": 144, "failed": 0, "skipped": 0 },
+  "browser": {
+    "total": 2, "passed": 2, "failed": 0,
+    "cases": [
+      "Flash Sale only contains available discounted phones; filter survives price sort, bestseller sort, brand, search and paging links; legacy URL works; empty range stays empty",
+      "US-30 adds Pixel from the cross-sell popup, applies a 5 percent discount and removes that discount after the anchor phone is removed"
+    ]
+  },
+  "reminderHttpCheck": {
+    "account": "khachhang2@shop.vn in the isolated demo database",
+    "cartAgeHours": 25,
+    "trigger": "Fresh login through Account/Login after aging the demo cart",
+    "recoveryCodeVisible": true,
+    "remindersCreated": 1,
+    "notificationsCreated": 1,
+    "emailEnabled": false
+  },
+  "demoCrossSell": {
+    "anchor": "iPhone 15 Pro",
+    "addOn": "Google Pixel 7 Pro",
+    "discountPercent": 5,
+    "regularPrice": 14990000,
+    "offerPrice": 14240500,
+    "savings": 749500
+  },
+  "workingStoreDatabase": "Only read to check whether active phone cross-sell offers exist; test mutations use a separate demo database."
+}

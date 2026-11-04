@@ -1,7 +1,4 @@
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats;
-using SixLabors.ImageSharp.Formats.Webp;
-using SixLabors.ImageSharp.Processing;
+using SkiaSharp;
 
 namespace EcommerceApp.Services;
 
@@ -110,36 +107,41 @@ public class ImageStorageService : IImageStorageService
             throw new ArgumentOutOfRangeException(nameof(maxWidth), "Kích thước ảnh tối đa phải lớn hơn 0.");
         }
 
-        Image image;
-        try
+        await using var input = file.OpenReadStream();
+        using var encoded = new MemoryStream();
+        await input.CopyToAsync(encoded, cancellationToken);
+        using var data = SKData.CreateCopy(encoded.ToArray());
+        using var codec = SKCodec.Create(data);
+        if (codec is null || codec.EncodedFormat is not (SKEncodedImageFormat.Jpeg or SKEncodedImageFormat.Png or SKEncodedImageFormat.Webp))
+            throw new InvalidOperationException("Tệp tải lên không phải ảnh JPG, PNG hoặc WEBP hợp lệ.");
+        // Bound decoded memory before allocation, independently of compressed size.
+        if (codec.Info.Width <= 0 || codec.Info.Height <= 0 || (long)codec.Info.Width * codec.Info.Height > 40_000_000)
+            throw new InvalidOperationException("Ảnh vượt quá giới hạn 40 triệu điểm ảnh.");
+        using var bitmap = new SKBitmap(codec.Info.Width, codec.Info.Height, SKColorType.Rgba8888, SKAlphaType.Premul);
+        if (codec.GetPixels(bitmap.Info, bitmap.GetPixels()) != SKCodecResult.Success)
+            throw new InvalidOperationException("Tệp tải lên không phải ảnh hợp lệ hoặc đã bị hỏng.");
+        var rotated = codec.EncodedOrigin is SKEncodedOrigin.LeftTop or SKEncodedOrigin.RightTop
+            or SKEncodedOrigin.RightBottom or SKEncodedOrigin.LeftBottom;
+        var width = rotated ? bitmap.Height : bitmap.Width;
+        var height = rotated ? bitmap.Width : bitmap.Height;
+        var scale = Math.Min(1d, Math.Min((double)maxWidth / width, (double)maxHeight / height));
+        using var output = new SKBitmap(Math.Max(1, (int)Math.Floor(width * scale)), Math.Max(1, (int)Math.Floor(height * scale)),
+            SKColorType.Rgba8888, SKAlphaType.Premul);
+        using (var canvas = new SKCanvas(output))
         {
-            await using var input = file.OpenReadStream();
-            image = await Image.LoadAsync(input, cancellationToken);
-        }
-        catch (Exception ex) when (ex is UnknownImageFormatException or InvalidImageContentException)
-        {
-            throw new InvalidOperationException("Tệp tải lên không phải ảnh hợp lệ hoặc đã bị hỏng.", ex);
+            canvas.Clear(SKColors.Transparent);
+            canvas.Scale((float)output.Width / width, (float)output.Height / height);
+            var transform = OrientationTransform(codec.EncodedOrigin, bitmap.Width, bitmap.Height);
+            canvas.Concat(in transform);
+            using var image = SKImage.FromBitmap(bitmap);
+            canvas.DrawImage(image, 0, 0, new SKSamplingOptions(SKFilterMode.Linear));
         }
 
-        using (image)
+        // A fresh bitmap encodes only pixels; uploaded EXIF/XMP is not propagated.
+        using (var image = SKImage.FromBitmap(output))
+        using (var webp = image.Encode(SKEncodedImageFormat.Webp, Math.Clamp(quality, 1, 100)))
         {
-            image.Mutate(context =>
-            {
-                context.AutoOrient();
-                if (image.Width > maxWidth || image.Height > maxHeight)
-                {
-                    context.Resize(new ResizeOptions
-                    {
-                        Mode = ResizeMode.Max,
-                        Size = new Size(maxWidth, maxHeight),
-                        Sampler = KnownResamplers.Lanczos3
-                    });
-                }
-            });
-
-            image.Metadata.ExifProfile = null;
-            image.Metadata.IccProfile = null;
-            image.Metadata.XmpProfile = null;
+            if (webp is null) throw new InvalidOperationException("Chưa thể chuyển ảnh sang WEBP.");
 
             var safeFolder = string.Concat(subfolder
                 .Trim()
@@ -158,10 +160,9 @@ public class ImageStorageService : IImageStorageService
 
             try
             {
-                await image.SaveAsWebpAsync(
-                    filePath,
-                    new WebpEncoder { Quality = Math.Clamp(quality, 1, 100) },
-                    cancellationToken);
+                await using var destination = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write);
+                using var content = webp.AsStream();
+                await content.CopyToAsync(destination, cancellationToken);
             }
             catch
             {
@@ -175,6 +176,22 @@ public class ImageStorageService : IImageStorageService
 
             return $"/uploads/{safeFolder}/{fileName}";
         }
+    }
+
+    private static SKMatrix OrientationTransform(SKEncodedOrigin origin, int w, int h)
+    {
+        var (a, b, x, c, d, y) = origin switch
+        {
+            SKEncodedOrigin.TopRight => (-1, 0, w, 0, 1, 0),
+            SKEncodedOrigin.BottomRight => (-1, 0, w, 0, -1, h),
+            SKEncodedOrigin.BottomLeft => (1, 0, 0, 0, -1, h),
+            SKEncodedOrigin.LeftTop => (0, 1, 0, 1, 0, 0),
+            SKEncodedOrigin.RightTop => (0, -1, h, 1, 0, 0),
+            SKEncodedOrigin.RightBottom => (0, -1, h, -1, 0, w),
+            SKEncodedOrigin.LeftBottom => (0, 1, 0, -1, 0, w),
+            _ => (1, 0, 0, 0, 1, 0)
+        };
+        return new SKMatrix { ScaleX = a, SkewX = b, TransX = x, SkewY = c, ScaleY = d, TransY = y, Persp2 = 1 };
     }
 
 }

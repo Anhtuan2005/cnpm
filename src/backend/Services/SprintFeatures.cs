@@ -17,9 +17,13 @@ public interface ISprintFeatureService
 
 public sealed class SprintFeatureService : ISprintFeatureService
 {
+    public const int LatestSprint = 3;
+
+    public static int Normalize(int sprint) => Math.Clamp(sprint, 1, LatestSprint);
+
     public SprintFeatureService(IOptions<SprintFeatureOptions> options)
     {
-        ActiveSprint = Math.Clamp(options.Value.ActiveSprint, 1, 2);
+        ActiveSprint = Normalize(options.Value.ActiveSprint);
     }
 
     public int ActiveSprint { get; }

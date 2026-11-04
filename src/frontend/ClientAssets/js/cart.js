@@ -83,8 +83,29 @@ function initDetailAddToCart() {
     button.addEventListener("click", function () {
       if (button.disabled) return;
       var qty = clampQuantity(input);
-      window.location.href = "/Order/Checkout?buyNowProductId=" + encodeURIComponent(button.dataset.productId)
+      var checkoutUrl = "/Order/Checkout?buyNowProductId=" + encodeURIComponent(button.dataset.productId)
         + "&buyNowQuantity=" + encodeURIComponent(qty);
+      if (!window.showBuyNowOfferModal) {
+        window.location.href = checkoutUrl;
+        return;
+      }
+      setBusy(button, true);
+      fetch("/Product/BuyNowOffers?productId=" + encodeURIComponent(button.dataset.productId)
+        + "&quantity=" + encodeURIComponent(qty), { headers: { Accept: "application/json" } })
+        .then(function (response) {
+          if (!response.ok || response.redirected) throw new Error("offers-unavailable");
+          return response.json();
+        })
+        .then(function (data) {
+          setBusy(button, false);
+          if (!window.showBuyNowOfferModal(getCartOfferSuggestions(data), checkoutUrl, button)) {
+            window.location.href = checkoutUrl;
+          }
+        })
+        .catch(function () {
+          setBusy(button, false);
+          window.location.href = checkoutUrl;
+        });
     });
   });
 }

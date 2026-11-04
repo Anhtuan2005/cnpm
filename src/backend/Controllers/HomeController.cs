@@ -40,6 +40,7 @@ public class HomeController : Controller
         var productNameQuery = _db.Products.AsNoTracking().AsQueryable();
         if (_catalogScope is not null)
             productNameQuery = _catalogScope.Products(productNameQuery);
+        productNameQuery = PhoneCatalogScope.OnlyPhones(productNameQuery);
         var productNames = await productNameQuery.Select(product => product.Name).ToListAsync();
 
         var flashSaleQuery = _db.Products
@@ -48,6 +49,7 @@ public class HomeController : Controller
             .AsQueryable();
         if (_catalogScope is not null)
             flashSaleQuery = _catalogScope.Products(flashSaleQuery);
+        flashSaleQuery = PhoneCatalogScope.OnlyPhones(flashSaleQuery);
 
         var model = new HomeViewModel
         {

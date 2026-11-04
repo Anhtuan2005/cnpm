@@ -10,6 +10,8 @@ public interface ICatalogScope
     IQueryable<Category> Categories(IQueryable<Category> query);
     bool IsPhoneCategory(string? slug);
     bool IsPhoneCategoryName(string? name);
+    bool IsSupportedCategory(string? slug);
+    bool IsSupportedCategoryName(string? name);
     bool IsPhoneBanner(Banner banner);
 }
 
@@ -20,7 +22,14 @@ public interface ICatalogScope
 public sealed class PhoneCatalogScope : ICatalogScope
 {
     public const string RootSlug = "dien-thoai";
+    public const string AccessoryRootSlug = "phu-kien-dien-thoai";
     private const string SlugPrefix = "dien-thoai-";
+    private readonly bool _accessoriesEnabled;
+
+    public PhoneCatalogScope(ISprintFeatureService? sprintFeatures = null)
+    {
+        _accessoriesEnabled = sprintFeatures?.IsEnabled(3) ?? true;
+    }
 
     private static readonly string[] OutOfScopeTerms =
     {
@@ -31,10 +40,26 @@ public sealed class PhoneCatalogScope : ICatalogScope
 
     public IQueryable<Product> Products(IQueryable<Product> query) =>
         query.Where(product => product.Category != null
-            && (product.Category.Slug == RootSlug || product.Category.Slug.StartsWith(SlugPrefix)));
+            && (product.Category.Slug == RootSlug || product.Category.Slug.StartsWith(SlugPrefix)
+                || (_accessoriesEnabled && (product.Category.Slug == AccessoryRootSlug
+                    || product.Category.Slug.StartsWith(AccessoryRootSlug + "-")))));
 
     public IQueryable<Category> Categories(IQueryable<Category> query) =>
-        query.Where(category => category.Slug == RootSlug || category.Slug.StartsWith(SlugPrefix));
+        query.Where(category => category.Slug == RootSlug || category.Slug.StartsWith(SlugPrefix)
+            || (_accessoriesEnabled && (category.Slug == AccessoryRootSlug || category.Slug.StartsWith(AccessoryRootSlug + "-"))));
+
+    public static IQueryable<Product> OnlyPhones(IQueryable<Product> query) => query.Where(product => product.Category != null
+        && (product.Category.Slug == RootSlug || product.Category.Slug.StartsWith(SlugPrefix)));
+
+    public static IQueryable<Product> OnlyAccessories(IQueryable<Product> query) => query.Where(product => product.Category != null
+        && (product.Category.Slug == AccessoryRootSlug || product.Category.Slug.StartsWith(AccessoryRootSlug + "-")));
+
+    public static bool IsAccessorySlug(string? slug) => string.Equals(slug, AccessoryRootSlug, StringComparison.OrdinalIgnoreCase)
+        || (slug?.StartsWith(AccessoryRootSlug + "-", StringComparison.OrdinalIgnoreCase) ?? false);
+
+    public bool IsSupportedCategory(string? slug) => IsPhoneSlug(slug) || (_accessoriesEnabled && IsAccessorySlug(slug));
+
+    public bool IsSupportedCategoryName(string? name) => IsSupportedCategory(SlugGenerator.Generate(name ?? string.Empty));
 
     public static bool IsPhoneSlug(string? slug) =>
         string.Equals(slug, RootSlug, StringComparison.OrdinalIgnoreCase)

@@ -1,3 +1,5 @@
+> Bản demo nghiệm thu Sprint 1–3 dùng [kịch bản Lab 6](../lab6/demo-script.md) và [gói v1.0.0](../lab6/install-guide.md). Nội dung dưới đây giữ làm hướng dẫn luồng Sprint 1–2.
+
 
 
 # Kịch bản demo trong khoảng 3–5 phút

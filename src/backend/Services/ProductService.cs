@@ -21,13 +21,18 @@ public class ProductService : IProductService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task<ProductViewModel> GetPagedProductsAsync(string? search, int? categoryId, decimal? minPrice, decimal? maxPrice, string? sortBy, int page, int pageSize)
+    public async Task<ProductViewModel> GetPagedProductsAsync(string? search, int? categoryId, decimal? minPrice, decimal? maxPrice, string? sortBy, int page, int pageSize, bool saleOnly = false, bool includeAccessories = false)
     {
         page = Math.Max(page, 1);
+        var accessoryCatalog = categoryId.HasValue && await _db.Categories
+            .AnyAsync(category => category.Id == categoryId.Value && (category.Slug == PhoneCatalogScope.AccessoryRootSlug
+                || category.Slug.StartsWith(PhoneCatalogScope.AccessoryRootSlug + "-")));
         var query = ScopedProducts(_db.Products
             .Include(product => product.Category)
             .Include(product => product.Images)
             .AsQueryable());
+        if (_catalogScope is not null && !categoryId.HasValue && !includeAccessories)
+            query = PhoneCatalogScope.OnlyPhones(query);
 
         var searchTerms = ProductSearchIndex.QueryTerms(search);
         foreach (var term in searchTerms)
@@ -61,6 +66,13 @@ public class ProductService : IProductService
             "best_selling" or "discount_desc" or "newest" or "price_asc" or "price_desc" => sortBy,
             _ => "featured"
         };
+
+        if (!promotionsEnabled && normalizedSortBy == "discount_desc")
+            normalizedSortBy = "featured";
+        // Preserve old Flash Sale URLs while keeping the sale filter independent of sorting.
+        saleOnly = promotionsEnabled && (saleOnly || normalizedSortBy == "discount_desc");
+        if (saleOnly)
+            query = query.Where(product => product.DiscountPercent > 0 && product.Stock > 0);
 
         var completedOrderItems = _db.OrderItems.WithRecognizedRevenue();
 
@@ -101,7 +113,8 @@ public class ProductService : IProductService
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
-        var catalogProductNames = await ScopedProducts(_db.Products.AsNoTracking())
+        var catalogProductNames = await PhoneCatalogScope.OnlyPhones(ScopedProducts(_db.Products.AsNoTracking()))
+            .Where(product => !saleOnly || (product.DiscountPercent > 0 && product.Stock > 0))
             .Select(product => product.Name)
             .ToListAsync();
 
@@ -115,6 +128,10 @@ public class ProductService : IProductService
             MinPrice = minPrice,
             MaxPrice = maxPrice,
             SortBy = normalizedSortBy,
+            SaleOnly = saleOnly,
+            IsAccessoryCatalog = accessoryCatalog,
+            AccessoryCategoryId = await ScopedCategories(_db.Categories).Where(category => category.Slug == PhoneCatalogScope.AccessoryRootSlug)
+                .Select(category => (int?)category.Id).FirstOrDefaultAsync(),
             CurrentPage = page,
             TotalPages = totalPages,
             TotalItems = totalItems,
@@ -124,9 +141,9 @@ public class ProductService : IProductService
 
     public async Task<IEnumerable<Product>> GetFeaturedProductsAsync(int count)
     {
-        return await ScopedProducts(_db.Products
+        return await PhoneCatalogScope.OnlyPhones(ScopedProducts(_db.Products
             .Include(product => product.Category)
-            .Include(product => product.Images))
+            .Include(product => product.Images)))
             .Where(product => product.IsFeatured)
             .OrderByDescending(product => product.CreatedAt)
             .Take(count)
@@ -262,7 +279,7 @@ public class ProductService : IProductService
         if (_catalogScope is not null
             && !await ScopedCategories(_db.Categories).AnyAsync(category => category.Id == categoryId))
         {
-            throw new InvalidOperationException("Chỉ được quản lý sản phẩm thuộc danh mục điện thoại.");
+            throw new InvalidOperationException("Chỉ được quản lý điện thoại và phụ kiện điện thoại.");
         }
     }
 

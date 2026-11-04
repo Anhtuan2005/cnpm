@@ -9,14 +9,20 @@ namespace EcommerceApp.Tests;
 
 public class SprintScopeTests
 {
-    [Fact]
-    public void Release_stays_within_sprints_one_and_two_even_if_config_requests_three()
+    [Theory]
+    [InlineData(-1, 1)]
+    [InlineData(1, 1)]
+    [InlineData(2, 2)]
+    [InlineData(3, 3)]
+    [InlineData(4, 3)]
+    public void Release_supports_sprint_three_and_rollback_without_enabling_future_sprints(int configured, int expected)
     {
-        var features = new SprintFeatureService(Options.Create(new SprintFeatureOptions { ActiveSprint = 3 }));
+        var features = new SprintFeatureService(Options.Create(new SprintFeatureOptions { ActiveSprint = configured }));
 
-        Assert.Equal(2, features.ActiveSprint);
-        Assert.True(features.IsEnabled(2));
-        Assert.False(features.IsEnabled(3));
+        Assert.Equal(expected, features.ActiveSprint);
+        Assert.Equal(expected >= 2, features.IsEnabled(2));
+        Assert.Equal(expected >= 3, features.IsEnabled(3));
+        Assert.False(features.IsEnabled(4));
     }
 
     [Fact]

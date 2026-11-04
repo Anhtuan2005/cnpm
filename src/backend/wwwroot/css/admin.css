@@ -1949,6 +1949,21 @@ input[type="checkbox"] {
   margin-bottom: 0;
 }
 
+.report-summary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.report-filter-panel > p {
+  margin: 10px 0 0;
+  line-height: 1.6;
+}
+
+.report-table-grid td:last-child {
+  white-space: nowrap;
+}
+
 .report-table-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 0.7fr);
@@ -2188,6 +2203,17 @@ input[type="checkbox"] {
 }
 
 @media (max-width: 560px) {
+  .report-summary-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .report-metrics .report-revenue {
+    font-size: 20px;
+    white-space: nowrap;
+    overflow-wrap: normal;
+  }
+
   .adm-header {
     flex-direction: column;
   }

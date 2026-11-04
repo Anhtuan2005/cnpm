@@ -170,7 +170,7 @@
                     </div>
                 }
             </div>
-            <a class="btn-primary flash-shop-link" asp-controller="Product" asp-action="Index" asp-route-sortBy="discount_desc">
+            <a class="btn-primary flash-shop-link" asp-controller="Product" asp-action="Index" asp-route-sortBy="discount_desc" asp-route-saleOnly="true">
                 <i data-lucide="flame" aria-hidden="true"></i>
                 Xem tất cả deal
             </a>
@@ -274,7 +274,7 @@
         <div class="newsletter-action">
             <span class="newsletter-action-label">Danh sách đang sắp theo</span>
             <strong>Mức giảm cao nhất</strong>
-            <a class="btn-primary newsletter-deal-link" asp-controller="Product" asp-action="Index" asp-route-sortBy="discount_desc">
+            <a class="btn-primary newsletter-deal-link" asp-controller="Product" asp-action="Index" asp-route-sortBy="discount_desc" asp-route-saleOnly="true">
                 Xem flash sale
                 <i data-lucide="arrow-right" aria-hidden="true"></i>
             </a>

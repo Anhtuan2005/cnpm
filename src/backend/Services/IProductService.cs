@@ -5,7 +5,7 @@ namespace EcommerceApp.Services;
 
 public interface IProductService
 {
-    Task<ProductViewModel> GetPagedProductsAsync(string? search, int? categoryId, decimal? minPrice, decimal? maxPrice, string? sortBy, int page, int pageSize);
+    Task<ProductViewModel> GetPagedProductsAsync(string? search, int? categoryId, decimal? minPrice, decimal? maxPrice, string? sortBy, int page, int pageSize, bool saleOnly = false, bool includeAccessories = false);
     Task<IEnumerable<Product>> GetFeaturedProductsAsync(int count);
     Task<IEnumerable<Category>> GetCategoriesAsync();
     Task<Product?> GetProductAsync(int id);

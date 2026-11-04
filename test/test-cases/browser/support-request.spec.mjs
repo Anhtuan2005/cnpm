@@ -1,7 +1,7 @@
 import { test, expect } from './playwright.mjs';
 import { signInDemo } from './auth.mjs';
 
-test('Sprint 2 support request reaches the admin order without a Sprint 3 route', async ({ page }) => {
+test('support request reaches the admin order and can be resolved in Sprint 3', async ({ page }) => {
   await signInDemo(page, 'User');
   const adminContext = await page.context().browser().newContext();
   const adminPage = await adminContext.newPage();
@@ -48,6 +48,18 @@ test('Sprint 2 support request reaches the admin order without a Sprint 3 route'
       .filter({ hasText: `Đơn #DH${orderId.padStart(4, '0')}` }).first().click();
     await expect(adminPage).toHaveURL(new RegExp(`/Admin/Order/${orderId}#support-request-${requestId}$`));
     await expect(adminPage.locator(`#support-request-${requestId}`)).toContainText('Máy khởi động nhưng màn hình không hiển thị hình ảnh.');
+    if (Number(await adminPage.locator('body').getAttribute('data-active-sprint')) >= 3) {
+      await adminPage.locator(`#support-request-${requestId}`).getByRole('link', { name: `Xử lý yêu cầu #${requestId}` }).click();
+      for (const status of ['Đang xử lý', 'Đã duyệt', 'Hoàn tất']) {
+        await adminPage.locator('#support-status').selectOption({ label: status });
+        await adminPage.locator('#admin-note').fill('Shop đã kiểm tra và xử lý yêu cầu.');
+        await adminPage.getByRole('button', { name: 'Lưu trạng thái' }).click();
+      }
+      await expect(adminPage.getByRole('button', { name: 'Lưu trạng thái' })).toBeDisabled();
+      await page.goto(`/ReturnWarranty/Details/${requestId}`);
+      await expect(page.locator('#main-content')).toContainText('Shop đã kiểm tra và xử lý yêu cầu.');
+      await expect(page.locator('#main-content')).toContainText('Hoàn tất');
+    }
   } finally {
     await adminContext.close();
   }

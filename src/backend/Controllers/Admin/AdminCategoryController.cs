@@ -49,9 +49,9 @@ public class AdminCategoryController : Controller
         {
             ModelState.AddModelError(nameof(Category.Name), "Vui lòng nhập tên danh mục");
         }
-        else if (_catalogScope is not null && !_catalogScope.IsPhoneCategoryName(model.Name))
+        else if (_catalogScope is not null && !_catalogScope.IsSupportedCategoryName(model.Name))
         {
-            ModelState.AddModelError(nameof(Category.Name), "Tên danh mục phải bắt đầu bằng 'Điện thoại' (ví dụ: Điện thoại Apple).");
+            ModelState.AddModelError(nameof(Category.Name), "Tên danh mục phải bắt đầu bằng 'Điện thoại' hoặc 'Phụ kiện điện thoại' (ví dụ: Điện thoại Apple).");
         }
         if (!ModelState.IsValid)
         {
@@ -84,9 +84,9 @@ public class AdminCategoryController : Controller
         {
             ModelState.AddModelError(nameof(Category.Name), "Vui lòng nhập tên danh mục");
         }
-        else if (_catalogScope is not null && !_catalogScope.IsPhoneCategoryName(model.Name))
+        else if (_catalogScope is not null && !_catalogScope.IsSupportedCategoryName(model.Name))
         {
-            ModelState.AddModelError(nameof(Category.Name), "Tên danh mục phải bắt đầu bằng 'Điện thoại' (ví dụ: Điện thoại Samsung).");
+            ModelState.AddModelError(nameof(Category.Name), "Tên danh mục phải bắt đầu bằng 'Điện thoại' hoặc 'Phụ kiện điện thoại' (ví dụ: Điện thoại Samsung).");
         }
         if (!ModelState.IsValid)
         {

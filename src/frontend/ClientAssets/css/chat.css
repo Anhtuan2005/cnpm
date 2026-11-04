@@ -186,6 +186,23 @@
   text-underline-offset: 3px;
 }
 
+.ai-message .ai-product-inline-link {
+  color: oklch(0.46 0.16 253);
+  font-weight: 650;
+  text-decoration-thickness: 1px;
+}
+
+.ai-message .ai-product-inline-link:hover {
+  color: oklch(0.38 0.16 253);
+  text-decoration-thickness: 2px;
+}
+
+.ai-message .ai-product-inline-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
 .ai-product-links {
   display: grid;
   gap: 8px;

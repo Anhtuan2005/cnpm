@@ -1,8 +1,8 @@
 @model ProductViewModel
 @{
-    ViewData["Title"] = "Sản phẩm";
+    ViewData["Title"] = Model.IsAccessoryCatalog ? "Phụ kiện điện thoại" : Model.SaleOnly ? "Flash Sale" : "Sản phẩm";
     var categories = Model.Categories.ToList();
-    var brands = Model.Brands.ToList();
+    var brands = Model.IsAccessoryCatalog ? new List<PhoneBrandViewModel>() : Model.Brands.ToList();
     var selectedCategory = categories.FirstOrDefault(category => category.Id == Model.CategoryId);
     var selectedBrand = brands.FirstOrDefault(brand => string.Equals(brand.SearchTerm, Model.Search, StringComparison.OrdinalIgnoreCase));
     const int visibleCategoryCount = 7;
@@ -36,8 +36,8 @@
 <section class="page-head product-page-head">
     <div>
         <span class="eyebrow">Techvora Store</span>
-        <h1>Tìm điện thoại phù hợp</h1>
-        <p><strong>@Model.TotalItems sản phẩm</strong> để bạn @(SprintFeatures.IsEnabled(2) ? "tìm và so sánh" : "tìm và lựa chọn").</p>
+        <h1>@(Model.IsAccessoryCatalog ? "Phụ kiện điện thoại" : Model.SaleOnly ? "Flash Sale" : "Tìm điện thoại phù hợp")</h1>
+        <p><strong>@Model.TotalItems sản phẩm</strong> @(Model.IsAccessoryCatalog ? "để bạn chọn cho điện thoại." : Model.SaleOnly ? "đang giảm giá và còn hàng." : SprintFeatures.IsEnabled(2) ? "để bạn tìm và so sánh." : "để bạn tìm và lựa chọn.")</p>
     </div>
 </section>
 
@@ -52,6 +52,7 @@
                 <input type="hidden" name="categoryId" value="@Model.CategoryId" />
                 <input type="hidden" name="minPrice" value="@Model.MinPrice" />
                 <input type="hidden" name="maxPrice" value="@Model.MaxPrice" />
+                <input type="hidden" name="saleOnly" value="@Model.SaleOnly.ToString().ToLowerInvariant()" />
                 <input type="hidden" name="sortBy" value="@Model.SortBy" />
                 @if (!string.IsNullOrWhiteSpace(Model.Search))
                 {
@@ -60,7 +61,7 @@
                        asp-route-categoryId="@Model.CategoryId"
                        asp-route-minPrice="@Model.MinPrice"
                        asp-route-maxPrice="@Model.MaxPrice"
-                       asp-route-sortBy="@Model.SortBy"
+                       asp-route-sortBy="@Model.SortBy" asp-route-saleOnly="@Model.SaleOnly"
                        aria-label="Xóa từ khóa tìm kiếm">
                         <i data-lucide="x" aria-hidden="true"></i>
                     </a>
@@ -87,7 +88,7 @@
                        asp-route-categoryId="@Model.CategoryId"
                        asp-route-minPrice="@Model.MinPrice"
                        asp-route-maxPrice="@Model.MaxPrice"
-                       asp-route-sortBy="featured">
+                       asp-route-sortBy="featured" asp-route-saleOnly="@Model.SaleOnly">
                         <i data-lucide="star" aria-hidden="true"></i>
                         <span>Nổi bật</span>
                     </a>
@@ -97,7 +98,7 @@
                        asp-route-categoryId="@Model.CategoryId"
                        asp-route-minPrice="@Model.MinPrice"
                        asp-route-maxPrice="@Model.MaxPrice"
-                       asp-route-sortBy="@(Model.SortBy == "best_selling" ? "featured" : "best_selling")">
+                       asp-route-sortBy="@(Model.SortBy == "best_selling" ? "featured" : "best_selling")" asp-route-saleOnly="@Model.SaleOnly">
                         <i data-lucide="trending-up" aria-hidden="true"></i>
                         <span>Bán chạy</span>
                         @if (Model.SortBy == "best_selling")
@@ -107,16 +108,17 @@
                     </a>
                     @if (SprintFeatures.IsEnabled(3))
                     {
-                    <a class="@(Model.SortBy == "discount_desc" ? "active" : "")"
+                    <a class="@(Model.SaleOnly ? "active" : "")"
                        asp-action="Index"
                        asp-route-search="@Model.Search"
                        asp-route-categoryId="@Model.CategoryId"
                        asp-route-minPrice="@Model.MinPrice"
                        asp-route-maxPrice="@Model.MaxPrice"
-                       asp-route-sortBy="@(Model.SortBy == "discount_desc" ? "featured" : "discount_desc")">
+                       asp-route-sortBy="@(Model.SaleOnly ? (Model.SortBy == "discount_desc" ? "featured" : Model.SortBy) : "discount_desc")"
+                       asp-route-saleOnly="@(!Model.SaleOnly)">
                         <i data-lucide="tag" aria-hidden="true"></i>
                         <span>Giảm giá</span>
-                        @if (Model.SortBy == "discount_desc")
+                        @if (Model.SaleOnly)
                         {
                             <i data-lucide="x" aria-hidden="true"></i>
                         }
@@ -128,7 +130,7 @@
                        asp-route-categoryId="@Model.CategoryId"
                        asp-route-minPrice="@Model.MinPrice"
                        asp-route-maxPrice="@Model.MaxPrice"
-                       asp-route-sortBy="@(Model.SortBy == "newest" ? "featured" : "newest")">
+                       asp-route-sortBy="@(Model.SortBy == "newest" ? "featured" : "newest")" asp-route-saleOnly="@Model.SaleOnly">
                         <i data-lucide="sparkles" aria-hidden="true"></i>
                         <span>Mới nhất</span>
                         @if (Model.SortBy == "newest")
@@ -145,6 +147,7 @@
                     <input type="hidden" name="categoryId" value="@Model.CategoryId" />
                     <input type="hidden" name="minPrice" value="@Model.MinPrice" />
                     <input type="hidden" name="maxPrice" value="@Model.MaxPrice" />
+                    <input type="hidden" name="saleOnly" value="@Model.SaleOnly.ToString().ToLowerInvariant()" />
                     <label class="visually-hidden" for="catalogPriceSort">Sắp xếp theo giá</label>
                     <select id="catalogPriceSort" name="sortBy" onchange="this.form.submit()">
                         <option value="featured" selected="@(Model.SortBy != "price_asc" && Model.SortBy != "price_desc")">Sắp xếp theo giá</option>
@@ -164,7 +167,7 @@
                        asp-route-categoryId="@Model.CategoryId"
                        asp-route-minPrice="@Model.MinPrice"
                        asp-route-maxPrice="@Model.MaxPrice"
-                       asp-route-sortBy="@Model.SortBy">
+                       asp-route-sortBy="@Model.SortBy" asp-route-saleOnly="@Model.SaleOnly">
                         <span>Thương hiệu: @selectedBrand.Name</span>
                         <i data-lucide="x" aria-hidden="true"></i>
                     </a>
@@ -175,7 +178,7 @@
                        asp-route-search="@Model.Search"
                        asp-route-minPrice="@Model.MinPrice"
                        asp-route-maxPrice="@Model.MaxPrice"
-                       asp-route-sortBy="@Model.SortBy">
+                       asp-route-sortBy="@Model.SortBy" asp-route-saleOnly="@Model.SaleOnly">
                         <span>Danh mục: @selectedCategory.Name</span>
                         <i data-lucide="x" aria-hidden="true"></i>
                     </a>
@@ -185,27 +188,27 @@
                     <a asp-action="Index"
                        asp-route-search="@Model.Search"
                        asp-route-categoryId="@Model.CategoryId"
-                       asp-route-sortBy="@Model.SortBy">
+                       asp-route-sortBy="@Model.SortBy" asp-route-saleOnly="@Model.SaleOnly">
                         <span>@priceFilterLabel</span>
                         <i data-lucide="x" aria-hidden="true"></i>
                     </a>
                 }
-                <a class="clear-all" asp-action="Index" asp-route-search="@(selectedBrand is null ? Model.Search : null)" asp-route-sortBy="@Model.SortBy">Xóa tất cả</a>
+                <a class="clear-all" asp-action="Index" asp-route-search="@(selectedBrand is null ? Model.Search : null)" asp-route-sortBy="@Model.SortBy" asp-route-saleOnly="@Model.SaleOnly">Xóa tất cả</a>
             </div>
         }
     </div>
 
     <aside class="catalog-category-rail" aria-label="Thương hiệu điện thoại">
         <div class="category-rail-head">
-            <strong>Thương hiệu</strong>
-            <span>@brands.Count</span>
+            <strong>@(Model.IsAccessoryCatalog ? "Danh mục" : "Thương hiệu")</strong>
+            <span>@(Model.IsAccessoryCatalog ? 2 : brands.Count)</span>
         </div>
         <nav class="category-rail-list">
             <a class="category-rail-link @(string.IsNullOrWhiteSpace(Model.Search) && !Model.CategoryId.HasValue ? "active" : "")"
                asp-action="Index"
                asp-route-minPrice="@Model.MinPrice"
                asp-route-maxPrice="@Model.MaxPrice"
-               asp-route-sortBy="@Model.SortBy">
+               asp-route-sortBy="@Model.SortBy" asp-route-saleOnly="@Model.SaleOnly">
                 <span>Tất cả điện thoại</span>
             </a>
             @for (var index = 0; index < brands.Count; index++)
@@ -216,12 +219,18 @@
                    asp-route-search="@brand.SearchTerm"
                    asp-route-minPrice="@Model.MinPrice"
                    asp-route-maxPrice="@Model.MaxPrice"
-                   asp-route-sortBy="@Model.SortBy">
+                   asp-route-sortBy="@Model.SortBy" asp-route-saleOnly="@Model.SaleOnly">
                     <span>@brand.Name</span>
                     <small>@brand.ProductCount</small>
                 </a>
             }
         </nav>
+        @if (SprintFeatures.IsEnabled(3) && Model.AccessoryCategoryId.HasValue)
+        {
+            <a class="category-rail-link @(Model.IsAccessoryCatalog ? "active" : "")" asp-action="Index" asp-route-categoryId="@Model.AccessoryCategoryId">
+                <span>Phụ kiện điện thoại</span>
+            </a>
+        }
         @if (brands.Count > visibleCategoryCount)
         {
             <button class="category-rail-more" type="button" data-category-expand aria-expanded="false">
@@ -236,10 +245,11 @@
         <form method="get" class="catalog-filter">
             <input type="hidden" name="search" value="@Model.Search" />
             <input type="hidden" name="sortBy" value="@Model.SortBy" />
+            <input type="hidden" name="saleOnly" value="@Model.SaleOnly.ToString().ToLowerInvariant()" />
             <input type="hidden" name="categoryId" value="@Model.CategoryId" />
             <div class="filter-title-row">
                 <h2>Bộ lọc sản phẩm</h2>
-                <a asp-action="Index" asp-route-search="@Model.Search" asp-route-sortBy="@Model.SortBy">Xóa lọc</a>
+                <a asp-action="Index" asp-route-search="@Model.Search" asp-route-sortBy="@Model.SortBy" asp-route-saleOnly="@Model.SaleOnly">Xóa lọc</a>
             </div>
             <div class="filter-group">
                 <div class="filter-group-head">
@@ -271,7 +281,7 @@
                 <div class="empty-state catalog-empty-state">
                     <strong>Không tìm thấy sản phẩm phù hợp</strong>
                     <span>Thử nới khoảng giá hoặc chọn thương hiệu khác.</span>
-                    <a class="btn-secondary" asp-action="Index" asp-route-search="@Model.Search" asp-route-sortBy="@Model.SortBy">Xóa bộ lọc</a>
+                    <a class="btn-secondary" asp-action="Index" asp-route-search="@Model.Search" asp-route-sortBy="@Model.SortBy" asp-route-saleOnly="@Model.SaleOnly">Xóa bộ lọc</a>
                 </div>
             }
             else
@@ -286,7 +296,7 @@
         <nav class="pagination">
             @for (var i = 1; i <= Model.TotalPages; i++)
             {
-                <a class="@(i == Model.CurrentPage ? "active" : "")" asp-action="Index" asp-route-page="@i" asp-route-search="@Model.Search" asp-route-categoryId="@Model.CategoryId" asp-route-minPrice="@Model.MinPrice" asp-route-maxPrice="@Model.MaxPrice" asp-route-sortBy="@Model.SortBy">@i</a>
+                <a class="@(i == Model.CurrentPage ? "active" : "")" asp-action="Index" asp-route-page="@i" asp-route-search="@Model.Search" asp-route-categoryId="@Model.CategoryId" asp-route-minPrice="@Model.MinPrice" asp-route-maxPrice="@Model.MaxPrice" asp-route-sortBy="@Model.SortBy" asp-route-saleOnly="@Model.SaleOnly">@i</a>
             }
         </nav>
     </div>

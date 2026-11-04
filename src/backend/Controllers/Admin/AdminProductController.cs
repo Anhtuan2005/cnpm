@@ -29,7 +29,7 @@ public class AdminProductController : Controller
     [HttpGet("")]
     public async Task<IActionResult> Index(string? search, int? categoryId, int page = 1)
     {
-        return View("~/Views/Admin/Product/Index.cshtml", await _productService.GetPagedProductsAsync(search, categoryId, null, null, "newest", page, 20));
+        return View("~/Views/Admin/Product/Index.cshtml", await _productService.GetPagedProductsAsync(search, categoryId, null, null, "newest", page, 20, includeAccessories: true));
     }
 
     [HttpGet("Create")]
@@ -182,7 +182,7 @@ public class AdminProductController : Controller
     {
         var normalizedName = (name ?? string.Empty).Trim();
         if (normalizedName.Length is > 0 and <= 100
-            && (_catalogScope is null || _catalogScope.IsPhoneCategoryName(normalizedName)))
+            && (_catalogScope is null || _catalogScope.IsSupportedCategoryName(normalizedName)))
         {
             var slug = SlugGenerator.Generate(normalizedName);
             if (string.IsNullOrWhiteSpace(slug))
@@ -201,7 +201,7 @@ public class AdminProductController : Controller
         }
         else
         {
-            TempData["Error"] = "Tên danh mục phải có từ 1 đến 100 ký tự và bắt đầu bằng 'Điện thoại'.";
+            TempData["Error"] = "Tên danh mục phải có từ 1 đến 100 ký tự và bắt đầu bằng 'Điện thoại' hoặc 'Phụ kiện điện thoại'.";
         }
 
         return RedirectToAction(nameof(Index));

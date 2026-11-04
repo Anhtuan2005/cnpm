@@ -1,3 +1,18 @@
+function initCheckoutValidation() {
+  var form = document.getElementById("checkoutForm");
+  if (!form) return;
+  function revalidateCorrectedField(event) {
+    var field = event.target;
+    if (!field.matches('[data-val="true"].input-validation-error') || !window.jQuery) return;
+    var validator = window.jQuery(form).data("validator");
+    // Clear a server error while editing, before blur can move the submit button
+    // between pointer-down and pointer-up and swallow the customer's click.
+    if (validator) validator.element(field);
+  }
+  form.addEventListener("input", revalidateCorrectedField);
+  form.addEventListener("change", revalidateCorrectedField);
+}
+
 function refreshCheckoutTotal() {
   var total = document.getElementById("checkoutTotal");
   if (!total) return;
@@ -128,6 +143,9 @@ function updateCheckoutShippingFee() {
   var buyNowQuantity = document.getElementById("BuyNowQuantity");
   if (buyNowProductId && buyNowProductId.value) query.append("buyNowProductId", buyNowProductId.value);
   if (buyNowQuantity && buyNowQuantity.value) query.append("buyNowQuantity", buyNowQuantity.value);
+  document.querySelectorAll('input[name="BuyNowAccessoryIds"]').forEach(function (input) {
+    if (input.value) query.append("buyNowAccessoryIds", input.value);
+  });
 
   fetch("/Order/ShippingFee?" + query.toString(), { headers: { Accept: "application/json" } })
     .then(function (response) {

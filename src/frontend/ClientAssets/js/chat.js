@@ -209,19 +209,31 @@ function initAiChatbot() {
 
   function formatAiMessage(text, products) {
     var productIds = {};
+    var productNames = {};
     var placeholders = [];
     (products || []).forEach(function (product) {
       productIds[String(product.id)] = product.url || ("/Product/Detail/" + product.id);
+      productNames[String(product.id)] = product.name || "sản phẩm";
     });
 
+    function productLink(url, id, label) {
+      var key = "@@AI_LINK_" + placeholders.length + "@@";
+      var accessibleLabel = escapeHtml("Xem chi tiết " + (productNames[String(id)] || "sản phẩm"));
+      var visibleLabel = label && !/^(?:https?:\/\/[^/\s]+)?\/Product\/Detail\/\d+$/i.test(label.trim())
+        ? label : "Xem chi tiết";
+      placeholders.push('<a class="ai-product-inline-link" href="' + url + '" aria-label="' + accessibleLabel + '">'
+        + visibleLabel + ' <span aria-hidden="true">↗</span></a>');
+      return key;
+    }
+
     var html = escapeHtml(text)
-      .replace(/\[([^\]]+)\]\((\/Product\/Detail\/(\d+))\)/g, function (_, label, url) {
-        var key = "@@AI_LINK_" + placeholders.length + "@@";
-        placeholders.push('<a href="' + url + '">' + label + "</a>");
-        return key;
+      .replace(/\[([^\]]+)\]\((?:https?:\/\/[^/\s<>()]+)?(\/Product\/Detail\/(\d+))\)/gi, function (_, label, url, id) {
+        return productLink(url, id, label);
+      })
+      .replace(/(?:(?:Xem chi tiết tại|Xem tại|Link xem chi tiết|Link sản phẩm|Link)\s*:\s*)?(?:https?:\/\/[^/\s<>]+)?(\/Product\/Detail\/(\d+))/gi, function (_, url, id) {
+        return productLink(url, id);
       })
       .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-      .replace(/(\/Product\/Detail\/(\d+))/g, '<a href="$1">$1</a>')
       .replace(/#(\d+)/g, function (match, id) {
         var url = productIds[String(id)] || ("/Product/Detail/" + id);
         return '<a href="' + url + '">' + match + "</a>";

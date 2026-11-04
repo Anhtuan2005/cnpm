@@ -18,6 +18,7 @@ public class AiChatController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [EnableRateLimiting("ai-chat")]
+    [RequestSizeLimit(32_768)]
     public async Task<IActionResult> Ask([FromBody] AiChatRequest? request, CancellationToken cancellationToken)
     {
         var message = request?.Message?.Trim();
@@ -40,8 +41,13 @@ public class AiChatController : Controller
         }
 
         var history = request?.History?
-            .Where(item => !string.IsNullOrWhiteSpace(item.Text))
+            .Where(item => item is not null && !string.IsNullOrWhiteSpace(item.Text))
             .TakeLast(8)
+            .Select(item => new AiChatHistoryItem
+            {
+                Role = string.Equals(item.Role, "model", StringComparison.OrdinalIgnoreCase) ? "model" : "user",
+                Text = item.Text.Length > 1200 ? item.Text[..1200] : item.Text
+            })
             .ToList() ?? new List<AiChatHistoryItem>();
 
         var chatResponse = await _aiChatService.AskAsync(message, history, cancellationToken);

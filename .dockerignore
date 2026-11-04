@@ -10,5 +10,14 @@ artifacts
 TestResults
 appsettings.Development.json
 .env
+**/.env.*
+**/secrets.json
+**/appsettings.Development.json
+**/appsettings.Local.json
+tmp
+output
+outputs
+.codex-*
+test-results
 docs/design/screenshots
 **/wwwroot/uploads

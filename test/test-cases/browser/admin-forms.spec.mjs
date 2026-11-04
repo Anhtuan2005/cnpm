@@ -19,10 +19,11 @@ test('Sprint 2 order administration is available', async ({ page }) => {
   await expect(page.locator('main')).toBeVisible();
   await expect(page.locator('body')).not.toContainText('InvalidOperationException');
   expect((await page.goto('/Admin/Dashboard')).status()).toBe(200);
-  await expect(page.locator('a[href="/Admin/Report"]')).toHaveCount(0);
+  const sprint = Number(await page.locator('body').getAttribute('data-active-sprint'));
+  await expect(page.locator('.adm-nav a[href="/Admin/Report"]')).toHaveCount(sprint >= 3 ? 1 : 0);
   await expect(page.getByRole('heading', { name: 'Top sản phẩm bán chạy' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Sản phẩm được xem nhiều' })).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'Cần xem lại giá/ưu đãi' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Sản phẩm được xem nhiều' })).toHaveCount(sprint >= 3 ? 1 : 0);
+  await expect(page.getByRole('heading', { name: 'Cần xem lại giá/ưu đãi' })).toHaveCount(sprint >= 3 ? 1 : 0);
 });
 
 test('banner upload without a URL reaches the server and shows a file validation error', async ({ page }) => {

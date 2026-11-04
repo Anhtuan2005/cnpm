@@ -31,11 +31,38 @@ public class ProductController : Controller
         _catalogScope = catalogScope;
     }
 
-    public async Task<IActionResult> Index(string? search, int? categoryId, decimal? minPrice, decimal? maxPrice, string? sortBy, int page = 1)
+    public async Task<IActionResult> Index(string? search, int? categoryId, decimal? minPrice, decimal? maxPrice, string? sortBy, int page = 1, bool saleOnly = false)
     {
         if (!_sprintFeatures.IsEnabled(3) && string.Equals(sortBy, "discount_desc", StringComparison.OrdinalIgnoreCase))
             sortBy = "featured";
-        return View(await _productService.GetPagedProductsAsync(search, categoryId, minPrice, maxPrice, sortBy, page, 12));
+        return View(await _productService.GetPagedProductsAsync(search, categoryId, minPrice, maxPrice, sortBy, page, 12,
+            saleOnly && _sprintFeatures.IsEnabled(3)));
+    }
+
+    [HttpGet]
+    [MinimumSprint(3)]
+    public async Task<IActionResult> BuyNowOffers(int productId, int quantity,
+        [FromServices] BuyNowService buyNowService, [FromServices] ICrossSellService crossSell)
+    {
+        var quote = await buyNowService.BuildAsync(productId, quantity);
+        if (quote is null) return BadRequest(new { message = "Sản phẩm không hợp lệ hoặc không đủ hàng." });
+        var suggestions = await crossSell.GetSuggestionsAsync(quote.Items, 12);
+        return Json(new
+        {
+            crossSellSuggestions = suggestions.Select(suggestion => new
+            {
+                productId = suggestion.ProductId,
+                productName = suggestion.ProductName,
+                anchorProductName = suggestion.AnchorProductName,
+                imageUrl = suggestion.ImageUrl,
+                discountPercent = suggestion.DiscountPercent,
+                hasDiscount = suggestion.HasDiscount,
+                badgeText = suggestion.BadgeText,
+                contextText = suggestion.ContextText,
+                originalPrice = suggestion.OriginalPrice.ToString("N0") + " ₫",
+                offerPrice = suggestion.OfferPrice.ToString("N0") + " ₫"
+            })
+        });
     }
 
     [HttpGet]
@@ -54,7 +81,7 @@ public class ProductController : Controller
             .Include(product => product.Images)
             .AsQueryable();
         if (_catalogScope is not null)
-            compareQuery = _catalogScope.Products(compareQuery);
+            compareQuery = PhoneCatalogScope.OnlyPhones(_catalogScope.Products(compareQuery));
 
         var products = await compareQuery
             .Where(product => requestedIds.Contains(product.Id))
@@ -171,7 +198,7 @@ public class ProductController : Controller
         var model = new ProductDetailViewModel
         {
             Product = product,
-            RecommendedProducts = _sprintFeatures.IsEnabled(3)
+            RecommendedProducts = _sprintFeatures.IsEnabled(3) && !PhoneCatalogScope.IsAccessorySlug(product.Category?.Slug)
                 ? await _recommendationService.GetRecommendationsAsync(
                     userId,
                     HttpContext.Session.Id,

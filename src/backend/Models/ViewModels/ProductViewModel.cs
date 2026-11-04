@@ -12,6 +12,9 @@ public class ProductViewModel
     public decimal? MinPrice { get; set; }
     public decimal? MaxPrice { get; set; }
     public string? SortBy { get; set; }
+    public bool SaleOnly { get; set; }
+    public bool IsAccessoryCatalog { get; set; }
+    public int? AccessoryCategoryId { get; set; }
     public int CurrentPage { get; set; } = 1;
     public int TotalPages { get; set; } = 1;
     public int TotalItems { get; set; }

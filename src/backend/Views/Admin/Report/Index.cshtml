@@ -12,9 +12,9 @@
     var previousRevenue = System.Text.Json.JsonSerializer.Serialize(Model.PreviousPeriodRevenue);
 }
 
-<section class="metric-grid" aria-label="Tổng quan báo cáo">
-    <article><span>Doanh thu kỳ này</span><strong>@Model.CurrentPeriodRevenue.ToString("N0") ₫</strong></article>
-    <article><span>Tăng trưởng</span><strong>@Model.GrowthPercent.ToString("0.0")%</strong></article>
+<section class="metric-grid report-metrics" aria-label="Tổng quan báo cáo">
+    <article><span>Doanh thu kỳ này</span><strong class="report-revenue">@Model.CurrentPeriodRevenue.ToString("N0") ₫</strong></article>
+    <article><span>Tăng trưởng</span><strong>@(Model.GrowthPercent is decimal growth ? growth.ToString("0.0") + "%" : "Chưa có kỳ gốc")</strong></article>
     <article><span>Tổng đơn</span><strong>@Model.TotalOrders</strong></article>
     <article><span>Khách hàng</span><strong>@Model.TotalCustomers</strong></article>
 </section>
@@ -39,11 +39,21 @@
                 </select>
                 <input type="date" name="fromDate" value="@Model.FromDate?.ToString("yyyy-MM-dd")" aria-label="Từ ngày" />
                 <input type="date" name="toDate" value="@Model.ToDate?.ToString("yyyy-MM-dd")" aria-label="Đến ngày" />
-                <button class="admin-button" type="submit"><i class="bi bi-funnel"></i> Lọc</button>
+                <button class="admin-button" type="submit"><i class="bi bi-funnel" aria-hidden="true"></i> Lọc</button>
             </form>
         </div>
-        <a class="admin-button secondary" href="/Admin/Dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a>
+        <div class="report-summary-actions">
+            <a class="admin-button secondary" href="/Admin/Dashboard"><i class="bi bi-speedometer2" aria-hidden="true"></i> Dashboard</a>
+            <a class="admin-button secondary" asp-controller="AdminReport" asp-action="ExportCsv" asp-route-period="@Model.Period"
+               asp-route-fromDate="@Model.FromDate?.ToString("yyyy-MM-dd")" asp-route-toDate="@Model.ToDate?.ToString("yyyy-MM-dd")">Xuất CSV</a>
+        </div>
     </div>
+    <p>Tính theo ngày đặt hàng (UTC), gồm đơn đã thanh toán hoặc đã giao; loại đơn hủy và đơn chờ hoàn hoặc đã hoàn tiền.</p>
+    <p>Tiền hàng <strong>@Model.MerchandiseRevenue.ToString("N0") ₫</strong>
+        − voucher <strong>@Model.VoucherDiscount.ToString("N0") ₫</strong>
+        + phí giao hàng <strong>@Model.ShippingRevenue.ToString("N0") ₫</strong>
+        = doanh thu <strong>@Model.CurrentPeriodRevenue.ToString("N0") ₫</strong>.</p>
+    <p>Số liệu danh mục và sản phẩm là tiền hàng trước voucher, chưa gồm phí giao hàng.</p>
 </section>
 
 <section class="chart-grid">

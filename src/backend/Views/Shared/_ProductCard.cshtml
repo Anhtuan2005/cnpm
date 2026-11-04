@@ -2,7 +2,8 @@
 @{
     var showPromotion = SprintFeatures.IsEnabled(3);
     var displayPrice = showPromotion ? Model.SalePrice : Model.Price;
-    var displayBrand = PhoneBrandCatalog.Resolve(Model.Name)?.Name ?? Model.Category?.Name;
+    var isAccessory = PhoneCatalogScope.IsAccessorySlug(Model.Category?.Slug);
+    var displayBrand = isAccessory ? "Phụ kiện điện thoại" : PhoneBrandCatalog.Resolve(Model.Name)?.Name ?? Model.Category?.Name;
     var badge = showPromotion && Model.DiscountPercent > 0 ? $"-{Model.DiscountPercent}%" : (Model.IsFeatured ? "Nổi bật" : (Model.CreatedAt > DateTime.UtcNow.AddDays(-21) ? "Mới" : ""));
     var stockClass = Model.Stock == 0 ? "out" : (Model.Stock <= 5 ? "low" : "ok");
     var stockText = Model.Stock == 0 ? "Hết hàng" : $"Còn {Model.Stock} cái";
@@ -21,7 +22,7 @@
             }
             <span class="stock-badge @stockClass">@stockText</span>
         </div>
-        @if (SprintFeatures.IsEnabled(2))
+        @if (SprintFeatures.IsEnabled(2) && !isAccessory)
         {
             <button class="btn-compare card-compare" type="button"
                     data-compare-product="@Model.Id"

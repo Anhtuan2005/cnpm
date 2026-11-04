@@ -11,6 +11,8 @@ obj/
 logs/
 *.log
 TestResults/
+test-results/
+playwright-report/
 artifacts/
 node_modules/
 **/wwwroot/uploads/
@@ -18,6 +20,11 @@ node_modules/
 
 # ASP.NET secrets
 appsettings.Development.json
+appsettings.Local.json
+secrets.json
+.env.*
+!.env.example
+!.env.sample
 
 # Browser data
 .edge-3d-test/
