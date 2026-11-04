@@ -7,7 +7,10 @@ public class AdminReportViewModel
     public List<TopProductViewModel> TopProducts { get; set; } = new();
     public decimal CurrentPeriodRevenue { get; set; }
     public decimal PreviousPeriodRevenue { get; set; }
-    public decimal GrowthPercent { get; set; }
+    public decimal? GrowthPercent { get; set; }
+    public decimal MerchandiseRevenue { get; set; }
+    public decimal VoucherDiscount { get; set; }
+    public decimal ShippingRevenue { get; set; }
     public int TotalOrders { get; set; }
     public int TotalCustomers { get; set; }
     public string Period { get; set; } = "30";

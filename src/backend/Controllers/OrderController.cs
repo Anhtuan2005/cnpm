@@ -17,7 +17,7 @@ public class OrderController : Controller
     private readonly IShippingFeeService _shippingFeeService;
     private readonly IVnpayService _vnpayService;
     private readonly IGhnShippingService _ghnShippingService;
-    private readonly IProductService _productService;
+    private readonly BuyNowService _buyNowService;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ISprintFeatureService _sprintFeatures;
     private readonly ILogger<OrderController> _logger;
@@ -29,7 +29,7 @@ public class OrderController : Controller
         IShippingFeeService shippingFeeService,
         IVnpayService vnpayService,
         IGhnShippingService ghnShippingService,
-        IProductService productService,
+        BuyNowService buyNowService,
         UserManager<ApplicationUser> userManager,
         ISprintFeatureService sprintFeatures,
         ILogger<OrderController> logger)
@@ -40,7 +40,7 @@ public class OrderController : Controller
         _shippingFeeService = shippingFeeService;
         _vnpayService = vnpayService;
         _ghnShippingService = ghnShippingService;
-        _productService = productService;
+        _buyNowService = buyNowService;
         _userManager = userManager;
         _sprintFeatures = sprintFeatures;
         _logger = logger;
@@ -49,7 +49,8 @@ public class OrderController : Controller
     public async Task<IActionResult> Checkout(
         [FromQuery] int[] selectedProductIds,
         [FromQuery] int? buyNowProductId,
-        [FromQuery] int? buyNowQuantity)
+        [FromQuery] int? buyNowQuantity,
+        [FromQuery] int[] buyNowAccessoryIds)
     {
         if (User.IsInRole("Admin"))
         {
@@ -61,10 +62,10 @@ public class OrderController : Controller
         CartViewModel? cart;
         if (buyNowProductId.HasValue)
         {
-            cart = await BuildBuyNowCartAsync(buyNowProductId.Value, buyNowQuantity ?? 1);
+            cart = await _buyNowService.BuildAsync(buyNowProductId.Value, buyNowQuantity ?? 1, buyNowAccessoryIds);
             if (cart is null)
             {
-                TempData["Error"] = "Sản phẩm mua ngay không hợp lệ hoặc không đủ hàng.";
+                TempData["Error"] = "Sản phẩm hoặc ưu đãi mua kèm đã thay đổi. Vui lòng chọn lại sản phẩm mua ngay.";
                 return RedirectToAction("Detail", "Product", new { id = buyNowProductId.Value });
             }
         }
@@ -92,6 +93,7 @@ public class OrderController : Controller
             SelectedProductIds = selectedIds,
             BuyNowProductId = buyNowProductId,
             BuyNowQuantity = buyNowProductId.HasValue ? buyNowQuantity ?? 1 : null,
+            BuyNowAccessoryIds = buyNowProductId.HasValue ? (buyNowAccessoryIds ?? []).Distinct().ToList() : new(),
             RecipientName = user?.FullName ?? string.Empty,
             RecipientPhone = user?.PhoneNumber ?? string.Empty,
             ShippingFee = _shippingFeeService.Calculate(null, null).Fee,
@@ -105,7 +107,8 @@ public class OrderController : Controller
         string? district,
         [FromQuery] int[] selectedProductIds,
         [FromQuery] int? buyNowProductId,
-        [FromQuery] int? buyNowQuantity)
+        [FromQuery] int? buyNowQuantity,
+        [FromQuery] int[] buyNowAccessoryIds)
     {
         if (User.IsInRole("Admin"))
         {
@@ -125,7 +128,7 @@ public class OrderController : Controller
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var cart = buyNowProductId.HasValue
-            ? await BuildBuyNowCartAsync(buyNowProductId.Value, buyNowQuantity ?? 1) ?? new CartViewModel()
+            ? await _buyNowService.BuildAsync(buyNowProductId.Value, buyNowQuantity ?? 1, buyNowAccessoryIds) ?? new CartViewModel()
             : await _cartService.GetCartAsync(userId, GetStableCartSessionId(userId), NormalizeSelectedProductIds(selectedProductIds));
         var quote = _shippingFeeService.Calculate(province, district);
         var total = cart.Total + quote.Fee;
@@ -169,10 +172,11 @@ public class OrderController : Controller
         if (model.BuyNowProductId.HasValue)
         {
             model.SelectedProductIds.Clear();
-            model.Cart = await BuildBuyNowCartAsync(model.BuyNowProductId.Value, model.BuyNowQuantity ?? 0) ?? new CartViewModel();
+            model.Cart = await _buyNowService.BuildAsync(model.BuyNowProductId.Value, model.BuyNowQuantity ?? 0, model.BuyNowAccessoryIds) ?? new CartViewModel();
             if (!model.Cart.Items.Any())
             {
-                ModelState.AddModelError(string.Empty, "Sản phẩm mua ngay không hợp lệ hoặc không đủ hàng.");
+                TempData["Error"] = "Sản phẩm hoặc ưu đãi mua kèm đã thay đổi. Vui lòng chọn lại sản phẩm mua ngay.";
+                return RedirectToAction("Detail", "Product", new { id = model.BuyNowProductId.Value });
             }
         }
         else if (!model.SelectedProductIds.Any())
@@ -362,29 +366,6 @@ public class OrderController : Controller
             .Where(id => id > 0)
             .Distinct()
             .ToList();
-    }
-
-    private async Task<CartViewModel?> BuildBuyNowCartAsync(int productId, int quantity)
-    {
-        if (productId <= 0 || quantity <= 0)
-        {
-            return null;
-        }
-
-        var product = await _productService.GetProductAsync(productId);
-        if (product is null || product.Stock < quantity)
-        {
-            return null;
-        }
-
-        return new CartViewModel
-        {
-            PromotionsEnabled = _sprintFeatures.IsEnabled(3),
-            Items = new[]
-            {
-                new CartItem { ProductId = product.Id, Product = product, Quantity = quantity }
-            }
-        };
     }
 
     private string GetStableCartSessionId(string? userId)

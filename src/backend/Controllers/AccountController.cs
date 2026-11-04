@@ -68,7 +68,7 @@ public class AccountController : Controller
                     var reminder = await _abandonedCartRecoveryService.GetLoginReminderAsync(user.Id);
                     if (reminder is not null)
                     {
-                        TempData["Success"] = $"Giỏ hàng của bạn đang chờ này! Dùng mã {reminder.RecoveryCode} để miễn phí vận chuyển trước {reminder.ExpiresAt.ToLocalTime():dd/MM HH:mm}.";
+                        TempData["Success"] = $"Giỏ hàng của bạn đang chờ! Dùng mã {reminder.RecoveryCode} để giảm 30.000 ₫ cho đơn từ 300.000 ₫ trước {reminder.ExpiresAt.ToLocalTime():dd/MM HH:mm}.";
                     }
                 }
 

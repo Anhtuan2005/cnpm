@@ -1,7 +1,7 @@
 import { test, expect } from './playwright.mjs';
 import { signInDemo } from './auth.mjs';
 
-test('Sprint 2 storefront exposes Sprint 2 routes and keeps later routes unavailable', async ({ page }) => {
+test('storefront exposes the configured sprint and keeps future routes unavailable', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   for (const path of ['/', '/Product']) {
@@ -11,14 +11,18 @@ test('Sprint 2 storefront exposes Sprint 2 routes and keeps later routes unavail
     await expect(page.locator('body')).not.toContainText('InvalidOperationException');
   }
   await page.goto('/');
+  const sprint = Number(await page.locator('body').getAttribute('data-active-sprint'));
   await expect(page.locator('.brand-category-tile')).toHaveCount(8);
   const bannerImages = await page.locator('.slide-bg img').evaluateAll(images => images.map(image => new URL(image.src).pathname));
   expect(new Set(bannerImages).size).toBe(bannerImages.length);
   for (const path of ['/Product/Compare', '/Info/About']) {
     expect((await page.goto(path)).status(), `${path} must be available in Sprint 2`).toBe(200);
   }
-  for (const path of ['/BuildPc', '/AiChat', '/sitemap.xml', '/robots.txt']) {
-    expect((await page.goto(path)).status(), `${path} must stay unavailable after Sprint 2`).toBe(404);
+  for (const path of ['/BuildPc', '/AiChat']) {
+    expect((await page.goto(path)).status(), `${path} has no available page`).toBe(404);
+  }
+  for (const path of ['/sitemap.xml', '/robots.txt']) {
+    expect((await page.goto(path)).status(), `${path} follows the release scope`).toBe(sprint >= 3 ? 200 : 404);
   }
   await page.goto('/');
   await expect(page.locator('body')).not.toContainText('Banking');

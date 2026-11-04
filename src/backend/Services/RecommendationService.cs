@@ -45,8 +45,8 @@ public class RecommendationService : IRecommendationService
             var cartProductIds = await _db.CartItems
                 .AsNoTracking()
                 .Where(item => item.Cart != null
-                    && ((hasUserId && item.Cart.UserId == userId)
-                        || (hasSessionId && item.Cart.SessionId == sessionId)))
+                    && (hasUserId ? item.Cart.UserId == userId
+                        : item.Cart.UserId == null && item.Cart.SessionId == sessionId))
                 .Select(item => item.ProductId)
                 .Distinct()
                 .ToListAsync(cancellationToken);
@@ -95,8 +95,8 @@ public class RecommendationService : IRecommendationService
             var recentInteractions = await _db.ProductInteractions
                 .AsNoTracking()
                 .Where(interaction => interaction.CreatedAt >= now.AddDays(-InteractionLookbackDays)
-                    && ((hasUserId && interaction.UserId == userId)
-                        || (hasSessionId && interaction.SessionId == sessionId)))
+                    && (hasUserId ? interaction.UserId == userId
+                        : interaction.UserId == null && interaction.SessionId == sessionId))
                 .Select(interaction => new
                 {
                     interaction.ProductId,
@@ -223,7 +223,6 @@ public class RecommendationService : IRecommendationService
                 product.IsFeatured,
                 product.CreatedAt
             })
-            .Where(product => product.Score > 0)
             .OrderByDescending(product => product.Score)
             .ThenByDescending(product => product.IsFeatured)
             .ThenByDescending(product => product.CreatedAt)
@@ -249,7 +248,7 @@ public class RecommendationService : IRecommendationService
     }
 
     private IQueryable<Product> ScopedProducts(IQueryable<Product> query) =>
-        _catalogScope?.Products(query) ?? query;
+        PhoneCatalogScope.OnlyPhones(_catalogScope?.Products(query) ?? query);
 
     private static void AddScore(Dictionary<int, decimal> scores, int productId, decimal score)
     {

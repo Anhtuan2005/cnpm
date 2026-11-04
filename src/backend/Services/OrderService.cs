@@ -51,28 +51,16 @@ public class OrderService : IOrderService
         var order = await DatabaseTransaction.ExecuteAsync(_db, async () =>
         {
             Cart? cart = null;
+            IReadOnlyDictionary<int, decimal>? buyNowPrices = null;
             List<CartItem> checkoutItems;
             if (model.BuyNowProductId.HasValue)
             {
-                var quantity = model.BuyNowQuantity ?? 0;
-                if (model.BuyNowProductId.Value <= 0 || quantity <= 0)
-                {
-                    throw new InvalidOperationException("Sản phẩm mua ngay không hợp lệ.");
-                }
-
-                var products = _db.Products.Include(product => product.Category).AsQueryable();
-                if (_catalogScope is not null)
-                    products = _catalogScope.Products(products);
-                var product = await products.FirstOrDefaultAsync(row => row.Id == model.BuyNowProductId.Value);
-                if (product is null || product.Stock < quantity)
-                {
-                    throw new InvalidOperationException($"Sản phẩm mua ngay không đủ hàng. Còn {product?.Stock ?? 0} sản phẩm.");
-                }
-
-                checkoutItems = new List<CartItem>
-                {
-                    new() { ProductId = product.Id, Product = product, Quantity = quantity }
-                };
+                var quote = await new BuyNowService(_db, _crossSellService, _sprintFeatures, _catalogScope)
+                    .BuildAsync(model.BuyNowProductId.Value, model.BuyNowQuantity ?? 0, model.BuyNowAccessoryIds);
+                if (quote is null)
+                    throw new InvalidOperationException("Sản phẩm hoặc ưu đãi mua kèm đã thay đổi. Vui lòng chọn lại sản phẩm mua ngay.");
+                checkoutItems = quote.Items.ToList();
+                buyNowPrices = quote.CrossSellUnitPrices;
             }
             else
             {
@@ -93,7 +81,7 @@ public class OrderService : IOrderService
 
                 checkoutItems = cart.Items
                     .Where(item => selectedProductIds.Contains(item.ProductId)
-                        && (_catalogScope is null || _catalogScope.IsPhoneCategory(item.Product?.Category?.Slug)))
+                        && (_catalogScope is null || _catalogScope.IsSupportedCategory(item.Product?.Category?.Slug)))
                     .ToList();
                 if (!checkoutItems.Any())
                 {
@@ -112,9 +100,9 @@ public class OrderService : IOrderService
             }
 
             var isVnpayOrder = IsVnpayPayment(model.PaymentMethod);
-            var crossSellUnitPrices = model.BuyNowProductId.HasValue || !IsEnabled(3)
+            var crossSellUnitPrices = !IsEnabled(3)
                 ? new Dictionary<int, decimal>()
-                : await _crossSellService.GetEligibleUnitPricesAsync(checkoutItems);
+                : buyNowPrices ?? await _crossSellService.GetEligibleUnitPricesAsync(checkoutItems);
             var order = new Order
             {
                 PaymentExpiresAt = IsVnpayPayment(model.PaymentMethod) ? DateTime.UtcNow.Add(OrderLifecycle.PaymentWindow) : null,

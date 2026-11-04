@@ -1,4 +1,4 @@
-name: Sprint 1-2 integration
+name: Sprint 1-3 integration
 
 on:
   push:
@@ -12,6 +12,10 @@ jobs:
     # Keep the runner compatible with the locked Playwright version.
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        sprint: [2, 3]
     services:
       sqlserver:
         image: mcr.microsoft.com/mssql/server:2022-latest
@@ -44,14 +48,15 @@ jobs:
       - name: Install browser
         working-directory: src/frontend
         run: npx playwright install --with-deps chromium
-      - name: Start Sprint 2 with an isolated demo database
+      - name: Start the selected sprint with an isolated demo database
         env:
           ASPNETCORE_ENVIRONMENT: Development
           ConnectionStrings__DefaultConnection: Server=localhost,1433;Database=TechvoraBrowserTests;User Id=sa;Password=Techvora_Test_Only123!;TrustServerCertificate=True
           Database__MigrateOnStartup: 'true'
           Demo__Enabled: 'true'
           Email__Enabled: 'false'
-          Release__ActiveSprint: '2'
+          Release__ActiveSprint: ${{ matrix.sprint }}
+          Gemini__ApiKey: ''
         run: |
           mkdir -p artifacts/ci
           dotnet run --project src/backend/EcommerceApp.csproj --configuration Release --no-build --no-launch-profile --urls http://127.0.0.1:5017 > artifacts/ci/app.log 2>&1 &
@@ -83,9 +88,11 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: sprint12-test-results
+          name: sprint${{ matrix.sprint }}-test-results
           path: |
             TestResults/*.trx
             artifacts/ci/*.log
             artifacts/ci/*results.json
             artifacts/browser/
+            artifacts/sprint3/*.png
+            artifacts/flash-sale/*.png

@@ -12,6 +12,8 @@ public class ProductSpecService : IProductSpecService
 {
     public IReadOnlyList<ProductSpecViewModel> Build(Product product)
     {
+        if (PhoneCatalogScope.IsAccessorySlug(product.Category?.Slug))
+            return new[] { Spec("Loại sản phẩm", "Phụ kiện điện thoại"), Spec("Thông tin sử dụng", product.Description) };
         if (product.PhoneSpecificationsJson is not null && PhoneCatalogScope.IsPhoneSlug(product.Category?.Slug))
             return PhoneSpecificationFields.Read(product.PhoneSpecificationsJson);
 

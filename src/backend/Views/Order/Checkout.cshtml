@@ -22,6 +22,10 @@
         {
             <input asp-for="BuyNowProductId" type="hidden" />
             <input asp-for="BuyNowQuantity" type="hidden" />
+            @foreach (var accessoryId in Model.BuyNowAccessoryIds)
+            {
+                <input type="hidden" name="BuyNowAccessoryIds" value="@accessoryId" />
+            }
         }
         else
         {

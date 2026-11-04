@@ -30,7 +30,7 @@ public class CartService : ICartService
             .ThenInclude(product => product!.Category)
             .LoadAsync();
         var items = cart.Items
-            .Where(item => _catalogScope is null || _catalogScope.IsPhoneCategory(item.Product?.Category?.Slug))
+            .Where(item => _catalogScope is null || _catalogScope.IsSupportedCategory(item.Product?.Category?.Slug))
             .OrderBy(item => string.IsNullOrWhiteSpace(item.GroupKey))
             .ThenBy(item => item.GroupKey)
             .ThenBy(item => item.GroupSortOrder ?? 999)
@@ -71,11 +71,10 @@ public class CartService : ICartService
     public async Task<int> GetCountAsync(string? userId, string sessionId)
     {
         var query = FindCartQuery(userId, sessionId);
+        var allowedProducts = _catalogScope?.Products(_db.Products) ?? _db.Products;
         return await query
             .Select(cart => cart.Items
-                .Where(item => _catalogScope == null || (item.Product != null && item.Product.Category != null
-                    && (item.Product.Category.Slug == PhoneCatalogScope.RootSlug
-                        || item.Product.Category.Slug.StartsWith("dien-thoai-"))))
+                .Where(item => allowedProducts.Any(product => product.Id == item.ProductId))
                 .Sum(item => (int?)item.Quantity) ?? 0)
             .FirstOrDefaultAsync();
     }

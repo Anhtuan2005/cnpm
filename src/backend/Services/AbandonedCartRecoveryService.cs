@@ -1,6 +1,7 @@
 using EcommerceApp.Data;
 using EcommerceApp.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -12,7 +13,7 @@ public class AbandonedCartRecoveryService : IAbandonedCartRecoveryService
     private static readonly TimeSpan AbandonedAfter = TimeSpan.FromHours(24);
     private static readonly TimeSpan VoucherLifetime = TimeSpan.FromHours(48);
     private static readonly TimeSpan LoginReminderCooldown = TimeSpan.FromHours(12);
-    private const decimal FreeShipAmount = 30_000m;
+    private const decimal RecoveryDiscount = 30_000m;
     private const decimal MinOrderAmount = 300_000m;
 
     private readonly AppDbContext _db;
@@ -40,7 +41,12 @@ public class AbandonedCartRecoveryService : IAbandonedCartRecoveryService
             .Include(cart => cart.User)
             .Include(cart => cart.Items)
             .ThenInclude(item => item.Product)
-            .Where(cart => cart.UserId != null && cart.UpdatedAt <= cutoff && cart.Items.Any())
+            .Where(cart => cart.UserId != null && cart.UpdatedAt <= cutoff
+                && cart.Items.Any(item => item.Product != null && item.Product.Stock > 0)
+                && !_db.AbandonedCartReminders.Any(row => row.CartId == cart.Id && row.CartUpdatedAt == cart.UpdatedAt)
+                && !_db.Orders.Any(order => order.UserId == cart.UserId && order.CreatedAt >= cart.UpdatedAt)
+                && !_db.UserRoles.Any(userRole => userRole.UserId == cart.UserId
+                    && _db.Roles.Any(role => role.Id == userRole.RoleId && role.Name == "Admin")))
             .OrderBy(cart => cart.UpdatedAt)
             .Take(50)
             .ToListAsync(cancellationToken);
@@ -78,9 +84,13 @@ public class AbandonedCartRecoveryService : IAbandonedCartRecoveryService
                 && row.ExpiresAt > now
                 && (row.LastShownAt == null || row.LastShownAt <= now.Subtract(LoginReminderCooldown))
                 && row.Cart != null
-                && row.Cart.Items.Any()
+                && row.Cart.UpdatedAt == row.CartUpdatedAt
+                && row.Cart.Items.Any(item => item.Product != null && item.Product.Stock > 0)
+                && !_db.Orders.Any(order => order.UserId == userId && order.CreatedAt >= row.CartUpdatedAt)
                 && row.Voucher != null
                 && row.Voucher.IsActive
+                && row.Voucher.UsedCount < row.Voucher.UsageLimit
+                && row.Voucher.StartDate <= now
                 && row.Voucher.EndDate > now)
             .OrderByDescending(row => row.CreatedAt)
             .FirstOrDefaultAsync(cancellationToken);
@@ -101,7 +111,8 @@ public class AbandonedCartRecoveryService : IAbandonedCartRecoveryService
 
     private async Task CreateReminderIfNeededAsync(Cart cart, DateTime now, bool sendEmail, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(cart.UserId) || cart.User is null || string.IsNullOrWhiteSpace(cart.User.Email))
+        if (string.IsNullOrWhiteSpace(cart.UserId) || cart.User is null || string.IsNullOrWhiteSpace(cart.User.Email)
+            || !cart.Items.Any(item => item.Product is { Stock: > 0, IsDeleted: false }))
         {
             return;
         }
@@ -137,10 +148,29 @@ public class AbandonedCartRecoveryService : IAbandonedCartRecoveryService
             ExpiresAt = voucher.EndDate
         };
 
+        var notification = new UserNotification
+        {
+            UserId = cart.UserId, Title = "Giỏ hàng của bạn đang chờ",
+            Message = $"Dùng mã {voucher.Code} để giảm 30.000 ₫ cho đơn từ 300.000 ₫ trong 48 giờ.",
+            Type = NotificationTypes.Voucher, LinkUrl = "/Cart"
+        };
         _db.AbandonedCartReminders.Add(reminder);
-        await _db.SaveChangesAsync(cancellationToken);
+        _db.UserNotifications.Add(notification);
+        try
+        {
+            // The unique cart/version index also protects simultaneous login and background scans.
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 2601 or 2627 })
+        {
+            _db.Entry(reminder).State = EntityState.Detached;
+            _db.Entry(voucher).State = EntityState.Detached;
+            _db.Entry(notification).State = EntityState.Detached;
+            return;
+        }
 
-        if (!sendEmail)
+        if (!sendEmail || !_configuration.GetValue<bool>("Email:Enabled")
+            || string.IsNullOrWhiteSpace(_configuration["Email:Host"]))
         {
             return;
         }
@@ -173,9 +203,9 @@ public class AbandonedCartRecoveryService : IAbandonedCartRecoveryService
         {
             Code = code,
             Type = VoucherType.FixedAmount,
-            Value = FreeShipAmount,
+            Value = RecoveryDiscount,
             MinOrderAmount = MinOrderAmount,
-            MaxDiscount = FreeShipAmount,
+            MaxDiscount = RecoveryDiscount,
             UsageLimit = 1,
             StartDate = now,
             EndDate = now.Add(VoucherLifetime),
@@ -189,7 +219,7 @@ public class AbandonedCartRecoveryService : IAbandonedCartRecoveryService
 
     private string BuildEmailBody(Cart cart, string voucherCode, DateTime expiresAt)
     {
-        var cartUrl = $"{(_configuration["App:BaseUrl"] ?? "http://localhost:5009").TrimEnd('/')}/Cart";
+        var cartUrl = $"{(_configuration["App:BaseUrl"] ?? _configuration["Email:FrontendUrl"] ?? "http://localhost:5009").TrimEnd('/')}/Cart";
         var itemRows = string.Join("", cart.Items.Take(5).Select(item =>
         {
             var productName = WebUtility.HtmlEncode(item.Product?.Name ?? "Sản phẩm");
@@ -201,12 +231,12 @@ public class AbandonedCartRecoveryService : IAbandonedCartRecoveryService
         var html = new StringBuilder();
         html.Append("<div style=\"font-family:Inter,Arial,sans-serif;color:#111827;line-height:1.55;max-width:620px;margin:auto\">");
         html.Append("<h2 style=\"margin:0 0 12px\">Giỏ hàng của bạn đang chờ này!</h2>");
-        html.Append("<p>Bạn còn vài sản phẩm trong giỏ. Techvora giữ lại giỏ hàng và tặng bạn mã miễn phí vận chuyển trong thời gian ngắn.</p>");
+        html.Append("<p>Bạn còn vài sản phẩm trong giỏ. Techvora tặng bạn mã giảm 30.000 ₫ cho đơn từ 300.000 ₫, dùng một lần trong 48 giờ.</p>");
         html.Append("<table style=\"width:100%;border-collapse:collapse;margin:16px 0\">");
         html.Append(itemRows);
         html.Append($"<tr><td colspan=\"2\" style=\"padding:10px 0;font-weight:700\">Tạm tính</td><td style=\"padding:10px 0;text-align:right;font-weight:700\">{total:N0} ₫</td></tr>");
         html.Append("</table>");
-        html.Append($"<p>Mã freeship: <strong style=\"font-size:18px;letter-spacing:.06em\">{WebUtility.HtmlEncode(voucherCode)}</strong></p>");
+        html.Append($"<p>Mã giảm giá: <strong style=\"font-size:18px;letter-spacing:.06em\">{WebUtility.HtmlEncode(voucherCode)}</strong></p>");
         html.Append($"<p>Hạn dùng: <strong>{expiresAt.ToLocalTime():dd/MM/yyyy HH:mm}</strong></p>");
         html.Append($"<p><a href=\"{WebUtility.HtmlEncode(cartUrl)}\" style=\"display:inline-block;background:#0f6bff;color:white;text-decoration:none;padding:12px 16px;border-radius:8px;font-weight:700\">Quay lại giỏ hàng</a></p>");
         html.Append("</div>");

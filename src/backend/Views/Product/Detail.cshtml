@@ -4,6 +4,7 @@
 @{
     ViewData["Title"] = Model.Product.Name;
     var product = Model.Product;
+    var isAccessory = PhoneCatalogScope.IsAccessorySlug(product.Category?.Slug);
     var promotionEnabled = SprintFeatures.IsEnabled(3);
     var displayPrice = promotionEnabled ? product.SalePrice : product.Price;
     var stockClass = product.Stock == 0 ? "out" : product.Stock <= 5 ? "low" : "ok";
@@ -32,13 +33,13 @@
     var isAdminViewer = User.IsInRole("Admin");
     var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
     var brandSpec = Model.TechnicalSpecs.FirstOrDefault(spec => spec.Label == "Hãng sản xuất")?.Value ?? "Techvora Select";
-    var displayBrand = PhoneBrandCatalog.Resolve(product.Name)?.Name ?? brandSpec;
+    var displayBrand = isAccessory ? "Phụ kiện điện thoại" : PhoneBrandCatalog.Resolve(product.Name)?.Name ?? brandSpec;
 }
 
 <nav class="pdp-breadcrumb breadcrumb">
     <a asp-controller="Home" asp-action="Index">Trang chủ</a>
     <span>›</span>
-    <a asp-controller="Product" asp-action="Index" asp-route-search="@(PhoneBrandCatalog.Resolve(product.Name)?.SearchTerm)">@displayBrand</a>
+    <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@(isAccessory ? product.CategoryId : (int?)null)" asp-route-search="@(isAccessory ? null : PhoneBrandCatalog.Resolve(product.Name)?.SearchTerm)">@displayBrand</a>
     <span>›</span>
     <strong>@product.Name</strong>
 </nav>
@@ -112,7 +113,7 @@
             @if (!isAdminViewer)
             {
                 <div class="pdp-icon-actions">
-                    @if (SprintFeatures.IsEnabled(2))
+                    @if (SprintFeatures.IsEnabled(2) && !isAccessory)
                     {
                         <button type="button"
                                 data-compare-product="@product.Id"
@@ -191,7 +192,7 @@
                     <div><dt>Tình trạng</dt><dd>Hàng mới</dd></div>
                     @if (SprintFeatures.IsEnabled(2))
                     {
-                        var warrantySpec = Model.TechnicalSpecs.FirstOrDefault(spec => spec.Label == "Bảo hành")?.Value ?? "12 tháng";
+                        var warrantySpec = Model.TechnicalSpecs.FirstOrDefault(spec => spec.Label == "Bảo hành")?.Value ?? (isAccessory ? "Theo chính sách từng sản phẩm" : "12 tháng");
                         <div><dt>Bảo hành</dt><dd>@warrantySpec</dd></div>
                     }
                 </dl>
@@ -200,7 +201,7 @@
                 <h2>Thông số kỹ thuật</h2>
                 <button class="pdp-spec-open" type="button" data-spec-modal-open>
                     <i data-lucide="list-checks" aria-hidden="true"></i>
-                    Xem cấu hình chi tiết
+                    @(isAccessory ? "Xem thông tin phụ kiện" : "Xem cấu hình chi tiết")
                 </button>
                 <ul class="pdp-spec-list">
                     <li>Mã sản phẩm: @productCode</li>

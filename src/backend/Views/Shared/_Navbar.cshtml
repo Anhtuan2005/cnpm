@@ -8,16 +8,19 @@
     var isAuthenticated = User.Identity?.IsAuthenticated == true;
     var isAdminViewer = User.IsInRole("Admin");
     var cartCount = isAdminViewer ? 0 : await CartService.GetCountAsync(userId, Context.Session.Id);
+    var allowedWishlistIds = CatalogScope.Products(Db.Products).Select(product => product.Id);
+    var accessoryCategoryId = SprintFeatures.IsEnabled(3)
+        ? await CatalogScope.Categories(Db.Categories).Where(category => category.Slug == PhoneCatalogScope.AccessoryRootSlug)
+            .Select(category => (int?)category.Id).FirstOrDefaultAsync() : null;
     var wishlistCount = isAdminViewer || string.IsNullOrWhiteSpace(userId) ? 0 : await Db.WishlistItems.CountAsync(item => item.UserId == userId
-        && item.Product != null && item.Product.Category != null
-        && (item.Product.Category.Slug == PhoneCatalogScope.RootSlug || item.Product.Category.Slug.StartsWith("dien-thoai-")));
+        && allowedWishlistIds.Contains(item.ProductId));
     var notificationCount = SprintFeatures.IsEnabled(2) && isAuthenticated && !string.IsNullOrWhiteSpace(userId)
         ? await NotificationService.GetUnreadCountAsync(userId)
         : 0;
     var notifications = SprintFeatures.IsEnabled(2) && isAuthenticated && !string.IsNullOrWhiteSpace(userId)
         ? await NotificationService.GetRecentAsync(userId, 5)
         : Array.Empty<UserNotification>();
-    var phoneProductNames = await CatalogScope.Products(Db.Products.AsNoTracking())
+    var phoneProductNames = await PhoneCatalogScope.OnlyPhones(CatalogScope.Products(Db.Products.AsNoTracking()))
         .Select(product => product.Name)
         .ToListAsync();
     var brands = PhoneBrandCatalog.Summarize(phoneProductNames);
@@ -59,7 +62,11 @@
             </div>
             @if (SprintFeatures.IsEnabled(3))
             {
-                <a class="nav-link nav-flash nav-sale-pill nav-link-with-icon" asp-controller="Product" asp-action="Index" asp-route-sortBy="discount_desc"><i data-lucide="flame" aria-hidden="true"></i> Flash Sale</a>
+                @if (accessoryCategoryId.HasValue)
+                {
+                    <a class="nav-link" asp-controller="Product" asp-action="Index" asp-route-categoryId="@accessoryCategoryId">Phụ kiện</a>
+                }
+                <a class="nav-link nav-flash nav-sale-pill nav-link-with-icon" asp-controller="Product" asp-action="Index" asp-route-sortBy="discount_desc" asp-route-saleOnly="true"><i data-lucide="flame" aria-hidden="true"></i> Flash Sale</a>
             }
         </div>
 
@@ -184,7 +191,11 @@
     @if (SprintFeatures.IsEnabled(3))
     {
         <span class="drawer-section-label">Ưu đãi</span>
-        <a class="nav-flash nav-sale-pill" asp-controller="Product" asp-action="Index" asp-route-sortBy="discount_desc"><i data-lucide="flame" aria-hidden="true"></i> Flash Sale</a>
+        @if (accessoryCategoryId.HasValue)
+        {
+            <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@accessoryCategoryId">Phụ kiện điện thoại</a>
+        }
+        <a class="nav-flash nav-sale-pill" asp-controller="Product" asp-action="Index" asp-route-sortBy="discount_desc" asp-route-saleOnly="true"><i data-lucide="flame" aria-hidden="true"></i> Flash Sale</a>
     }
     @if (!isAdminViewer)
     {

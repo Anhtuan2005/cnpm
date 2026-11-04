@@ -35,9 +35,10 @@ public class WishlistController : Controller
             .ThenInclude(product => product!.Images)
             .Where(item => item.UserId == userId);
         if (_catalogScope is not null)
-            query = query.Where(item => item.Product != null && item.Product.Category != null
-                && (item.Product.Category.Slug == PhoneCatalogScope.RootSlug
-                    || item.Product.Category.Slug.StartsWith("dien-thoai-")));
+        {
+            var allowedIds = _catalogScope.Products(_db.Products).Select(product => product.Id);
+            query = query.Where(item => allowedIds.Contains(item.ProductId));
+        }
         var items = await query
             .OrderByDescending(item => item.AddedAt)
             .ToListAsync();
@@ -80,9 +81,10 @@ public class WishlistController : Controller
         }
         var countQuery = _db.WishlistItems.Where(row => row.UserId == userId);
         if (_catalogScope is not null)
-            countQuery = countQuery.Where(item => item.Product != null && item.Product.Category != null
-                && (item.Product.Category.Slug == PhoneCatalogScope.RootSlug
-                    || item.Product.Category.Slug.StartsWith("dien-thoai-")));
+        {
+            var allowedIds = _catalogScope.Products(_db.Products).Select(product => product.Id);
+            countQuery = countQuery.Where(item => allowedIds.Contains(item.ProductId));
+        }
         var count = await countQuery.CountAsync();
 
         return Json(new

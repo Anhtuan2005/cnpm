@@ -1,5 +1,7 @@
 # Kế hoạch Sprint 3
 
+> Cập nhật 29/10/2026: tám story Sprint 3 trong Excel đã được tích hợp theo yêu cầu mới. Xem [bản triển khai và hướng dẫn demo](../user-guide/sprint-3.md). Nội dung bên dưới giữ nguyên kế hoạch đề xuất tại Buổi 7.
+
 Ngày lập: **28/10/2026**. Nền tích hợp là Sprint 1–2 ở `73aa335`, bổ sung kiểm thử và CI trong [PR #39](https://github.com/Anhtuan2005/cnpm/pull/39). Backlog hiện có gồm tám issue #30–#37; giữ các ID này để không tạo trùng công việc.
 
 ## Sprint Goal đề xuất

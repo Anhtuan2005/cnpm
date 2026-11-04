@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-29",
+  "timezone": "Asia/Saigon",
+  "backend": { "passed": 155, "total": 155, "failed": 0 },
+  "browserSprint3": { "passed": 9, "total": 9, "failed": 0, "skipped": 0 },
+  "browserSprint2": { "passed": 5, "total": 6, "failed": 0, "skipped": 1 },
+  "sprint2SkipReason": "Accessory selection is only available in Sprint 3",
+  "build": { "configuration": "Release", "warnings": 0, "errors": 0 },
+  "assetCheck": "passed",
+  "scope": [
+    "Buy Now offers discounted compatible accessories before direct checkout",
+    "Multiple accessories can be selected, deselected, or skipped; one unit per accessory",
+    "Closing the dialog restores focus to Buy Now; mobile checkout actions remain visible",
+    "Missing offers or failed offer requests fall back to main-product checkout",
+    "Hidden accessory selections and bundle prices survive a real invalid checkout POST",
+    "Corrected server validation errors clear while editing so the submit button does not move on blur",
+    "Shipping quotes include the selected accessories",
+    "A browser COD order completes with the quoted total and leaves the existing cart untouched",
+    "Order prices, quantities, stock movements, and saved cart quantities are checked in SQL integration tests",
+    "Wrong-model, expired, future, disabled, deleted, sold-out, second-phone and Sprint 2 add-ons are rejected",
+    "Sprint 2 direct checkout and address selection remain available; the offer API is gated"
+  ],
+  "browserFiles": ["buy-now.spec.mjs", "cross-sell.spec.mjs", "checkout-address.spec.mjs", "checkout-resilience.spec.mjs"],
+  "artifacts": "artifacts/buy-now",
+  "environment": "Windows, SQL Server isolated test databases, Microsoft Edge",
+  "externalProviders": "Gemini and SMTP disabled; external address API mocked for the new end-to-end order"
+}

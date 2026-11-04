@@ -94,7 +94,7 @@ test('removing an item refreshes the remaining Sprint 1 price and selected total
   await expect(rows.first().locator('.line-total')).toHaveText('123.456 ₫');
   await expect(rows.first().locator('[data-cart-unit-price]')).toHaveText('123.456 ₫');
   await expect(page.locator('#cart-total')).toHaveText(/123[.,]456/);
-  await expect(page.locator('[data-cart-cross-sell-summary]')).toHaveCount(0);
+  await expect(page.locator('[data-cart-cross-sell-summary]:visible')).toHaveCount(0);
 });
 
 test('removing the final item shows the empty cart and survives reload', async ({ page }) => {

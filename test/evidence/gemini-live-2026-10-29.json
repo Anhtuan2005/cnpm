@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-29",
+  "timezone": "Asia/Saigon",
+  "environment": "Local Development; isolated SQL Server demo database",
+  "provider": "Gemini Developer API",
+  "model": "gemini-3.5-flash",
+  "credentialStorage": ".NET User Secrets outside the repository",
+  "providerChecks": {
+    "listModelsHttpStatus": 200,
+    "generateContentHttpStatus": 200,
+    "minimalPromptReply": "OK",
+    "minimalPromptTotalTokens": 9
+  },
+  "applicationCheck": {
+    "endpoint": "/AiChat/Ask",
+    "httpStatus": 200,
+    "success": true,
+    "usedCatalogFallback": false,
+    "prompt": "Tư vấn giúp tôi điện thoại Samsung dưới 10 triệu, ưu tiên pin tốt.",
+    "linkedProduct": "Samsung Galaxy A55 5G",
+    "linkedProductPrice": "9.990.000 đ",
+    "linkedProductUrl": "/Product/Detail/4"
+  },
+  "limits": "This confirms connectivity and one real catalog consultation, not sustained free-tier capacity. SMTP was disabled."
+}

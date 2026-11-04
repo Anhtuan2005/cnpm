@@ -17,7 +17,7 @@ using System.IO.Compression;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
-var activeSprint = Math.Clamp(builder.Configuration.GetValue("Release:ActiveSprint", 1), 1, 2);
+var activeSprint = SprintFeatureService.Normalize(builder.Configuration.GetValue("Release:ActiveSprint", 1));
 
 var viCulture = CultureInfo.GetCultureInfo("vi-VN");
 CultureInfo.DefaultThreadCurrentCulture = viCulture;
@@ -25,6 +25,9 @@ CultureInfo.DefaultThreadCurrentUICulture = viCulture;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
+    // Framework request messages include query strings (for example reset tokens).
+    // Keep the structured path/status request log below, without those payloads.
+    .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", Serilog.Events.LogEventLevel.Warning)
     .Enrich.FromLogContext()
     .WriteTo.Console()
@@ -192,6 +195,7 @@ builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<ICrossSellService, CrossSellService>();
+builder.Services.AddScoped<BuyNowService>();
 builder.Services.AddScoped<ICustomerSegmentService, CustomerSegmentService>();
 builder.Services.AddScoped<IAbandonedCartRecoveryService, AbandonedCartRecoveryService>();
 builder.Services.AddScoped<IUserNotificationService, UserNotificationService>();

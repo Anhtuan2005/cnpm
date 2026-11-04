@@ -3,6 +3,7 @@ if (lucideScript) lucideScript.addEventListener("load", refreshIcons);
 
 document.addEventListener("DOMContentLoaded", function () {
   initFlashToasts();
+  initCheckoutValidation();
   initNavbar();
   initCatalogFilters();
   initHeroSlider();
@@ -117,11 +118,18 @@ function initCartOfferModal() {
   var modal = document.getElementById("cartOfferModal");
   var list = document.getElementById("cartOfferList");
   if (!modal || !list) return;
+  var cartActions = modal.querySelector("[data-cart-offer-actions]");
+  var buyNowActions = modal.querySelector("[data-buy-now-actions]");
+  var continueButton = modal.querySelector("[data-buy-now-checkout]");
+  var buyNowCheckoutUrl = null;
+  var selectedAccessories = new Set();
+  var returnFocus = null;
 
   function close() {
     modal.hidden = true;
     modal.setAttribute("aria-hidden", "true");
     document.body.classList.remove("cart-offer-open");
+    if (returnFocus && returnFocus.isConnected) returnFocus.focus();
   }
 
   function escapeHtml(value) {
@@ -151,9 +159,10 @@ function initCartOfferModal() {
         '    <small>' + escapeHtml(suggestion.contextText || ("Kèm " + suggestion.anchorProductName)) + '</small>',
         '    ' + price,
         '  </div>',
-        '  <button class="cart-offer-add" type="button" data-cart-offer-add="' + escapeHtml(suggestion.productId) + '">',
+        '  <button class="cart-offer-add" type="button" data-cart-offer-add="' + escapeHtml(suggestion.productId) + '"'
+          + (buyNowCheckoutUrl ? ' aria-pressed="false"' : '') + '>',
         '    <i data-lucide="plus" aria-hidden="true"></i>',
-        '    Thêm',
+        buyNowCheckoutUrl ? '    Chọn mua kèm' : '    Thêm',
         '  </button>',
         '</article>'
       ].join("");
@@ -161,8 +170,19 @@ function initCartOfferModal() {
     refreshIcons();
   }
 
-  window.showCartOfferModal = function (suggestions) {
+  function open(suggestions, checkoutUrl, trigger) {
     if (!Array.isArray(suggestions) || suggestions.length === 0) return false;
+    buyNowCheckoutUrl = checkoutUrl || null;
+    selectedAccessories.clear();
+    cartActions.hidden = !!buyNowCheckoutUrl;
+    buyNowActions.hidden = !buyNowCheckoutUrl;
+    continueButton.textContent = "Tiếp tục thanh toán";
+    modal.querySelector("[data-cart-offer-eyebrow]").textContent = buyNowCheckoutUrl ? "Trước khi thanh toán" : "Đã thêm vào giỏ";
+    modal.querySelector("#cartOfferTitle").textContent = buyNowCheckoutUrl ? "Phụ kiện mua kèm ưu đãi" : "Gợi ý mua kèm phù hợp";
+    modal.querySelector("[data-cart-offer-description]").textContent = buyNowCheckoutUrl
+      ? "Chọn phụ kiện phù hợp hoặc tiếp tục chỉ mua sản phẩm đã chọn. Mỗi phụ kiện có số lượng 1."
+      : "Chọn phụ kiện phù hợp với giá ưu đãi khi mua cùng điện thoại.";
+    returnFocus = trigger || document.activeElement;
     render(suggestions);
     modal.hidden = false;
     modal.setAttribute("aria-hidden", "false");
@@ -170,7 +190,25 @@ function initCartOfferModal() {
     var closeButton = modal.querySelector("[data-cart-offer-close]");
     if (closeButton) closeButton.focus();
     return true;
+  }
+
+  window.showCartOfferModal = function (suggestions) {
+    return open(suggestions, null);
   };
+
+  window.showBuyNowOfferModal = function (suggestions, checkoutUrl, trigger) {
+    return open(suggestions, checkoutUrl, trigger);
+  };
+
+  modal.querySelector("[data-buy-now-skip]").addEventListener("click", function () {
+    if (buyNowCheckoutUrl) window.location.href = buyNowCheckoutUrl;
+  });
+  continueButton.addEventListener("click", function () {
+    if (!buyNowCheckoutUrl) return;
+    var url = new URL(buyNowCheckoutUrl, window.location.origin);
+    selectedAccessories.forEach(function (id) { url.searchParams.append("buyNowAccessoryIds", id); });
+    window.location.href = url.pathname + url.search;
+  });
 
   modal.querySelectorAll("[data-cart-offer-close]").forEach(function (button) {
     button.addEventListener("click", close);
@@ -179,6 +217,18 @@ function initCartOfferModal() {
   list.addEventListener("click", function (event) {
     var button = event.target.closest("[data-cart-offer-add]");
     if (!button || button.disabled) return;
+    if (buyNowCheckoutUrl) {
+      var id = button.dataset.cartOfferAdd;
+      var selected = !selectedAccessories.has(id);
+      if (selected) selectedAccessories.add(id);
+      else selectedAccessories.delete(id);
+      button.setAttribute("aria-pressed", String(selected));
+      button.innerHTML = '<i data-lucide="' + (selected ? 'check' : 'plus') + '" aria-hidden="true"></i>'
+        + (selected ? "Đã chọn" : "Chọn mua kèm");
+      continueButton.textContent = "Tiếp tục thanh toán" + (selectedAccessories.size ? " (" + selectedAccessories.size + " phụ kiện)" : "");
+      refreshIcons();
+      return;
+    }
     button.disabled = true;
     button.dataset.originalHtml = button.dataset.originalHtml || button.innerHTML;
     button.textContent = "Đang thêm";
@@ -210,7 +260,20 @@ function initCartOfferModal() {
   });
 
   document.addEventListener("keydown", function (event) {
-    if (event.key === "Escape" && !modal.hidden) close();
+    if (modal.hidden) return;
+    if (event.key === "Escape") close();
+    if (event.key !== "Tab") return;
+    var focusable = Array.from(modal.querySelectorAll('button:not(:disabled), a[href]'))
+      .filter(function (element) { return element.getClientRects().length > 0; });
+    var first = focusable[0];
+    var last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   });
 }
 
@@ -433,19 +496,31 @@ function initAiChatbot() {
 
   function formatAiMessage(text, products) {
     var productIds = {};
+    var productNames = {};
     var placeholders = [];
     (products || []).forEach(function (product) {
       productIds[String(product.id)] = product.url || ("/Product/Detail/" + product.id);
+      productNames[String(product.id)] = product.name || "sản phẩm";
     });
 
+    function productLink(url, id, label) {
+      var key = "@@AI_LINK_" + placeholders.length + "@@";
+      var accessibleLabel = escapeHtml("Xem chi tiết " + (productNames[String(id)] || "sản phẩm"));
+      var visibleLabel = label && !/^(?:https?:\/\/[^/\s]+)?\/Product\/Detail\/\d+$/i.test(label.trim())
+        ? label : "Xem chi tiết";
+      placeholders.push('<a class="ai-product-inline-link" href="' + url + '" aria-label="' + accessibleLabel + '">'
+        + visibleLabel + ' <span aria-hidden="true">↗</span></a>');
+      return key;
+    }
+
     var html = escapeHtml(text)
-      .replace(/\[([^\]]+)\]\((\/Product\/Detail\/(\d+))\)/g, function (_, label, url) {
-        var key = "@@AI_LINK_" + placeholders.length + "@@";
-        placeholders.push('<a href="' + url + '">' + label + "</a>");
-        return key;
+      .replace(/\[([^\]]+)\]\((?:https?:\/\/[^/\s<>()]+)?(\/Product\/Detail\/(\d+))\)/gi, function (_, label, url, id) {
+        return productLink(url, id, label);
+      })
+      .replace(/(?:(?:Xem chi tiết tại|Xem tại|Link xem chi tiết|Link sản phẩm|Link)\s*:\s*)?(?:https?:\/\/[^/\s<>]+)?(\/Product\/Detail\/(\d+))/gi, function (_, url, id) {
+        return productLink(url, id);
       })
       .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-      .replace(/(\/Product\/Detail\/(\d+))/g, '<a href="$1">$1</a>')
       .replace(/#(\d+)/g, function (match, id) {
         var url = productIds[String(id)] || ("/Product/Detail/" + id);
         return '<a href="' + url + '">' + match + "</a>";
@@ -1171,8 +1246,29 @@ function initDetailAddToCart() {
     button.addEventListener("click", function () {
       if (button.disabled) return;
       var qty = clampQuantity(input);
-      window.location.href = "/Order/Checkout?buyNowProductId=" + encodeURIComponent(button.dataset.productId)
+      var checkoutUrl = "/Order/Checkout?buyNowProductId=" + encodeURIComponent(button.dataset.productId)
         + "&buyNowQuantity=" + encodeURIComponent(qty);
+      if (!window.showBuyNowOfferModal) {
+        window.location.href = checkoutUrl;
+        return;
+      }
+      setBusy(button, true);
+      fetch("/Product/BuyNowOffers?productId=" + encodeURIComponent(button.dataset.productId)
+        + "&quantity=" + encodeURIComponent(qty), { headers: { Accept: "application/json" } })
+        .then(function (response) {
+          if (!response.ok || response.redirected) throw new Error("offers-unavailable");
+          return response.json();
+        })
+        .then(function (data) {
+          setBusy(button, false);
+          if (!window.showBuyNowOfferModal(getCartOfferSuggestions(data), checkoutUrl, button)) {
+            window.location.href = checkoutUrl;
+          }
+        })
+        .catch(function () {
+          setBusy(button, false);
+          window.location.href = checkoutUrl;
+        });
     });
   });
 }
@@ -1863,6 +1959,21 @@ function initReviewImagePreview() {
   });
 }
 
+function initCheckoutValidation() {
+  var form = document.getElementById("checkoutForm");
+  if (!form) return;
+  function revalidateCorrectedField(event) {
+    var field = event.target;
+    if (!field.matches('[data-val="true"].input-validation-error') || !window.jQuery) return;
+    var validator = window.jQuery(form).data("validator");
+    // Clear a server error while editing, before blur can move the submit button
+    // between pointer-down and pointer-up and swallow the customer's click.
+    if (validator) validator.element(field);
+  }
+  form.addEventListener("input", revalidateCorrectedField);
+  form.addEventListener("change", revalidateCorrectedField);
+}
+
 function refreshCheckoutTotal() {
   var total = document.getElementById("checkoutTotal");
   if (!total) return;
@@ -1993,6 +2104,9 @@ function updateCheckoutShippingFee() {
   var buyNowQuantity = document.getElementById("BuyNowQuantity");
   if (buyNowProductId && buyNowProductId.value) query.append("buyNowProductId", buyNowProductId.value);
   if (buyNowQuantity && buyNowQuantity.value) query.append("buyNowQuantity", buyNowQuantity.value);
+  document.querySelectorAll('input[name="BuyNowAccessoryIds"]').forEach(function (input) {
+    if (input.value) query.append("buyNowAccessoryIds", input.value);
+  });
 
   fetch("/Order/ShippingFee?" + query.toString(), { headers: { Accept: "application/json" } })
     .then(function (response) {

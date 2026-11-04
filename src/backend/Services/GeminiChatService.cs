@@ -48,7 +48,7 @@ public class GeminiChatService : IAiChatService
         var apiKey = _configuration["Gemini:ApiKey"] ?? _configuration["GEMINI_API_KEY"];
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            return TextOnly("Chatbot AI chưa được cấu hình API key. Vui lòng thêm Gemini:ApiKey hoặc biến môi trường GEMINI_API_KEY.");
+            return await BuildCatalogReplyAsync(message, cancellationToken);
         }
 
         var model = _configuration["Gemini:Model"] ?? "gemini-3.5-flash";
@@ -80,16 +80,15 @@ public class GeminiChatService : IAiChatService
             using var response = await SendGeminiRequestWithRetryAsync(endpoint, apiKey, request, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                var error = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogWarning("Gemini API returned {StatusCode}: {Body}", response.StatusCode, error);
-                return TextOnly("Mình chưa kết nối được Gemini lúc này. Bạn thử lại sau ít phút nhé.");
+                _logger.LogWarning("Gemini API returned {StatusCode}.", response.StatusCode);
+                return await BuildCatalogReplyAsync(message, cancellationToken);
             }
 
             var result = await response.Content.ReadFromJsonAsync<GeminiGenerateResponse>(JsonOptions, cancellationToken);
             var answer = ExtractText(result);
             if (string.IsNullOrWhiteSpace(answer))
             {
-                return TextOnly("Mình chưa có đủ dữ liệu để tư vấn chắc chắn. Bạn cho mình thêm nhu cầu, ngân sách và mục đích sử dụng nhé.");
+                return await BuildCatalogReplyAsync(message, cancellationToken);
             }
 
             return new AiChatResponse
@@ -100,17 +99,17 @@ public class GeminiChatService : IAiChatService
         }
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            return TextOnly("Gemini phản hồi hơi lâu. Bạn thử gửi lại câu hỏi ngắn hơn giúp mình nhé.");
+            return await BuildCatalogReplyAsync(message, cancellationToken);
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogWarning(ex, "Gemini API request failed.");
-            return TextOnly("Mình đang gặp lỗi kết nối AI. Bạn thử lại sau một chút nhé.");
+            _logger.LogWarning("Gemini request failed with {ErrorType}.", ex.GetType().Name);
+            return await BuildCatalogReplyAsync(message, cancellationToken);
         }
         catch (JsonException ex)
         {
-            _logger.LogWarning(ex, "Gemini API response could not be parsed.");
-            return TextOnly("Mình nhận được phản hồi AI nhưng chưa đọc được nội dung. Bạn thử lại giúp mình nhé.");
+            _logger.LogWarning("Gemini response could not be parsed: {ErrorType}.", ex.GetType().Name);
+            return await BuildCatalogReplyAsync(message, cancellationToken);
         }
     }
 
@@ -158,6 +157,25 @@ public class GeminiChatService : IAiChatService
     private static AiChatResponse TextOnly(string reply)
     {
         return new AiChatResponse { Reply = reply };
+    }
+
+    private async Task<AiChatResponse> BuildCatalogReplyAsync(string message, CancellationToken cancellationToken)
+    {
+        var products = (await FindCatalogProductsAsync(message, cancellationToken)).Take(4).ToList();
+        if (products.Count == 0)
+            return TextOnly("Chưa có sản phẩm còn hàng phù hợp với hãng và ngân sách bạn nêu. Bạn có thể thử hãng khác hoặc điều chỉnh ngân sách.");
+
+        return new AiChatResponse
+        {
+            Reply = "Mình gợi ý từ danh mục hiện có:\n"
+                + string.Join("\n", products.Select(product => $"• {product.Name}: {FormatMoney(product.SalePrice)}."))
+                + "\nBạn có thể mở chi tiết để xem thông số, hoặc cho mình biết hãng và mức giá mong muốn.",
+            Products = products.Select(product => new AiChatProductLink
+            {
+                Id = product.Id, Name = product.Name, Category = product.Category?.Name ?? "Điện thoại",
+                Price = FormatMoney(product.SalePrice), Url = $"/Product/Detail/{product.Id}"
+            }).ToList()
+        };
     }
 
     private async Task<HttpResponseMessage> SendGeminiRequestWithRetryAsync(string endpoint, string apiKey, GeminiGenerateRequest request, CancellationToken cancellationToken)
@@ -222,7 +240,7 @@ public class GeminiChatService : IAiChatService
         return null;
     }
 
-    private async Task<string> BuildCatalogContextAsync(string message, CancellationToken cancellationToken)
+    private async Task<List<Product>> FindCatalogProductsAsync(string message, CancellationToken cancellationToken)
     {
         var query = _db.Products
             .AsNoTracking()
@@ -231,20 +249,45 @@ public class GeminiChatService : IAiChatService
             .AsQueryable();
         if (_catalogScope is not null)
             query = _catalogScope.Products(query);
-        var products = await query
-            .OrderByDescending(product => product.IsFeatured)
-            .ThenByDescending(product => product.DiscountPercent)
-            .ThenByDescending(product => product.CreatedAt)
-            .Take(80)
-            .ToListAsync(cancellationToken);
-
-        if (products.Count == 0)
+        var normalized = NormalizeSearchText(message);
+        var asksForAccessories = new[] { "phu kien", "op lung", "tai nghe", "cu sac", "cap sac", "cap usb", "kinh cuong luc", "earphone", "charger", "phone case" }
+            .Any(term => normalized.Contains(term, StringComparison.Ordinal));
+        query = asksForAccessories ? PhoneCatalogScope.OnlyAccessories(query) : PhoneCatalogScope.OnlyPhones(query);
+        if (asksForAccessories)
         {
-            return "Hiện chưa có sản phẩm còn hàng trong catalog.";
+            var phones = await PhoneCatalogScope.OnlyPhones(_db.Products).Select(product => new { product.Id, product.Name }).ToListAsync(cancellationToken);
+            var phone = phones.OrderByDescending(product => product.Name.Length)
+                .FirstOrDefault(product => normalized.Contains(NormalizeSearchText(product.Name), StringComparison.Ordinal));
+            var isCase = normalized.Contains("op lung", StringComparison.Ordinal) || normalized.Contains("phone case", StringComparison.Ordinal);
+            var isGlass = normalized.Contains("kinh cuong luc", StringComparison.Ordinal);
+            if ((isCase || isGlass) && phone is null) return new List<Product>();
+            if (phone is not null)
+            {
+                var now = DateTime.UtcNow;
+                query = query.Where(product => _db.CrossSellOffers.Any(offer => offer.AnchorProductId == phone.Id
+                    && offer.AddOnProductId == product.Id && offer.IsActive
+                    && (offer.StartDate == null || offer.StartDate <= now) && (offer.EndDate == null || offer.EndDate >= now)));
+            }
+            if (isCase) query = query.Where(product => product.Name.Contains("Ốp lưng"));
+            else if (isGlass) query = query.Where(product => product.Name.Contains("Kính"));
+            else if (normalized.Contains("tai nghe") || normalized.Contains("earphone")) query = query.Where(product => product.Name.Contains("Tai nghe"));
+            else if (normalized.Contains("cu sac") || normalized.Contains("charger")) query = query.Where(product => product.Name.Contains("Củ sạc"));
+            else if (normalized.Contains("cap sac") || normalized.Contains("cap usb")) query = query.Where(product => product.Name.Contains("Cáp"));
         }
-
+        var brand = new[] { "iphone", "samsung", "xiaomi", "oppo", "vivo", "realme", "pixel", "sony" }
+            .FirstOrDefault(name => normalized.Contains(name, StringComparison.Ordinal));
+        if (brand is not null && !asksForAccessories)
+            query = query.Where(product => product.Name.Contains(brand));
+        var budgetMatch = Regex.Match(message, @"(\d+(?:[.,]\d+)?)\s*(?:triệu|trieu|tr\b)", RegexOptions.IgnoreCase);
+        if (budgetMatch.Success && decimal.TryParse(budgetMatch.Groups[1].Value.Replace(',', '.'),
+                NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var millions) && millions > 0 && millions <= 1000)
+        {
+            var budget = millions * 1_000_000m;
+            query = query.Where(product => product.Price * (100 - product.DiscountPercent) / 100m <= budget);
+        }
+        var products = await query.ToListAsync(cancellationToken);
         var terms = ExtractSearchTerms(message);
-        var rankedProducts = products
+        return products
             .Select(product => new
             {
                 Product = product,
@@ -257,6 +300,13 @@ public class GeminiChatService : IAiChatService
             .Take(MaxProductsInPrompt)
             .Select(item => item.Product)
             .ToList();
+    }
+
+    private async Task<string> BuildCatalogContextAsync(string message, CancellationToken cancellationToken)
+    {
+        var rankedProducts = await FindCatalogProductsAsync(message, cancellationToken);
+        if (rankedProducts.Count == 0)
+            return "Hiện chưa có điện thoại còn hàng phù hợp hãng và ngân sách đã nêu. Hãy hỏi khách điều chỉnh tiêu chí.";
 
         var builder = new StringBuilder();
         builder.AppendLine("Catalog sản phẩm còn hàng của Techvora:");
@@ -294,7 +344,8 @@ public class GeminiChatService : IAiChatService
     {
         return $"""
 Bạn là trợ lý tư vấn mua sắm của Techvora, trả lời bằng tiếng Việt tự nhiên, ngắn gọn và hữu ích.
-Nhiệm vụ: hỏi thêm khi thiếu nhu cầu, tư vấn điện thoại, laptop, linh kiện, phụ kiện và cấu hình PC theo ngân sách.
+Nhiệm vụ: hỏi thêm khi thiếu nhu cầu, tư vấn điện thoại và phụ kiện điện thoại theo ngân sách.
+Chỉ khẳng định phụ kiện tương thích với máy khi mô tả catalog nêu rõ; không suy đoán ốp lưng, kính hoặc cổng cáp của mẫu máy khác.
 Chỉ dùng dữ liệu sản phẩm được cung cấp bên dưới khi nói về tên sản phẩm, giá, tồn kho hoặc link. Không bịa sản phẩm, giá hay khuyến mãi.
 Khi gợi ý sản phẩm, chọn tối đa 4 lựa chọn. Mỗi lựa chọn phải ghi đủ: tên sản phẩm, mã #id, giá bán, lý do ngắn và link /Product/Detail/id.
 Ưu tiên trả lời trong 4 đến 7 dòng. Hoàn thành câu trả lời, không dừng giữa câu.
@@ -310,6 +361,7 @@ Không cam kết giá tuyệt đối; nhắc khách kiểm tra trang chi tiết 
         var contents = new List<GeminiContent>();
         foreach (var item in history.TakeLast(MaxHistoryItems))
         {
+            if (item is null) continue;
             var text = CompactText(item.Text, 1200);
             if (string.IsNullOrWhiteSpace(text))
             {
@@ -318,7 +370,7 @@ Không cam kết giá tuyệt đối; nhắc khách kiểm tra trang chi tiết 
 
             contents.Add(new GeminiContent
             {
-                Role = item.Role.Equals("model", StringComparison.OrdinalIgnoreCase) ? "model" : "user",
+                Role = string.Equals(item.Role, "model", StringComparison.OrdinalIgnoreCase) ? "model" : "user",
                 Parts = new List<GeminiPart> { new() { Text = text } }
             });
         }

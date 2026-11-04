@@ -1,6 +1,10 @@
 # Backend test evidence
 
-**Cập nhật 28/10/2026:** 132/132 backend, 26/26 browser Edge và kiểm tra asset đạt. [Test Report Buổi 7](../../test/TestReport.md) và [kết quả từng test](../../test/evidence/buoi7-2026-10-28.json) là bằng chứng mới; các mốc dưới đây được giữ để đối chiếu lịch sử. CI hiện chạy thêm browser và lưu artifact `sprint12-test-results`.
+**Mua ngay kèm phụ kiện, 29/10/2026:** **155/155 backend**, **9/9 browser Sprint 3** và **5 browser Sprint 2 đạt** (1 test phụ kiện được bỏ qua đúng cấu hình). Đã thử chọn/bỏ qua phụ kiện, sửa thông tin sau lỗi server, tính phí ship và đặt COD mà giỏ cũ không đổi. Build Release và kiểm tra asset đạt. Xem [bằng chứng](../../test/evidence/buy-now-accessories-2026-10-29.json) và [cách thử US-30](us-30.md).
+
+**Cập nhật 29/10/2026:** 143/143 backend, 28/28 browser Edge cho mỗi cấu hình Sprint 2 và Sprint 3, build và kiểm tra asset đạt. [Kết quả từng test Sprint 3](../../test/evidence/sprint3-2026-10-29.json) và [hướng dẫn demo](sprint-3.md) ghi phạm vi đã tích hợp. CI có matrix Sprint 2/3 và lưu artifact `sprint2-test-results`, `sprint3-test-results`; kết quả CI sau khi push cần được kiểm chứng riêng.
+
+**Mốc 28/10/2026:** 132/132 backend và 26/26 browser Edge đạt. [Test Report Buổi 7](../../test/TestReport.md) và [kết quả từng test](../../test/evidence/buoi7-2026-10-28.json) được giữ cùng các mốc bên dưới để đối chiếu lịch sử.
 
 Ngày 14/10/2026, lệnh `dotnet test test/test-cases/EcommerceApp.Tests/EcommerceApp.Tests.csproj --configuration Debug --no-restore --verbosity minimal` đạt **110/110** test backend trên máy local. Sau khi sắp xếp lại repo ngày 07/10/2026, `dotnet build EcommerceApp.sln` và `npm run check:assets` trong `src/frontend/` cũng thành công; ứng dụng trả HTTP 200 cho `/Home/Privacy` và `/css/site.css` ở lần kiểm tra đó.
 

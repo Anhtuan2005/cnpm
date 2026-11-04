@@ -79,7 +79,7 @@
         <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
     </environment>
 </head>
-<body>
+<body data-active-sprint="@SprintFeatures.ActiveSprint">
     <a class="skip-link" href="#main-content">Bỏ qua đến nội dung chính</a>
     <header>
         <partial name="_Navbar" />
@@ -115,17 +115,21 @@
                     <i data-lucide="x" aria-hidden="true"></i>
                 </button>
                 <div class="cart-offer-head">
-                    <span>Đã thêm vào giỏ</span>
+                    <span data-cart-offer-eyebrow>Đã thêm vào giỏ</span>
                     <h2 id="cartOfferTitle">Gợi ý mua kèm phù hợp</h2>
-                    <p>Chọn thêm sản phẩm thường được mua cùng hoặc đang có giá mua kèm.</p>
+                    <p data-cart-offer-description>Chọn phụ kiện phù hợp với giá ưu đãi khi mua cùng điện thoại.</p>
                 </div>
                 <div class="cart-offer-list" id="cartOfferList"></div>
-                <div class="cart-offer-actions">
+                <div class="cart-offer-actions" data-cart-offer-actions>
                     <a class="btn-ghost" asp-controller="Cart" asp-action="Index">Xem giỏ</a>
                     @if (!User.IsInRole("Admin"))
                     {
                         <a class="btn-primary" asp-controller="Cart" asp-action="Index">Thanh toán trong giỏ</a>
                     }
+                </div>
+                <div class="cart-offer-actions" data-buy-now-actions hidden>
+                    <button class="btn-ghost" type="button" data-buy-now-skip>Chỉ mua sản phẩm này</button>
+                    <button class="btn-primary" type="button" data-buy-now-checkout>Tiếp tục thanh toán</button>
                 </div>
             </section>
         </div>

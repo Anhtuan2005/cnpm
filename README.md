@@ -2,7 +2,7 @@
 
 **Theo dõi tiến độ:** [Mở bảng GitHub Project](https://github.com/users/Anhtuan2005/projects/1) · [Milestone Sprint 1](https://github.com/Anhtuan2005/cnpm/milestone/1) · [Sprint 2](https://github.com/Anhtuan2005/cnpm/milestone/2) · [Sprint 3](https://github.com/Anhtuan2005/cnpm/milestone/3).
 
-**Cửa hàng điện thoại từ lúc chọn máy đến khi theo dõi đơn hàng.** Khách có thể so sánh sản phẩm, đặt mua và gửi yêu cầu hậu mãi; nhân viên quản lý danh mục, tồn kho và đơn hàng trên cùng một hệ thống.
+**Cửa hàng điện thoại và phụ kiện từ lúc chọn máy đến khi theo dõi đơn hàng.** Khách có thể so sánh điện thoại, mua phụ kiện có ưu đãi theo máy, đặt hàng và gửi yêu cầu hậu mãi; nhân viên quản lý danh mục, tồn kho và đơn hàng trên cùng một hệ thống.
 
 `ASP.NET Core 8 MVC` · `EF Core 8` · `SQL Server` · `Razor` · `JavaScript`
 
@@ -22,6 +22,7 @@
 | Quản lý cấu hình | [Hồ sơ Lab 3](docs/lab3/README.md) |
 | Tiến độ Sprint 1–2 | [Hồ sơ Lab 4 và phiếu thực hành](docs/lab4/README.md) |
 | Tích hợp và chuẩn bị Sprint 3 | [Báo cáo Buổi 7](docs/buoi7/README.md), [Test Report](test/TestReport.md) và [kế hoạch Sprint 3](docs/buoi7/sprint-3-plan.md) |
+| Sprint 3 đã triển khai | [Chức năng, cấu hình và kịch bản demo](docs/user-guide/sprint-3.md) |
 
 **Tài liệu gốc Tuần 1–2 chưa có trong repository.** `docs/requirements/` hiện chỉ có trang hướng dẫn đặt tài liệu; `docs/design/` đã có sơ đồ kiến trúc và ảnh minh họa. Khi có bản gốc, đặt yêu cầu vào `docs/requirements/` và thiết kế vào `docs/design/`. Repo hiện chưa có video demo hoặc URL triển khai công khai.
 
@@ -135,6 +136,8 @@ dotnet test test/test-cases/EcommerceApp.Tests/EcommerceApp.Tests.csproj
 
 Nếu dùng SQL Server khác, đặt `TECHVORA_TEST_SQLSERVER` thành connection string của server test trước khi chạy. Ngày 28/10/2026, **132/132 test backend** và **26/26 smoke test trình duyệt** pass trên máy local với database demo riêng; [Test Report Buổi 7](test/TestReport.md) ghi input, kết quả và bước chạy lại. Bộ test bao gồm phạm vi Sprint 2, checkout/voucher, phí vận chuyển, mua ngay, tranh chấp tồn kho, callback thanh toán, phân quyền và luồng yêu cầu hỗ trợ đến trang đơn hàng admin. [Lệnh, kết quả và mã test tiêu biểu](docs/user-guide/backend-tests.md) giúp kiểm chứng; [workflow CI](.github/workflows/portfolio-tests.yml) chạy backend trên SQL Server 2022, kiểm tra asset và browser trên Chromium.
 
+Ngày 29/10/2026, bản Sprint 3 đạt **143/143 backend**, **28/28 browser ở Sprint 2** và **28/28 browser ở Sprint 3**; kiểm tra riêng báo cáo sau chỉnh giao diện mobile cũng pass. [Bằng chứng kiểm thử Sprint 3](test/evidence/sprint3-2026-10-29.json) ghi từng test và giới hạn xác nhận dịch vụ ngoài. CI đã thêm matrix Sprint 2/3; các số trên là kết quả local.
+
 ## Cấu hình tùy chọn
 
 Dùng `dotnet user-secrets` khi phát triển và biến môi trường khi triển khai; trong tên biến môi trường, thay `:` bằng `__`.
@@ -142,13 +145,15 @@ Dùng `dotnet user-secrets` khi phát triển và biến môi trường khi tri�
 | Cấu hình | Mục đích |
 | --- | --- |
 | `ConnectionStrings:DefaultConnection` | Kết nối SQL Server |
-| `Release:ActiveSprint` | Phạm vi chức năng đang mở; mặc định `2` |
+| `Release:ActiveSprint` | Phạm vi chức năng đang mở; mặc định `3`, có thể đặt `2` để quay về Sprint 2 |
 | `Demo:Enabled` | Tạo dữ liệu demo; mặc định `false` |
+| `Catalog:SeedPhoneCatalog` | Tạo danh mục điện thoại và, ở Sprint 3, phụ kiện cùng ưu đãi mua kèm; giữ giá/tồn kho phụ kiện đã có |
 | `BootstrapAdmin:Email`, `BootstrapAdmin:Password` | Tạo tài khoản quản trị ban đầu |
-| `Email:*` | Gửi email đặt lại mật khẩu |
+| `Email:*` | Email đặt lại mật khẩu, đơn hàng và nhắc giỏ bỏ quên; mặc định tắt |
+| `Gemini:ApiKey`, `Gemini:Model` | Tư vấn AI; khi chưa có khóa hoặc provider lỗi, chatbot gợi ý từ danh mục |
 | `Vnpay:*` | Thông tin sandbox VNPAY và callback URL |
 | `Ghn:*` | Token, shop ID và webhook secret của GHN |
 
 Email được tắt khi chưa cung cấp thông tin xác thực, nên không bắt buộc để chạy bản demo cục bộ.
 
-Các route thuộc Sprint 3 trở lên trả `404`; menu và tiến trình nền tương ứng không hoạt động. Xác thực, phân quyền, chống CSRF và rate limit nền tảng vẫn được giữ để ứng dụng an toàn.
+Sprint 3 mở quản trị hậu mãi, người dùng, voucher/phân khúc, báo cáo/CSV, gợi ý cá nhân hóa, mua kèm, nhắc giỏ, chatbot và `/health/live`, `/health/ready`. `Release:ActiveSprint=2` tắt các route/menu và job nhắc giỏ tương ứng sau khi khởi động lại; Sprint 4 vẫn bị khóa. Xem [hướng dẫn Sprint 3](docs/user-guide/sprint-3.md) để chạy demo và kiểm thử.

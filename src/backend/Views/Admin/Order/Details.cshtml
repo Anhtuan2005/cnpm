@@ -278,6 +278,10 @@
                     <dt>Sản phẩm</dt>
                     <dd>@(string.Join(", ", request.Items.Select(item => $"{item.ProductNameSnapshot} × {item.Quantity}")))</dd>
                 </dl>
+                @if (SprintFeatures.IsEnabled(3))
+                {
+                    <a class="admin-button secondary" href="/Admin/ReturnWarranty/@request.Id">Xử lý yêu cầu #@request.Id</a>
+                }
                 @if (request.Images.Any())
                 {
                     <div class="admin-support-images">

@@ -2069,6 +2069,7 @@ progress { width: 100%; height: 8px; accent-color: var(--warning); }
   max-height: min(720px, calc(100vh - 36px));
   overflow: auto;
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 16px;
   padding: 22px;
   border: 1px solid oklch(0.87 0.018 250);
@@ -2120,6 +2121,8 @@ progress { width: 100%; height: 8px; accent-color: var(--warning); }
 .cart-offer-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow-y: auto;
+  padding: 8px 1px 2px;
   gap: 12px;
 }
 .cart-offer-item {
@@ -2222,12 +2225,19 @@ progress { width: 100%; height: 8px; accent-color: var(--warning); }
   opacity: 0.72;
 }
 .cart-offer-add i { width: 15px; height: 15px; }
+.cart-offer-add[aria-pressed="true"] {
+  background: oklch(0.94 0.04 248);
+  color: var(--accent-dark);
+  box-shadow: inset 0 0 0 1px currentColor;
+}
 .cart-offer-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
   padding-top: 2px;
 }
+.cart-offer-actions[hidden] { display: none; }
+.cart-offer-open .ai-chatbot { visibility: hidden; }
 .cross-sell-panel,
 .checkout-cross-sell {
   overflow: hidden;

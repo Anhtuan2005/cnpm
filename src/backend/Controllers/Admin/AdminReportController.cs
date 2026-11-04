@@ -4,6 +4,8 @@ using EcommerceApp.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using EcommerceApp.Services;
+using System.Text;
 
 namespace EcommerceApp.Controllers.Admin;
 
@@ -21,6 +23,32 @@ public class AdminReportController : Controller
 
     [HttpGet("")]
     public async Task<IActionResult> Index(string period = "30", DateTime? fromDate = null, DateTime? toDate = null)
+    {
+        return View("~/Views/Admin/Report/Index.cshtml", await BuildReportAsync(period, fromDate, toDate));
+    }
+
+    [HttpGet("ExportCsv")]
+    public async Task<IActionResult> ExportCsv(string period = "30", DateTime? fromDate = null, DateTime? toDate = null)
+    {
+        var report = await BuildReportAsync(period, fromDate, toDate);
+        var csv = new StringBuilder();
+        csv.AppendLine(CsvFormatter.Row("TuNgayUTC", "DenNgayUTC", "TienHang", "GiamGiaVoucher", "PhiGiaoHang", "DoanhThu", "SoDon"));
+        csv.AppendLine(CsvFormatter.Row(report.FromDate, report.ToDate, report.MerchandiseRevenue,
+            report.VoucherDiscount, report.ShippingRevenue, report.CurrentPeriodRevenue, report.TotalOrders));
+        csv.AppendLine(CsvFormatter.Row("NgayUTC", "DoanhThu"));
+        foreach (var day in report.DailyRevenue)
+            csv.AppendLine(CsvFormatter.Row(day.Label, day.Revenue));
+        csv.AppendLine(CsvFormatter.Row("DanhMuc", "TienHangTruocVoucher"));
+        foreach (var category in report.RevenueByCategory.OrderByDescending(row => row.Value))
+            csv.AppendLine(CsvFormatter.Row(category.Key, category.Value));
+        csv.AppendLine(CsvFormatter.Row("TopSanPham", "SoLuong", "TienHangTruocVoucher"));
+        foreach (var product in report.TopProducts)
+            csv.AppendLine(CsvFormatter.Row(product.ProductName, product.QuantitySold, product.Revenue));
+        return File(Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(csv.ToString())).ToArray(),
+            "text/csv; charset=utf-8", $"bao-cao-{report.FromDate:yyyyMMdd}-{report.ToDate:yyyyMMdd}.csv");
+    }
+
+    private async Task<AdminReportViewModel> BuildReportAsync(string period, DateTime? fromDate, DateTime? toDate)
     {
         period = period is "7" or "30" or "90" or "365" or "custom" ? period : "30";
         var today = DateTime.UtcNow.Date;
@@ -78,7 +106,7 @@ public class AdminReportController : Controller
                 var date = start.Date.AddDays(offset);
                 return new RevenuePointViewModel
                 {
-                    Label = date.ToString("dd/MM"),
+                    Label = date.ToString("yyyy-MM-dd"),
                     Revenue = revenueByDate.GetValueOrDefault(date)
                 };
             })
@@ -91,7 +119,12 @@ public class AdminReportController : Controller
             ToDate = end.AddDays(-1).Date,
             CurrentPeriodRevenue = currentRevenue,
             PreviousPeriodRevenue = previousRevenue,
-            GrowthPercent = previousRevenue == 0 ? (currentRevenue > 0 ? 100 : 0) : (currentRevenue - previousRevenue) / previousRevenue * 100,
+            GrowthPercent = previousRevenue == 0 ? null : (currentRevenue - previousRevenue) / previousRevenue * 100,
+            MerchandiseRevenue = await _db.OrderItems.IgnoreQueryFilters().WithRecognizedRevenue()
+                .Where(item => item.Order!.CreatedAt >= start && item.Order.CreatedAt < end)
+                .SumAsync(item => item.Quantity * item.UnitPrice),
+            VoucherDiscount = await currentOrders.SumAsync(order => order.DiscountAmount),
+            ShippingRevenue = await currentOrders.SumAsync(order => order.ShippingFee),
             TotalOrders = await currentOrders.CountAsync(),
             TotalCustomers = await _db.Users.CountAsync(),
             DailyRevenue = dailyPoints,
@@ -107,13 +140,14 @@ public class AdminReportController : Controller
                 .Include(item => item.Product)
                 .WithRecognizedRevenue()
                 .Where(item => item.Order!.CreatedAt >= start && item.Order.CreatedAt < end)
-                .GroupBy(item => item.Product!.Name)
-                .Select(group => new TopProductViewModel { ProductName = group.Key, QuantitySold = group.Sum(item => item.Quantity), Revenue = group.Sum(item => item.Quantity * item.UnitPrice) })
+                .GroupBy(item => new { item.ProductId, item.Product!.Name })
+                .Select(group => new TopProductViewModel { ProductName = group.Key.Name, QuantitySold = group.Sum(item => item.Quantity), Revenue = group.Sum(item => item.Quantity * item.UnitPrice) })
                 .OrderByDescending(item => item.QuantitySold)
+                .ThenBy(item => item.ProductName)
                 .Take(10)
                 .ToListAsync()
         };
 
-        return View("~/Views/Admin/Report/Index.cshtml", model);
+        return model;
     }
 }

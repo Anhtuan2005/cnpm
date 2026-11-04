@@ -50,10 +50,10 @@
         }
 
         <label asp-for="CategoryId">Danh mục</label>
-        <select asp-for="CategoryId">
+        <select asp-for="CategoryId" onchange="document.querySelector('[data-phone-specifications]').hidden = this.selectedOptions[0].dataset.accessory === 'true'">
             @foreach (var category in Model.Categories)
             {
-                <option value="@category.Id">@category.Name</option>
+                <option value="@category.Id" data-accessory="@PhoneCatalogScope.IsAccessorySlug(category.Slug).ToString().ToLowerInvariant()">@category.Name</option>
             }
         </select>
         <span asp-validation-for="CategoryId"></span>
@@ -84,7 +84,7 @@
         @Html.ValidationMessage("imageFiles")
         <small class="form-hint">Chọn tối đa 8 ảnh. Ảnh upload sẽ được nén WebP và nối vào cuối thư viện.</small>
 
-        <fieldset class="admin-specifications">
+        <fieldset class="admin-specifications" data-phone-specifications hidden="@Model.Categories.Any(category => category.Id == Model.CategoryId && PhoneCatalogScope.IsAccessorySlug(category.Slug))">
             <legend>Thông số điện thoại</legend>
             <p class="form-hint">Nhập đúng cấu hình đang bán. Để trống thông tin chưa xác minh; thông số sẽ được dùng trên trang chi tiết và khi so sánh.</p>
             <div class="admin-spec-grid">
