@@ -28,15 +28,32 @@
 
         <section class="auth-card">
             <div class="auth-mode-switch" aria-label="Chuyển chế độ tài khoản">
-                <a class="active" asp-action="Login">Đăng nhập</a>
-                <a asp-action="Register" data-auth-switch>Đăng ký</a>
+                <a class="active" asp-controller="Account" asp-action="Login">Đăng nhập</a>
+                <a asp-controller="Account" asp-action="Register" data-auth-switch>Đăng ký</a>
             </div>
 
-            <form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" class="auth-form auth-form-animated">
+            <form asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" class="auth-form auth-form-animated">
                 @Html.AntiForgeryToken()
                 <h2>Chào mừng trở lại</h2>
                 <p class="auth-subtitle">Tiếp tục mua sắm tại Techvora.</p>
-                <div asp-validation-summary="ModelOnly" class="alert-error"></div>
+                @if (Model.Notice is { } notice)
+                {
+                    <div class="auth-login-alert @(notice.IsWarning ? "auth-login-alert--warning" : null)" role="alert">
+                        <svg class="auth-login-alert__icon" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 8v4m0 4h.01" />
+                        </svg>
+                        <div>
+                            <strong class="auth-login-alert__title">@notice.Title</strong>
+                            <p class="auth-login-alert__message">@notice.Message</p>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div asp-validation-summary="ModelOnly" class="alert-error" role="alert"></div>
+                }
 
                 <div class="field-group">
                     <label asp-for="Email">Email</label>
@@ -62,11 +79,11 @@
                         <input asp-for="RememberMe" type="checkbox" />
                         <span>Ghi nhớ đăng nhập</span>
                     </label>
-                    <a asp-action="ForgotPassword" class="link-muted">Quên mật khẩu?</a>
+                    <a asp-controller="Account" asp-action="ForgotPassword" class="link-muted">Quên mật khẩu?</a>
                 </div>
 
                 <button type="submit" class="btn-auth-submit">Đăng nhập</button>
-                <p class="auth-switch">Chưa có tài khoản? <a asp-action="Register" data-auth-switch>Đăng ký ngay</a></p>
+                <p class="auth-switch">Chưa có tài khoản? <a asp-controller="Account" asp-action="Register" data-auth-switch>Đăng ký ngay</a></p>
             </form>
         </section>
     </section>

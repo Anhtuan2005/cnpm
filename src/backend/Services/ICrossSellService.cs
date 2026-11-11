@@ -7,4 +7,6 @@ public interface ICrossSellService
 {
     Task<IReadOnlyDictionary<int, decimal>> GetEligibleUnitPricesAsync(IEnumerable<CartItem> cartItems, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<CrossSellSuggestionViewModel>> GetSuggestionsAsync(IEnumerable<CartItem> cartItems, int take = 4, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<AccessorySuggestion>> GetAfterPurchaseSuggestionsAsync(Order order, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<AccessorySuggestion>> GetSavedPhoneSuggestionsAsync(string userId, CancellationToken cancellationToken = default);
 }

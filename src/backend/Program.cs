@@ -1,5 +1,6 @@
 using EcommerceApp.Data;
 using EcommerceApp.Hubs;
+using EcommerceApp.Middleware;
 using EcommerceApp.Models;
 using EcommerceApp.Services;
 using Microsoft.AspNetCore.DataProtection;
@@ -85,7 +86,7 @@ builder.Services
         options.User.RequireUniqueEmail = true;
         options.Lockout.AllowedForNewUsers = true;
         options.Lockout.MaxFailedAccessAttempts = 5;
-        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(30);
     })
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
@@ -131,16 +132,36 @@ builder.Services.AddRateLimiter(options =>
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.OnRejected = async (context, token) =>
     {
-        context.HttpContext.Response.ContentType = "text/plain; charset=utf-8";
-        await context.HttpContext.Response.WriteAsync("Bạn thao tác quá nhanh. Vui lòng thử lại sau.", token);
+        var request = context.HttpContext.Request;
+        var response = context.HttpContext.Response;
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+            response.Headers.RetryAfter = Math.Max(1, Math.Ceiling(retryAfter.TotalSeconds)).ToString(CultureInfo.InvariantCulture);
+
+        // Let the existing status-page middleware render HTML for browser navigation.
+        if (request.GetTypedHeaders().Accept?.Any(value =>
+            value.Quality.GetValueOrDefault(1) > 0 &&
+            string.Equals(value.MediaType.Value, "text/html", StringComparison.OrdinalIgnoreCase)) == true)
+            return;
+
+        response.ContentType = "text/plain; charset=utf-8";
+        await response.WriteAsync("Bạn thao tác quá nhanh. Vui lòng thử lại sau.", token);
     };
 
     options.AddPolicy("login", httpContext => RateLimitPartition.GetFixedWindowLimiter(
         httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions
         {
+            PermitLimit = 20,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+
+    options.AddPolicy("admin-role-confirmation", httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous",
+        _ => new FixedWindowRateLimiterOptions
+        {
             PermitLimit = 5,
-            Window = TimeSpan.FromMinutes(10),
+            Window = TimeSpan.FromMinutes(5),
             QueueLimit = 0
         }));
 
@@ -192,6 +213,7 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IProductSpecService, ProductSpecService>();
 builder.Services.AddScoped<IProductInteractionService, ProductInteractionService>();
 builder.Services.AddScoped<IRecommendationService, RecommendationService>();
+builder.Services.AddScoped<WishlistViewState>();
 builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<ICrossSellService, CrossSellService>();
@@ -199,6 +221,7 @@ builder.Services.AddScoped<BuyNowService>();
 builder.Services.AddScoped<ICustomerSegmentService, CustomerSegmentService>();
 builder.Services.AddScoped<IAbandonedCartRecoveryService, AbandonedCartRecoveryService>();
 builder.Services.AddScoped<IUserNotificationService, UserNotificationService>();
+builder.Services.AddScoped<AccountLoginLockoutRecorder>();
 builder.Services.AddScoped<IReturnWarrantyRequestService, ReturnWarrantyRequestService>();
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
@@ -243,6 +266,7 @@ try
     app.UseForwardedHeaders();
     app.UseResponseCompression();
     app.UseSerilogRequestLogging();
+    app.UseMiddleware<RequestBodyTooLargeMiddleware>();
     if (!app.Environment.IsDevelopment())
     {
         app.UseHttpsRedirection();

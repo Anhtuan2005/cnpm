@@ -36,7 +36,7 @@ test('US-30 suggests discounted compatible accessories and restores retail price
   await page.goto('/Product');
   await page.locator('.nav-menu a', { hasText: 'Phụ kiện' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Phụ kiện điện thoại' })).toBeVisible();
-  await expect(page.locator('.product-card')).toHaveCount(7);
+  await expect(page.locator('.product-card')).toHaveCount(9);
   await expect(page.locator('[data-compare-product]')).toHaveCount(0);
   await page.screenshot({ path: '../../artifacts/accessories/catalog.png', fullPage: true, animations: 'disabled' });
   await page.setViewportSize({ width: 390, height: 844 });
@@ -47,4 +47,33 @@ test('US-30 suggests discounted compatible accessories and restores retail price
   await expect(page.getByRole('heading', { level: 1, name: 'Ốp lưng trong suốt iPhone 15 Pro' })).toBeVisible();
   await expect(page.locator('[data-compare-product]')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Mua ngay', exact: true })).toBeVisible();
+});
+
+test('delivered phone orders suggest compatible accessories with retail prices and product photos', async ({ page }) => {
+  await page.goto('/');
+  test.skip(Number(await page.locator('body').getAttribute('data-active-sprint')) < 3, 'Accessory suggestions open in Sprint 3');
+  await signInDemo(page);
+  await page.goto('/Order/History');
+  const delivered = page.locator('.order-card').filter({
+    has: page.locator('.order-status.completed')
+  }).filter({ hasText: 'iPhone 15 Pro' });
+  await delivered.getByRole('link', { name: 'Xem chi tiết', exact: true }).first().click();
+
+  const section = page.getByRole('region', { name: 'Phụ kiện cho điện thoại của bạn' });
+  await expect(section).toBeVisible();
+  const caseLink = section.getByRole('link', { name: /Ốp lưng trong suốt iPhone 15 Pro/ });
+  await expect(caseLink).toContainText(/99[,.]000/);
+  await expect(section.getByRole('link', { name: /Kính cường lực iPhone 15 Pro/ })).toBeVisible();
+  await expect(section.getByRole('link', { name: /Củ sạc GaN USB-C PD\/PPS 100W/ })).toBeVisible();
+  await expect(section.getByRole('link', { name: /Cáp USB-C sang USB-C/ })).toBeVisible();
+  await expect(section).not.toContainText(/Galaxy S24|Lightning/);
+  await expect(caseLink.locator('img')).toHaveAttribute('src', '/images/accessories/case-iphone-15-pro.webp');
+  await caseLink.scrollIntoViewIfNeeded();
+  await expect.poll(() => caseLink.locator('img').evaluate(image => image.naturalWidth)).toBeGreaterThan(0);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await section.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+  await section.screenshot({ path: '../../artifacts/after-purchase-accessories/order-accessories-mobile.png', animations: 'disabled' });
+  await caseLink.click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Ốp lưng trong suốt iPhone 15 Pro' })).toBeVisible();
 });

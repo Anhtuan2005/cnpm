@@ -1,46 +1,39 @@
-@model IEnumerable<ApplicationUser>
+@model AdminUserIndexViewModel
 @using System.Security.Claims
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Quản lý người dùng";
-    var roles = ViewBag.Roles as Dictionary<string, IList<string>> ?? new();
+    var now = DateTimeOffset.UtcNow;
 }
 
 <section class="admin-panel">
-    <div class="panel-head"><h2>Người dùng</h2></div>
-    <table class="admin-table">
+    <div class="panel-head">
+        <div>
+            <h2>Người dùng</h2>
+            <p>Có thể cấp quyền Admin cho tài khoản User đang hoạt động. Chọn Xem xét để kiểm tra tài khoản đang khoá.</p>
+        </div>
+    </div>
+    <table class="admin-table" data-admin-user-statuses-url="@Url.Action("Statuses")">
         <thead><tr><th>Họ tên</th><th>Email</th><th>Số điện thoại</th><th>Vai trò</th><th>Trạng thái</th><th></th></tr></thead>
         <tbody>
-            @foreach (var user in Model)
+            @foreach (var user in Model.Accounts)
             {
-                var userRoles = roles.GetValueOrDefault(user.Id) ?? new List<string>();
-                var locked = user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow;
+                var userRoles = Model.Roles.GetValueOrDefault(user.Id) ?? new List<string>();
+                var status = AdminUserLockStatus.From(user.AdminLockedAt, user.AdminLockUntil, user.LockoutEnabled, user.LockoutEnd, now);
                 var isSelf = user.Id == User.FindFirstValue(ClaimTypes.NameIdentifier);
-                <tr>
+                var isAdmin = userRoles.Contains("Admin");
+                <tr data-admin-user-id="@user.Id">
                     <td>@user.FullName</td>
                     <td>@user.Email</td>
                     <td>@user.PhoneNumber</td>
                     <td>@string.Join(", ", userRoles)</td>
-                    <td>@(locked ? "Đang khoá" : "Hoạt động")</td>
+                    <td data-admin-user-status>@status.Label</td>
                     <td class="actions-cell">
-                        <form action="/Admin/User/ToggleLock/@user.Id" method="post">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="locked" value="@((!locked).ToString().ToLowerInvariant())" />
-                            <button class="admin-link" type="submit" disabled="@isSelf">@(locked ? "Mở khoá" : "Khoá")</button>
-                        </form>
-                        @if (userRoles.Contains("Admin"))
+                        <a class="admin-link" asp-action="Review" asp-route-id="@user.Id">Xem xét</a>
+                        @if (!isSelf)
                         {
-                            <form action="/Admin/User/RemoveAdmin/@user.Id" method="post">
-                                @Html.AntiForgeryToken()
-                                <button class="danger-link" type="submit" disabled="@isSelf">Gỡ Admin</button>
-                            </form>
-                        }
-                        else
-                        {
-                            <form action="/Admin/User/MakeAdmin/@user.Id" method="post">
-                                @Html.AntiForgeryToken()
-                                <button class="admin-link" type="submit">Cấp Admin</button>
-                            </form>
+                            <a class="admin-link" asp-action="ConfirmRole" asp-route-id="@user.Id"
+                               data-admin-grant="@(isAdmin ? null : "true")" hidden="@(!isAdmin && status.IsLocked)">@(isAdmin ? "Gỡ Admin" : "Cấp Admin")</a>
                         }
                     </td>
                 </tr>

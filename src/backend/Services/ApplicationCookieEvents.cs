@@ -12,7 +12,7 @@ public sealed class ApplicationCookieEvents(
     {
         // Validate on every authenticated request so admin locks/revocations take effect on the next request.
         var user = await signInManager.ValidateSecurityStampAsync(context.Principal);
-        if (user is null || await users.IsLockedOutAsync(user))
+        if (user is null || user.IsAdminLocked(DateTimeOffset.UtcNow) || await users.IsLockedOutAsync(user))
         {
             context.RejectPrincipal();
             await context.HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);

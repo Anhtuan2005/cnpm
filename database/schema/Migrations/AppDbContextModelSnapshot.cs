@@ -74,6 +74,57 @@ namespace EcommerceApp.Data.Migrations
                     b.ToTable("AbandonedCartReminders");
                 });
 
+            modelBuilder.Entity("EcommerceApp.Models.AccountAccessEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ActorId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ActorName")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<DateTimeOffset?>("AdminLockUntil")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("nvarchar(24)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)");
+
+                    b.Property<DateTimeOffset?>("TemporaryLockUntil")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Id");
+
+                    b.HasIndex("UserId", "TemporaryLockUntil")
+                        .IsUnique()
+                        .HasFilter("[TemporaryLockUntil] IS NOT NULL");
+
+                    b.ToTable("AccountAccessEvents");
+                });
+
             modelBuilder.Entity("EcommerceApp.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -85,6 +136,12 @@ namespace EcommerceApp.Data.Migrations
                     b.Property<string>("Address")
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");
+
+                    b.Property<DateTimeOffset?>("AdminLockUntil")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("AdminLockedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -461,6 +518,7 @@ namespace EcommerceApp.Data.Migrations
 
                     b.Property<string>("CustomerReceiptStatus")
                         .IsRequired()
+                        .ValueGeneratedOnAdd()
                         .HasMaxLength(40)
                         .HasColumnType("nvarchar(40)")
                         .HasDefaultValue("Chờ khách xác nhận");
@@ -576,6 +634,7 @@ namespace EcommerceApp.Data.Migrations
 
                     b.Property<string>("RefundReceiptStatus")
                         .IsRequired()
+                        .ValueGeneratedOnAdd()
                         .HasMaxLength(40)
                         .HasColumnType("nvarchar(40)")
                         .HasDefaultValue("Chờ khách xác nhận");

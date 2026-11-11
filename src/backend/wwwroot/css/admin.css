@@ -982,6 +982,9 @@ input[type="checkbox"] {
 .admin-link {
   color: var(--adm-accent-ink);
 }
+.admin-link[data-admin-grant][hidden] {
+  display: none;
+}
 .admin-link:hover {
   background: var(--adm-accent-soft);
   border-color: oklch(0.84 0.05 245);

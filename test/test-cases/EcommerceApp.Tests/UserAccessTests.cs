@@ -1,10 +1,12 @@
 using EcommerceApp.Data;
+using EcommerceApp.Hubs;
 using EcommerceApp.Models;
 using EcommerceApp.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -17,6 +19,9 @@ namespace EcommerceApp.Tests;
 [Collection("SqlServer")]
 public sealed class UserAccessTests(SqlServerFixture fixture)
 {
+    private const string Reason = "Xác minh tài khoản trong môi trường kiểm thử.";
+    private const string Password = "Original123";
+
     [Fact]
     public async Task Lock_and_unlock_revoke_old_cookies_and_only_new_login_is_accepted()
     {
@@ -28,12 +33,64 @@ public sealed class UserAccessTests(SqlServerFixture fixture)
         var factory = new MinimalUserClaimsPrincipalFactory(users, Options.Create(new IdentityOptions()));
         var cookie = await factory.CreateAsync(user);
         var access = Access(services);
-        Assert.True((await access.SetLockAsync(admin.Id, user.Id, true)).Succeeded);
+        Assert.False((await access.SetLockAsync(admin.Id, user.Id, true, "  ", AdminLockDuration.Indefinite)).Succeeded);
+        Assert.True(await CookieAcceptedAsync(services, cookie));
+        Assert.True((await access.SetLockAsync(admin.Id, user.Id, true, Reason, AdminLockDuration.Indefinite)).Succeeded);
         Assert.False(await CookieAcceptedAsync(services, cookie));
-        Assert.True((await access.SetLockAsync(admin.Id, user.Id, false)).Succeeded);
+        var lockedUser = (await users.FindByIdAsync(user.Id))!;
+        Assert.Null(lockedUser.AdminLockUntil);
+        Assert.True(lockedUser.IsAdminLocked(DateTimeOffset.UtcNow.AddYears(20)));
+        Assert.True((await access.SetLockAsync(admin.Id, user.Id, false, Reason)).Succeeded);
         Assert.False(await CookieAcceptedAsync(services, cookie));
         var currentUser = (await users.FindByIdAsync(user.Id))!;
+        Assert.Null(currentUser.AdminLockedAt);
         Assert.True(await CookieAcceptedAsync(services, await factory.CreateAsync(currentUser)));
+        var history = await services.GetRequiredService<AppDbContext>().AccountAccessEvents
+            .Where(entry => entry.UserId == user.Id).OrderBy(entry => entry.Id).ToListAsync();
+        Assert.Equal(new[] { AccountAccessEventKinds.AdminLock, AccountAccessEventKinds.Unlock }, history.Select(entry => entry.Kind));
+        Assert.All(history, entry =>
+        {
+            Assert.Equal(admin.Id, entry.ActorId);
+            Assert.Equal(Reason, entry.Reason);
+        });
+    }
+
+    [Fact]
+    public async Task Manual_lock_requires_an_explicit_duration_and_ends_without_reviving_old_sessions()
+    {
+        await using var scope = fixture.Services.CreateAsyncScope();
+        var services = scope.ServiceProvider;
+        var admin = await CreateAdminAsync(services);
+        var user = await SqlServerFixture.CreateUserAsync(services);
+        var db = services.GetRequiredService<AppDbContext>();
+        var users = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var factory = new MinimalUserClaimsPrincipalFactory(users, Options.Create(new IdentityOptions()));
+        var oldCookie = await factory.CreateAsync(user);
+        var access = Access(services);
+
+        Assert.False((await access.SetLockAsync(admin.Id, user.Id, true, Reason)).Succeeded);
+        Assert.False((await access.SetLockAsync(admin.Id, user.Id, true, Reason, (AdminLockDuration)999)).Succeeded);
+        Assert.True(await CookieAcceptedAsync(services, oldCookie));
+
+        var before = DateTimeOffset.UtcNow;
+        Assert.True((await access.SetLockAsync(admin.Id, user.Id, true, Reason, AdminLockDuration.OneWeek)).Succeeded);
+        var locked = await db.Users.AsNoTracking().SingleAsync(account => account.Id == user.Id);
+        var until = Assert.IsType<DateTimeOffset>(locked.AdminLockUntil);
+        Assert.InRange(until, before.AddDays(7), DateTimeOffset.UtcNow.AddDays(7));
+        Assert.Equal(until, locked.LockoutEnd);
+        Assert.False(await CookieAcceptedAsync(services, oldCookie));
+        Assert.False((await access.SetAdminAsync(admin.Id, user.Id, true, Reason, Password)).Succeeded);
+        var audit = Assert.Single(await db.AccountAccessEvents.Where(entry => entry.UserId == user.Id).ToListAsync());
+        Assert.Equal(until, audit.AdminLockUntil);
+
+        var past = DateTimeOffset.UtcNow.AddMinutes(-1);
+        await db.Users.Where(account => account.Id == user.Id).ExecuteUpdateAsync(setters => setters
+            .SetProperty(account => account.AdminLockUntil, past)
+            .SetProperty(account => account.LockoutEnd, past));
+        var expired = await db.Users.AsNoTracking().SingleAsync(account => account.Id == user.Id);
+        Assert.False(await CookieAcceptedAsync(services, oldCookie));
+        Assert.True(await CookieAcceptedAsync(services, await factory.CreateAsync(expired)));
+        Assert.True((await access.SetAdminAsync(admin.Id, user.Id, true, Reason, Password)).Succeeded);
     }
 
     [Fact]
@@ -57,13 +114,13 @@ public sealed class UserAccessTests(SqlServerFixture fixture)
         var first = await CreateAdminAsync(services);
         var second = await CreateAdminAsync(services);
         var access = Access(services);
-        Assert.False((await access.SetLockAsync(first.Id, first.Id, true)).Succeeded);
-        Assert.False((await access.SetAdminAsync(first.Id, first.Id, false)).Succeeded);
+        Assert.False((await access.SetLockAsync(first.Id, first.Id, true, Reason, AdminLockDuration.Indefinite)).Succeeded);
+        Assert.False((await access.SetAdminAsync(first.Id, first.Id, false, Reason, Password)).Succeeded);
         var users = services.GetRequiredService<UserManager<ApplicationUser>>();
         var oldCookie = await new MinimalUserClaimsPrincipalFactory(users, Options.Create(new IdentityOptions())).CreateAsync(first);
-        Assert.True((await access.SetAdminAsync(second.Id, first.Id, false)).Succeeded);
+        Assert.True((await access.SetAdminAsync(second.Id, first.Id, false, Reason, Password)).Succeeded);
         Assert.False(await CookieAcceptedAsync(services, oldCookie));
-        Assert.False((await access.SetAdminAsync(first.Id, second.Id, false)).Succeeded);
+        Assert.False((await access.SetAdminAsync(first.Id, second.Id, false, Reason, Password)).Succeeded);
         Assert.True(await users.IsInRoleAsync((await users.FindByIdAsync(second.Id))!, "Admin"));
     }
 
@@ -82,9 +139,85 @@ public sealed class UserAccessTests(SqlServerFixture fixture)
         {
             await using var scope = fixture.Services.CreateAsyncScope();
             var access = Access(scope.ServiceProvider);
-            return (lockAccounts ? await access.SetLockAsync(actor, target, true) : await access.SetAdminAsync(actor, target, false)).Succeeded;
+            return (lockAccounts
+                ? await access.SetLockAsync(actor, target, true, Reason, AdminLockDuration.Indefinite)
+                : await access.SetAdminAsync(actor, target, false, Reason, Password)).Succeeded;
         }
         Assert.Single(await Task.WhenAll(RevokeAsync(firstId, secondId), RevokeAsync(secondId, firstId)), succeeded => succeeded);
+    }
+
+    [Fact]
+    public async Task Changing_admin_role_requires_the_actors_password_and_records_only_successful_changes()
+    {
+        await using var scope = fixture.Services.CreateAsyncScope();
+        var services = scope.ServiceProvider;
+        var admin = await CreateAdminAsync(services);
+        var user = await SqlServerFixture.CreateUserAsync(services);
+        var users = services.GetRequiredService<UserManager<ApplicationUser>>();
+        Assert.True((await users.ChangePasswordAsync(user, Password, "OtherPassword123")).Succeeded);
+        var access = Access(services);
+        var factory = new MinimalUserClaimsPrincipalFactory(users, Options.Create(new IdentityOptions()));
+        var oldCookie = await factory.CreateAsync(user);
+
+        Assert.False((await access.SetAdminAsync(admin.Id, user.Id, true, null, Password)).Succeeded);
+        Assert.False((await access.SetAdminAsync(admin.Id, user.Id, true, Reason, null)).Succeeded);
+        Assert.False((await access.SetAdminAsync(admin.Id, user.Id, true, Reason, "OtherPassword123")).Succeeded);
+        Assert.True(await CookieAcceptedAsync(services, oldCookie));
+
+        Assert.True((await access.SetAdminAsync(admin.Id, user.Id, true, Reason, Password)).Succeeded);
+        Assert.False(await CookieAcceptedAsync(services, oldCookie));
+        var promoted = (await users.FindByIdAsync(user.Id))!;
+        Assert.True(await users.IsInRoleAsync(promoted, "Admin"));
+        var promotedCookie = await factory.CreateAsync(promoted);
+
+        Assert.False((await access.SetAdminAsync(admin.Id, user.Id, false, Reason, "incorrect")).Succeeded);
+        Assert.True(await CookieAcceptedAsync(services, promotedCookie));
+        Assert.True((await access.SetAdminAsync(admin.Id, user.Id, false, Reason, Password)).Succeeded);
+        Assert.False(await CookieAcceptedAsync(services, promotedCookie));
+        Assert.False(await users.IsInRoleAsync((await users.FindByIdAsync(user.Id))!, "Admin"));
+
+        var history = await services.GetRequiredService<AppDbContext>().AccountAccessEvents
+            .Where(entry => entry.UserId == user.Id).OrderBy(entry => entry.Id).ToListAsync();
+        Assert.Equal(new[] { AccountAccessEventKinds.GrantAdmin, AccountAccessEventKinds.RevokeAdmin }, history.Select(entry => entry.Kind));
+        Assert.All(history, entry => Assert.Equal(Reason, entry.Reason));
+    }
+
+    [Fact]
+    public async Task Login_lockout_is_recorded_once_in_account_history_and_stays_out_of_the_general_inbox()
+    {
+        await using var scope = fixture.Services.CreateAsyncScope();
+        var services = scope.ServiceProvider;
+        var admin = await CreateAdminAsync(services);
+        var user = await SqlServerFixture.CreateUserAsync(services);
+        var db = services.GetRequiredService<AppDbContext>();
+        var users = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var notifications = new UserNotificationService(db, users, Mock.Of<IHubContext<AdminNotificationHub>>(),
+            NullLogger<UserNotificationService>.Instance);
+        var lockouts = new AccountLoginLockoutRecorder(db);
+        var end = DateTimeOffset.UtcNow.AddMinutes(15);
+        Assert.True((await users.SetLockoutEndDateAsync(user, end)).Succeeded);
+
+        await lockouts.RecordAsync(user.Id, end, 5);
+        await lockouts.RecordAsync(user.Id, end, 5);
+
+        var recorded = Assert.Single(await db.AccountAccessEvents.Where(entry => entry.UserId == user.Id).ToListAsync());
+        Assert.Equal(AccountAccessEventKinds.LoginLockout, recorded.Kind);
+        Assert.Equal(end, recorded.TemporaryLockUntil);
+        Assert.False(await db.UserNotifications.AnyAsync(entry => entry.UserId == admin.Id || entry.UserId == user.Id));
+        Assert.Null((await users.FindByIdAsync(user.Id))!.AdminLockedAt);
+        Assert.True((await Access(services).SetLockAsync(admin.Id, user.Id, true, Reason, AdminLockDuration.Indefinite)).Succeeded);
+        Assert.NotNull((await users.FindByIdAsync(user.Id))!.AdminLockedAt);
+
+        var link = $"/Admin/User/Review/{user.Id}";
+        await notifications.CreateAsync(admin.Id, "Cảnh báo đăng nhập bất thường", "Cảnh báo cũ", NotificationTypes.System, link);
+        await notifications.CreateAsync(admin.Id, "Đơn hàng mới", "Một đơn mẫu", NotificationTypes.Order, "/Admin/Order/1");
+        var legacy = await db.UserNotifications.SingleAsync(entry => entry.UserId == admin.Id && entry.LinkUrl == link);
+        Assert.Equal(1, await notifications.GetUnreadCountAsync(admin.Id));
+        Assert.Equal("Đơn hàng mới", Assert.Single(await notifications.GetAllAsync(admin.Id)).Title);
+        Assert.Null(await notifications.GetAsync(legacy.Id, admin.Id));
+        await notifications.MarkAllAsReadAsync(admin.Id);
+        Assert.Equal(0, await notifications.GetUnreadCountAsync(admin.Id));
+        Assert.False((await db.UserNotifications.AsNoTracking().SingleAsync(entry => entry.Id == legacy.Id)).IsRead);
     }
 
     private static AdminUserAccessService Access(IServiceProvider services) => new(

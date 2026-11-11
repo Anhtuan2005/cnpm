@@ -133,37 +133,38 @@ function initProductCompare() {
     refreshIcons();
   }
 
-  document.querySelectorAll("[data-compare-product]").forEach(function (button) {
-    button.addEventListener("click", function (event) {
-      event.preventDefault();
-      event.stopPropagation();
-      var id = Number(button.dataset.compareProduct);
-      var existingIndex = selected.findIndex(function (item) { return item.id === id; });
-      if (existingIndex >= 0) {
-        selected.splice(existingIndex, 1);
-      } else if (selected.length >= 2) {
-        showToast("Bạn chỉ có thể so sánh 2 sản phẩm.", "error");
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest("[data-compare-product]");
+    if (!button) return;
+    event.preventDefault();
+    event.stopPropagation();
+    var id = Number(button.dataset.compareProduct);
+    var existingIndex = selected.findIndex(function (item) { return item.id === id; });
+    if (existingIndex >= 0) {
+      selected.splice(existingIndex, 1);
+    } else if (selected.length >= 2) {
+      showToast("Bạn chỉ có thể so sánh 2 sản phẩm.", "error");
+      return;
+    } else {
+      var categoryId = Number(button.dataset.compareCategoryId);
+      var categorySlug = String(button.dataset.compareCategorySlug || "");
+      if (selected.length > 0 && !canCompare(selected[0], categoryId, categorySlug)) {
+        showToast("Chỉ có thể so sánh các sản phẩm cùng loại.", "error");
         return;
-      } else {
-        var categoryId = Number(button.dataset.compareCategoryId);
-        var categorySlug = String(button.dataset.compareCategorySlug || "");
-        if (selected.length > 0 && !canCompare(selected[0], categoryId, categorySlug)) {
-          showToast("Chỉ có thể so sánh các sản phẩm cùng loại.", "error");
-          return;
-        }
-        selected.push({
-          id: id,
-          name: button.dataset.compareName || "Sản phẩm",
-          image: button.dataset.compareImage || "/images/placeholder.svg",
-          categoryId: categoryId,
-          categoryName: button.dataset.compareCategoryName || "danh mục này",
-          categorySlug: categorySlug
-        });
       }
-      writeSelection();
-      render();
-    });
+      selected.push({
+        id: id,
+        name: button.dataset.compareName || "Sản phẩm",
+        image: button.dataset.compareImage || "/images/placeholder.svg",
+        categoryId: categoryId,
+        categoryName: button.dataset.compareCategoryName || "danh mục này",
+        categorySlug: categorySlug
+      });
+    }
+    writeSelection();
+    render();
   });
+  document.addEventListener("recommendations:updated", render);
 
   if (itemsRoot) {
     itemsRoot.addEventListener("click", function (event) {

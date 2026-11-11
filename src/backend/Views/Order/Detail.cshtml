@@ -169,6 +169,14 @@
                     }
                 </div>
             </section>
+            @if (ViewData["OrderAccessories"] is IReadOnlyList<AccessorySuggestion> { Count: > 0 } accessories)
+            {
+                <section class="order-panel order-accessories" aria-labelledby="order-accessories-heading">
+                    <h2 id="order-accessories-heading">Phụ kiện cho điện thoại của bạn</h2>
+                    <p>Gợi ý theo mẫu máy trong đơn. Giá hiển thị áp dụng khi mua riêng.</p>
+                    <partial name="_AccessorySuggestionList" model="accessories" />
+                </section>
+            }
         </main>
 
         <aside class="order-detail-side">

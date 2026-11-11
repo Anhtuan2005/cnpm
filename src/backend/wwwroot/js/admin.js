@@ -7,8 +7,55 @@ document.addEventListener("DOMContentLoaded", function () {
   initReportCharts();
   initBannerSort();
   initOrderNotifications();
+  initAdminUserStatuses();
   initGhnAddressForms();
 });
+
+function initAdminUserStatuses() {
+  var table = document.querySelector("[data-admin-user-statuses-url]");
+  if (!table) return;
+
+  var rows = new Map();
+  table.querySelectorAll("[data-admin-user-id]").forEach(function (row) {
+    rows.set(row.dataset.adminUserId, {
+      status: row.querySelector("[data-admin-user-status]"),
+      grant: row.querySelector("[data-admin-grant]")
+    });
+  });
+  if (!rows.size) return;
+
+  async function refreshStatuses() {
+    var response = await fetch(table.dataset.adminUserStatusesUrl, {
+      headers: { Accept: "application/json" },
+      cache: "no-store"
+    });
+    if (!response.ok || response.redirected) return;
+    var accounts = await response.json();
+    accounts.forEach(function (account) {
+      var row = rows.get(account.id);
+      if (!row) return;
+      row.status.textContent = account.status.label;
+      if (row.grant) row.grant.hidden = account.status.isLocked;
+    });
+  }
+
+  var loading = false;
+  async function refresh() {
+    if (document.hidden || loading) return;
+    loading = true;
+    try {
+      await refreshStatuses();
+    } catch {
+      // Retry the status update on the next refresh.
+    } finally {
+      loading = false;
+    }
+  }
+
+  window.setInterval(refresh, 10000);
+  document.addEventListener("visibilitychange", refresh);
+  window.addEventListener("focus", refresh);
+}
 
 function initAdminConfirm() {
   document.querySelectorAll("[data-confirm]").forEach(function (form) {

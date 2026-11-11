@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
   initCountUp();
   initProductInteractionTracking();
   initWishlist();
+  initHomeRecommendations();
   initProductCompare();
   initCartOfferModal();
   initCartButtons();

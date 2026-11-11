@@ -58,15 +58,76 @@ public class CrossSellService : ICrossSellService
             }).ToList();
     }
 
+    public Task<IReadOnlyList<AccessorySuggestion>> GetAfterPurchaseSuggestionsAsync(
+        Order order, CancellationToken cancellationToken = default)
+    {
+        if (order.Status != OrderStatuses.Delivered
+            || order.RefundStatus is RefundStatuses.PendingManual or RefundStatuses.Refunded)
+            return Task.FromResult<IReadOnlyList<AccessorySuggestion>>([]);
+
+        var purchasedIds = order.Items.Select(item => item.ProductId).ToHashSet();
+        return GetRetailSuggestionsAsync(purchasedIds, purchasedIds, 8, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<AccessorySuggestion>> GetSavedPhoneSuggestionsAsync(
+        string userId, CancellationToken cancellationToken = default)
+    {
+        var catalog = _catalogScope?.Products(_db.Products) ?? _db.Products;
+        var phoneIds = PhoneCatalogScope.OnlyPhones(catalog).Select(product => product.Id);
+        var savedPhone = await _db.WishlistItems
+            .Where(item => item.UserId == userId && phoneIds.Contains(item.ProductId))
+            .OrderByDescending(item => item.AddedAt)
+            .ThenByDescending(item => item.Id)
+            .Select(item => new { item.ProductId, item.Product!.Name })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (savedPhone is null) return [];
+
+        var compatible = await GetRetailSuggestionsAsync([savedPhone.ProductId], [], 6, cancellationToken);
+        if (compatible.Count > 0) return compatible;
+
+        var earbuds = await PhoneCatalogScope.OnlyAccessories(catalog).AsNoTracking()
+            .Include(product => product.Images)
+            .Where(product => product.Name == PhoneAccessoryCatalog.UniversalEarbudsName && product.Stock > 0)
+            .OrderBy(product => product.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return earbuds is null
+            ? []
+            : [new AccessorySuggestion(earbuds.Id, earbuds.Name, savedPhone.Name, earbuds.PrimaryImageUrl, earbuds.SalePrice)];
+    }
+
+    private async Task<IReadOnlyList<AccessorySuggestion>> GetRetailSuggestionsAsync(
+        IReadOnlyCollection<int> phoneIds, IReadOnlyCollection<int> excludedIds, int take, CancellationToken cancellationToken)
+    {
+        var offers = await CompatibleOffers().AsNoTracking()
+            .Include(offer => offer.AnchorProduct)
+            .Include(offer => offer.AddOnProduct).ThenInclude(product => product!.Images)
+            .Where(offer => phoneIds.Contains(offer.AnchorProductId) && !excludedIds.Contains(offer.AddOnProductId))
+            .OrderBy(offer => offer.Id)
+            .ToListAsync(cancellationToken);
+
+        return offers.DistinctBy(offer => offer.AddOnProductId)
+            .Take(take)
+            .Select(offer => new AccessorySuggestion(
+                offer.AddOnProductId, offer.AddOnProduct!.Name, offer.AnchorProduct!.Name,
+                offer.AddOnProduct.PrimaryImageUrl, offer.AddOnProduct.SalePrice))
+            .ToList();
+    }
+
+    private IQueryable<CrossSellOffer> CompatibleOffers()
+    {
+        var catalog = _catalogScope?.Products(_db.Products) ?? _db.Products;
+        var phones = PhoneCatalogScope.OnlyPhones(catalog).Select(product => product.Id);
+        var accessories = PhoneCatalogScope.OnlyAccessories(catalog).Where(product => product.Stock > 0).Select(product => product.Id);
+        return _db.CrossSellOffers.Where(offer => offer.IsActive
+            && phones.Contains(offer.AnchorProductId) && accessories.Contains(offer.AddOnProductId));
+    }
+
     private IQueryable<CrossSellOffer> ActiveOffers()
     {
         var now = DateTime.UtcNow;
-        var catalog = _catalogScope?.Products(_db.Products) ?? _db.Products;
-        var phones = PhoneCatalogScope.OnlyPhones(catalog).Where(product => product.Stock > 0).Select(product => product.Id);
-        var accessories = PhoneCatalogScope.OnlyAccessories(catalog).Where(product => product.Stock > 0).Select(product => product.Id);
-        return _db.CrossSellOffers.Where(offer => offer.IsActive
+        return CompatibleOffers().Where(offer => offer.AnchorProduct!.Stock > 0
             && offer.DiscountPercent >= 1 && offer.DiscountPercent <= 90
-            && phones.Contains(offer.AnchorProductId) && accessories.Contains(offer.AddOnProductId)
             && (offer.StartDate == null || offer.StartDate <= now)
             && (offer.EndDate == null || offer.EndDate >= now));
     }

@@ -7,7 +7,7 @@ Phạm vi lấy từ `T4_B3_Nhom3.xlsx`, sheet `Sprint backlog`, A33:B40: toàn 
 | Story | Luồng sử dụng |
 | --- | --- |
 | US-18 | Admin → Đổi trả/Bảo hành: lọc yêu cầu, xem ảnh, chuyển trạng thái hợp lệ, ghi chú và gửi thông báo cho khách. Từ thông báo đơn hàng có thể mở thẳng nút xử lý yêu cầu. Yêu cầu đã đóng giữ nguyên dữ liệu; xử lý bảo hành không tự đánh dấu hoàn tiền. |
-| US-20 | Admin → Người dùng: cấp/gỡ Admin, khóa/mở tài khoản. Quyền hoặc khóa mới làm mất hiệu lực cookie cũ; bảo vệ tài khoản admin đang thao tác và admin cuối cùng. |
+| US-20 | Khách thấy số lượt còn lại sau mỗi lần sai. Lần sai thứ 5 tự khoá tạm 30 phút. Bảng Người dùng cập nhật thời điểm hết khoá. Admin chọn Xem xét, ghi lý do và chọn thời hạn khoá thủ công từ 24 giờ đến 90 ngày hoặc không thời hạn. Cấp Admin bắt đầu từ danh sách Người dùng. Cấp/gỡ quyền cần mật khẩu của admin đang thao tác và lý do. Thay đổi thu hồi phiên cũ của tài khoản được xử lý. |
 | US-26 | Admin → Voucher: tạo/sửa/bật/tắt/xóa mã chưa dùng, chọn nhóm áp dụng. Nhóm khách gồm khách mới, VIP (từ 3 đơn hợp lệ hoặc 20 triệu đồng), lâu không mua (60 ngày). Giá khuyến mãi nằm ở sửa sản phẩm; checkout tính lại giá và điều kiện voucher tại server. |
 | US-29 | Admin → Báo cáo: lọc 7/30 ngày, 3 tháng/1 năm hoặc tùy chọn; xem doanh thu theo ngày, danh mục, top sản phẩm và tải CSV cùng bộ lọc. |
 | US-28 | Trang chủ và chi tiết sản phẩm: gợi ý theo tương tác, giỏ, yêu thích và lịch sử mua; chỉ điện thoại còn hàng. Người mới có danh mục dự phòng. Không dùng lịch sử cá nhân của tài khoản khác trên cùng session. |
@@ -24,7 +24,7 @@ $env:Release__ActiveSprint = '3'
 dotnet run --project src/backend/EcommerceApp.csproj --launch-profile http
 ```
 
-Không thêm migration mới; các bảng Sprint 3 đã có trong lịch sử migration. Với database mới, chạy `dotnet tool run dotnet-ef database update --project src/backend/EcommerceApp.csproj` trước khi chạy. Không dùng database nghiệp vụ cho smoke test: bật `Demo:Enabled=true` trên database riêng để có tài khoản demo, đơn mẫu, giá khuyến mãi và cặp điện thoại mua kèm.
+Chạy `dotnet tool run dotnet-ef database update --project src/backend/EcommerceApp.csproj` để cập nhật database, bao gồm migration `AddAccountAccessReview` cho lịch sử và phân biệt khoá thủ công. Bật `Demo:Enabled=true` trên database riêng để có tài khoản demo, đơn mẫu, giá khuyến mãi và cặp điện thoại mua kèm.
 
 AI tùy chọn: cấu hình `Gemini:ApiKey` bằng User Secrets hoặc biến môi trường, giữ model được tài khoản Gemini hỗ trợ trong `Gemini:Model`. Khóa không gửi ra trình duyệt. Luồng tư vấn danh mục hoạt động mà không cần dịch vụ ngoài. Ngày 29/10/2026 đã lưu key local bằng User Secrets và xác nhận gọi thật `gemini-3.5-flash`: cả API Google và `/AiChat/Ask` trả HTTP 200, câu trả lời tư vấn kèm liên kết sản phẩm thật, không dùng chế độ danh mục dự phòng. Key nằm ngoài repository; các file `.env.*`, `secrets.json` và cấu hình local được bỏ qua bởi Git.
 
@@ -47,7 +47,7 @@ Quay về Sprint 2: đặt `Release:ActiveSprint=2`, khởi động lại. Route
 3. Admin xác nhận, giao hàng; khách mở đơn đã giao và gửi yêu cầu bảo hành.
 4. Admin mở thông báo → đơn hàng → xử lý yêu cầu. Chuyển Đang xử lý → Đã duyệt → Hoàn tất, nhập ghi chú. Khách xem trạng thái và thông báo tương ứng.
 5. Mở Báo cáo, chọn kỳ và xuất CSV. So sánh tiền hàng, voucher, vận chuyển và tổng đơn; kiểm tra đơn hủy/hoàn bị loại.
-6. Thử chatbot “Samsung dưới 10 triệu”, mở sản phẩm được gợi ý. Thử khóa/mở một tài khoản khách khác ở màn hình Người dùng.
+6. Thử chatbot “Samsung dưới 10 triệu” và mở sản phẩm được gợi ý. Sau năm lần đăng nhập sai trên tài khoản thử, mở **Người dùng** để kiểm tra thời điểm hết khoá và chọn **Xem xét** để đọc lịch sử. Với tài khoản User đang hoạt động, thử **Cấp Admin** với mật khẩu xác nhận sai, sau đó dùng mật khẩu của admin đang thao tác để xác nhận, rồi gỡ quyền sau khi thử.
 7. Kiểm thử nhắc giỏ bằng dữ liệu fixture trong test, không cần chờ 24 giờ hay gửi email thật.
 
 ## Kiểm thử

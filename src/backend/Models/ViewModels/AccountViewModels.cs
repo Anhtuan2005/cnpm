@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace EcommerceApp.Models.ViewModels;
 
@@ -14,7 +15,12 @@ public class LoginViewModel
 
     [Display(Name = "Ghi nhớ đăng nhập")]
     public bool RememberMe { get; set; }
+
+    [BindNever]
+    public LoginNotice? Notice { get; set; }
 }
+
+public sealed record LoginNotice(string Title, string Message, bool IsWarning);
 
 public class RegisterViewModel
 {

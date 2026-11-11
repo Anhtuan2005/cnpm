@@ -127,21 +127,19 @@
         </div>
     </section>
 
-    @if (SprintFeatures.IsEnabled(3) && Model.PersonalizedProducts.Any())
+    @if (SprintFeatures.IsEnabled(3))
     {
-        <section class="section reveal">
+        <section class="section reveal" data-home-recommendations hidden="@(!Model.Recommendations.HasResults)">
             <div class="section-heading tech-heading">
                 <div>
                     <span class="eyebrow">Gợi ý thông minh</span>
-                    <h2>Dành riêng cho bạn</h2>
+                    <h2 id="recommendations-heading" tabindex="-1">Dành riêng cho bạn</h2>
                 </div>
                 <a asp-controller="Product" asp-action="Index">Khám phá thêm</a>
             </div>
-            <div class="product-grid">
-                @foreach (var product in Model.PersonalizedProducts)
-                {
-                    <partial name="_ProductCard" model="product" />
-                }
+            <p class="recommendation-status" data-recommendation-status role="status"></p>
+            <div data-recommendation-url="@Url.Action("Recommendations", "Home")">
+                <partial name="_HomeRecommendations" model="Model.Recommendations" />
             </div>
         </section>
     }

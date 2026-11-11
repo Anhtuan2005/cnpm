@@ -3,17 +3,16 @@
 @inject EcommerceApp.Services.IUserNotificationService NotificationService
 @inject EcommerceApp.Data.AppDbContext Db
 @inject EcommerceApp.Services.ICatalogScope CatalogScope
+@inject WishlistViewState WishlistState
 @{
     var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
     var isAuthenticated = User.Identity?.IsAuthenticated == true;
     var isAdminViewer = User.IsInRole("Admin");
     var cartCount = isAdminViewer ? 0 : await CartService.GetCountAsync(userId, Context.Session.Id);
-    var allowedWishlistIds = CatalogScope.Products(Db.Products).Select(product => product.Id);
     var accessoryCategoryId = SprintFeatures.IsEnabled(3)
         ? await CatalogScope.Categories(Db.Categories).Where(category => category.Slug == PhoneCatalogScope.AccessoryRootSlug)
             .Select(category => (int?)category.Id).FirstOrDefaultAsync() : null;
-    var wishlistCount = isAdminViewer || string.IsNullOrWhiteSpace(userId) ? 0 : await Db.WishlistItems.CountAsync(item => item.UserId == userId
-        && allowedWishlistIds.Contains(item.ProductId));
+    var wishlistCount = (await WishlistState.GetProductIdsAsync()).Count;
     var notificationCount = SprintFeatures.IsEnabled(2) && isAuthenticated && !string.IsNullOrWhiteSpace(userId)
         ? await NotificationService.GetUnreadCountAsync(userId)
         : 0;

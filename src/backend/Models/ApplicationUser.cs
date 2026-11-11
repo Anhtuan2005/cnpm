@@ -10,4 +10,12 @@ public class ApplicationUser : IdentityUser
 
     [StringLength(250)]
     public string? Address { get; set; }
+
+    public DateTimeOffset? AdminLockedAt { get; set; }
+    public DateTimeOffset? AdminLockUntil { get; set; }
+
+    public bool IsAdminLocked(DateTimeOffset now) => IsAdminLockActive(AdminLockedAt, AdminLockUntil, now);
+
+    public static bool IsAdminLockActive(DateTimeOffset? lockedAt, DateTimeOffset? until, DateTimeOffset now) =>
+        lockedAt.HasValue && (until is null || until > now);
 }

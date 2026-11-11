@@ -8,14 +8,32 @@ function initFlashToasts() {
   });
 }
 
-function showToast(message, type) {
+function showToast(message, type, action) {
   var stack = document.getElementById("toast-stack");
   if (!stack) return;
   var toast = document.createElement("div");
   toast.className = "toast " + (type === "error" ? "toast-error" : "toast-success");
-  toast.textContent = message;
+  if (action) {
+    toast.classList.add("toast-with-action");
+    var text = document.createElement("span");
+    text.setAttribute("role", "status");
+    text.textContent = message;
+    var link = document.createElement("a");
+    link.href = action.href;
+    link.textContent = action.label;
+    toast.append(text, link);
+  } else {
+    toast.textContent = message;
+  }
   stack.appendChild(toast);
-  setTimeout(function () { toast.remove(); }, 2600);
+  setTimeout(function dismiss() {
+    if (action && toast.matches(":hover, :focus-within")) {
+      setTimeout(dismiss, 1000);
+      return;
+    }
+    toast.remove();
+  }, action ? 9000 : 2600);
+  return toast;
 }
 
 function escapeHtml(value) {

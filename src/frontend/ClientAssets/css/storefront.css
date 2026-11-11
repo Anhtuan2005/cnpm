@@ -938,6 +938,68 @@ body.order-cancel-open {
   font-size: 20px;
 }
 
+.order-accessories h2 {
+  margin-bottom: 4px;
+}
+
+.order-accessories > p {
+  color: var(--ink-muted);
+  font-size: .875rem;
+}
+
+.accessory-suggestion-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 10px 16px;
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+
+.accessory-suggestion-list a {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding-block: 10px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--ink);
+}
+
+.accessory-suggestion-list a:hover strong {
+  color: var(--accent-dark);
+  text-decoration: underline;
+}
+
+.accessory-suggestion-list a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.accessory-suggestion-list img {
+  display: block;
+  width: 84px;
+  height: 84px;
+  border-radius: var(--r-sm);
+  background: var(--bg-soft);
+  object-fit: cover;
+}
+
+.accessory-suggestion-copy {
+  display: grid;
+  gap: 3px;
+  line-height: 1.4;
+}
+
+.accessory-suggestion-copy small {
+  color: var(--ink-muted);
+}
+
+.accessory-suggestion-price {
+  color: var(--accent-dark);
+  font-weight: 700;
+}
+
 .assurance-panel { display: grid; gap: 12px; }
 .assurance-heading { display: flex; align-items: center; gap: 12px; }
 .assurance-heading h2 { margin: 2px 0 0; font-size: 18px; }

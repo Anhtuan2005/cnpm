@@ -70,7 +70,6 @@ public class RecommendationService : IRecommendationService
             foreach (var productId in wishlistProductIds)
             {
                 AddScore(seedScores, productId, 5m);
-                excludedIds.Add(productId);
             }
 
             var userOrderRows = await _db.OrderItems
@@ -95,6 +94,8 @@ public class RecommendationService : IRecommendationService
             var recentInteractions = await _db.ProductInteractions
                 .AsNoTracking()
                 .Where(interaction => interaction.CreatedAt >= now.AddDays(-InteractionLookbackDays)
+                    && interaction.EventType != ProductInteractionEvents.WishlistAdd
+                    && interaction.EventType != ProductInteractionEvents.WishlistRemove
                     && (hasUserId ? interaction.UserId == userId
                         : interaction.UserId == null && interaction.SessionId == sessionId))
                 .Select(interaction => new
@@ -105,13 +106,11 @@ public class RecommendationService : IRecommendationService
                 })
                 .ToListAsync(cancellationToken);
 
-            foreach (var interaction in recentInteractions)
+            foreach (var product in recentInteractions.GroupBy(interaction => interaction.ProductId))
             {
-                AddScore(
-                    seedScores,
-                    interaction.ProductId,
+                var strongest = product.Max(interaction =>
                     InteractionWeight(interaction.EventType) * RecencyBoost(now, interaction.CreatedAt));
-                excludedIds.Add(interaction.ProductId);
+                AddScore(seedScores, product.Key, strongest);
             }
         }
 
@@ -137,6 +136,7 @@ public class RecommendationService : IRecommendationService
             .Where(basket => basket.Count >= 2)
             .ToList();
 
+        var personalScores = new Dictionary<int, decimal>();
         foreach (var seed in seedScores)
         {
             var anchorSupport = baskets.Count(basket => basket.Contains(seed.Key));
@@ -152,13 +152,14 @@ public class RecommendationService : IRecommendationService
                 .GroupBy(productId => productId))
             {
                 var confidence = group.Count() / (decimal)anchorSupport;
-                AddScore(candidateScores, group.Key, seed.Value * confidence * 5m + group.Count() * 0.8m);
+                AddScore(personalScores, group.Key, seed.Value * confidence * 5m + group.Count() * 0.8m);
             }
         }
 
         var trendInteractions = await _db.ProductInteractions
             .AsNoTracking()
-            .Where(interaction => interaction.CreatedAt >= now.AddDays(-30))
+            .Where(interaction => interaction.CreatedAt >= now.AddDays(-30)
+                && interaction.EventType != ProductInteractionEvents.WishlistRemove)
             .Select(interaction => new
             {
                 interaction.ProductId,
@@ -175,57 +176,66 @@ public class RecommendationService : IRecommendationService
                 InteractionWeight(interaction.EventType) * RecencyBoost(now, interaction.CreatedAt) * 0.18m);
         }
 
-        if (seedScores.Any())
-        {
-            var seedProductIds = seedScores.Keys.ToHashSet();
-            var seedProducts = await ScopedProducts(_db.Products.AsNoTracking())
-                .Where(product => seedProductIds.Contains(product.Id))
-                .Select(product => new { product.Id, product.CategoryId })
-                .ToListAsync(cancellationToken);
-            var categoryWeights = seedProducts
-                .GroupBy(product => product.CategoryId)
-                .ToDictionary(
-                    group => group.Key,
-                    group => group.Sum(product => seedScores[product.Id]));
-
-            var categoryCandidateIds = await ScopedProducts(_db.Products.AsNoTracking())
-                .Where(product => product.Stock > 0
-                    && !excludedIds.Contains(product.Id)
-                    && categoryWeights.Keys.Contains(product.CategoryId))
-                .Select(product => new { product.Id, product.CategoryId })
-                .ToListAsync(cancellationToken);
-
-            foreach (var product in categoryCandidateIds)
-            {
-                AddScore(candidateScores, product.Id, categoryWeights[product.CategoryId] * 0.65m);
-            }
-        }
-
-        var candidates = await ScopedProducts(_db.Products.AsNoTracking())
-            .Where(product => product.Stock > 0 && !excludedIds.Contains(product.Id))
+        var seedIds = seedScores.Keys.ToList();
+        var catalog = await ScopedProducts(_db.Products.AsNoTracking())
+            .Where(product => (product.Stock > 0 && !excludedIds.Contains(product.Id)) || seedIds.Contains(product.Id))
             .Select(product => new
             {
                 product.Id,
+                product.Name,
+                product.CategoryId,
+                product.Stock,
+                Price = product.Price * (100 - product.DiscountPercent) / 100m,
                 product.IsFeatured,
                 product.DiscountPercent,
                 product.CreatedAt
             })
             .ToListAsync(cancellationToken);
 
-        var rankedIds = candidates
+        var interests = catalog
+            .Where(product => seedScores.ContainsKey(product.Id))
             .Select(product => new
             {
-                product.Id,
-                Score = candidateScores.GetValueOrDefault(product.Id)
-                    + (product.IsFeatured ? 1.5m : 0m)
-                    + Math.Min(product.DiscountPercent, 30) * 0.04m
-                    + (product.CreatedAt >= now.AddDays(-30) ? 0.8m : 0m),
-                product.IsFeatured,
-                product.CreatedAt
+                Brand = PhoneBrandCatalog.Resolve(product.Name)?.Name,
+                product.CategoryId,
+                product.Price,
+                Weight = seedScores[product.Id]
             })
-            .OrderByDescending(product => product.Score)
+            .ToList();
+
+        var rankedIds = catalog
+            .Where(product => product.Stock > 0 && !excludedIds.Contains(product.Id))
+            .Select(product =>
+            {
+                var brand = PhoneBrandCatalog.Resolve(product.Name)?.Name;
+                var affinity = interests.Sum(interest =>
+                {
+                    var brandMatch = brand is not null && brand == interest.Brand;
+                    var categoryMatch = product.CategoryId == interest.CategoryId;
+                    var priceMatch = product.Price > 0 && interest.Price > 0
+                        && Math.Abs(product.Price - interest.Price) <= interest.Price * 0.25m;
+                    return interest.Weight * ((brandMatch ? 1m : categoryMatch ? 0.2m : 0m)
+                        + (priceMatch ? 0.4m : 0m));
+                });
+
+                return new
+                {
+                    product.Id,
+                    PersonalScore = affinity + personalScores.GetValueOrDefault(product.Id)
+                        + seedScores.GetValueOrDefault(product.Id) * 0.5m,
+                    PopularityScore = candidateScores.GetValueOrDefault(product.Id)
+                        + (product.IsFeatured ? 1.5m : 0m)
+                        + Math.Min(product.DiscountPercent, 30) * 0.04m
+                        + (product.CreatedAt >= now.AddDays(-30) ? 0.8m : 0m),
+                    product.IsFeatured,
+                    product.CreatedAt
+                };
+            })
+            .OrderByDescending(product => product.PersonalScore)
+            .ThenByDescending(product => product.PopularityScore)
             .ThenByDescending(product => product.IsFeatured)
             .ThenByDescending(product => product.CreatedAt)
+            .ThenBy(product => product.Id)
             .Take(take)
             .Select(product => product.Id)
             .ToList();

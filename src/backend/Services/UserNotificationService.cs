@@ -9,6 +9,12 @@ namespace EcommerceApp.Services;
 
 public class UserNotificationService : IUserNotificationService
 {
+    private IQueryable<UserNotification> Inbox => _db.UserNotifications.Where(notification =>
+        notification.Type != NotificationTypes.System ||
+        notification.Title != "Cảnh báo đăng nhập bất thường" ||
+        notification.LinkUrl == null ||
+        !notification.LinkUrl.StartsWith("/Admin/User/Review/"));
+
     private readonly AppDbContext _db;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IHubContext<AdminNotificationHub> _adminNotificationHub;
@@ -97,17 +103,17 @@ public class UserNotificationService : IUserNotificationService
 
     public Task<UserNotification?> GetAsync(int id, string userId)
     {
-        return _db.UserNotifications.FirstOrDefaultAsync(notification => notification.Id == id && notification.UserId == userId);
+        return Inbox.FirstOrDefaultAsync(notification => notification.Id == id && notification.UserId == userId);
     }
 
     public Task<int> GetUnreadCountAsync(string userId)
     {
-        return _db.UserNotifications.CountAsync(notification => notification.UserId == userId && !notification.IsRead);
+        return Inbox.CountAsync(notification => notification.UserId == userId && !notification.IsRead);
     }
 
     public async Task MarkAsReadAsync(int id, string userId)
     {
-        var notification = await _db.UserNotifications.FirstOrDefaultAsync(row => row.Id == id && row.UserId == userId);
+        var notification = await Inbox.FirstOrDefaultAsync(row => row.Id == id && row.UserId == userId);
         if (notification is null || notification.IsRead)
         {
             return;
@@ -121,7 +127,7 @@ public class UserNotificationService : IUserNotificationService
     public async Task MarkAllAsReadAsync(string userId)
     {
         var now = DateTime.UtcNow;
-        await _db.UserNotifications
+        await Inbox
             .Where(notification => notification.UserId == userId && !notification.IsRead)
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(notification => notification.IsRead, true)
@@ -130,7 +136,7 @@ public class UserNotificationService : IUserNotificationService
 
     private IQueryable<UserNotification> BaseQuery(string userId)
     {
-        return _db.UserNotifications
+        return Inbox
             .AsNoTracking()
             .Where(notification => notification.UserId == userId)
             .OrderBy(notification => notification.IsRead)

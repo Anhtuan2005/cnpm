@@ -1,5 +1,5 @@
-function initCartButtons() {
-  document.querySelectorAll("[data-cart-product]").forEach(function (button) {
+function initCartButtons(root = document) {
+  root.querySelectorAll("[data-cart-product]").forEach(function (button) {
     button.addEventListener("click", function (event) {
       event.preventDefault();
       event.stopPropagation();

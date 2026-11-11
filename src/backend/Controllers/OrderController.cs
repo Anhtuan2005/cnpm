@@ -18,6 +18,7 @@ public class OrderController : Controller
     private readonly IVnpayService _vnpayService;
     private readonly IGhnShippingService _ghnShippingService;
     private readonly BuyNowService _buyNowService;
+    private readonly ICrossSellService _crossSellService;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ISprintFeatureService _sprintFeatures;
     private readonly ILogger<OrderController> _logger;
@@ -30,6 +31,7 @@ public class OrderController : Controller
         IVnpayService vnpayService,
         IGhnShippingService ghnShippingService,
         BuyNowService buyNowService,
+        ICrossSellService crossSellService,
         UserManager<ApplicationUser> userManager,
         ISprintFeatureService sprintFeatures,
         ILogger<OrderController> logger)
@@ -41,6 +43,7 @@ public class OrderController : Controller
         _vnpayService = vnpayService;
         _ghnShippingService = ghnShippingService;
         _buyNowService = buyNowService;
+        _crossSellService = crossSellService;
         _userManager = userManager;
         _sprintFeatures = sprintFeatures;
         _logger = logger;
@@ -273,6 +276,10 @@ public class OrderController : Controller
                 _logger.LogWarning(ex, "Could not refresh GHN status for order {OrderId}.", order.Id);
             }
         }
+
+        if (_sprintFeatures.IsEnabled(3) && !User.IsInRole("Admin"))
+            ViewData["OrderAccessories"] = await _crossSellService.GetAfterPurchaseSuggestionsAsync(
+                order, HttpContext.RequestAborted);
 
         return View(order);
     }

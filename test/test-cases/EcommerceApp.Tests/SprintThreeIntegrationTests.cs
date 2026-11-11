@@ -170,6 +170,50 @@ public sealed partial class OrderPaymentTests
     }
 
     [Fact]
+    public async Task Recommendations_keep_saved_phones_and_rank_brand_and_price_ahead_of_popularity()
+    {
+        await using var scope = fixture.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var customer = await SqlServerFixture.CreateUserAsync(scope.ServiceProvider);
+        var other = await SqlServerFixture.CreateUserAsync(scope.ServiceProvider);
+        var category = new Category { Name = "Phones", Slug = "dien-thoai-" + Guid.NewGuid().ToString("N") };
+        Product Phone(string name, decimal price, int stock = 2) => new()
+        {
+            Name = name, Description = "Fixture", Price = price, Stock = stock, Category = category
+        };
+        var saved = Phone("Samsung Galaxy S24", 22_000_000);
+        var sameBrand = Phone("Samsung Galaxy A55", 10_000_000);
+        var similarPrice = Phone("Xiaomi 14", 18_000_000);
+        var popular = Phone("iPhone SE", 8_000_000);
+        popular.IsFeatured = true;
+        var unavailable = Phone("Samsung Galaxy S24 Plus", 22_000_000, stock: 0);
+        var phones = new[] { saved, sameBrand, similarPrice, popular, unavailable };
+        db.Products.AddRange(phones);
+        await db.SaveChangesAsync();
+
+        var included = phones.Select(product => product.Id).ToList();
+        var exclusions = await db.Products.Where(product => !included.Contains(product.Id)).Select(product => product.Id).ToListAsync();
+        var service = new RecommendationService(db, new PhoneCatalogScope());
+        var cold = await service.GetRecommendationsAsync(customer.Id, "shared-browser", excludedProductIds: exclusions);
+        Assert.Equal(popular.Id, cold[0].Id);
+
+        db.ProductInteractions.Add(new ProductInteraction { ProductId = saved.Id, UserId = customer.Id, SessionId = "shared-browser" });
+        db.WishlistItems.AddRange(
+            new WishlistItem { ProductId = saved.Id, UserId = customer.Id },
+            new WishlistItem { ProductId = popular.Id, UserId = other.Id });
+        await db.SaveChangesAsync();
+
+        var personalized = await service.GetRecommendationsAsync(customer.Id, "shared-browser", excludedProductIds: exclusions);
+        Assert.Equal(new[] { saved.Id, sameBrand.Id, similarPrice.Id, popular.Id }, personalized.Select(product => product.Id));
+        var otherResults = await service.GetRecommendationsAsync(other.Id, "shared-browser", excludedProductIds: exclusions);
+        Assert.Equal(popular.Id, otherResults[0].Id);
+
+        var onDetail = await service.GetRecommendationsAsync(customer.Id, "shared-browser",
+            anchorProductId: saved.Id, excludedProductIds: exclusions);
+        Assert.Equal(new[] { sameBrand.Id, similarPrice.Id, popular.Id }, onDetail.Select(product => product.Id));
+    }
+
+    [Fact]
     public async Task Abandoned_cart_scan_creates_one_private_offer_and_notification_per_cart_version_without_fake_email_delivery()
     {
         var (productId, users) = await SeedCartsAsync(5, 1);

@@ -1,0 +1,22 @@
+@model HomeRecommendationsViewModel
+
+@if (Model.Accessories.Count > 0)
+{
+    <section class="home-accessory-suggestions" aria-labelledby="home-accessory-heading">
+        <h3 id="home-accessory-heading" tabindex="-1" data-suggested-for="@Model.Accessories[0].PhoneName">
+            Phụ kiện hợp với @Model.Accessories[0].PhoneName
+        </h3>
+        <p>Gợi ý theo mẫu điện thoại bạn lưu gần nhất. Giá mua riêng.</p>
+        <partial name="_AccessorySuggestionList" model="Model.Accessories" />
+    </section>
+}
+
+@if (Model.Phones.Count > 0)
+{
+    <div class="product-grid">
+        @foreach (var product in Model.Phones)
+        {
+            <partial name="_ProductCard" model="product" />
+        }
+    </div>
+}

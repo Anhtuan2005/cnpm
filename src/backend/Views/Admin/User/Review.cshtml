@@ -1,0 +1,121 @@
+@model AdminUserAccessViewModel
+@{
+    Layout = "_AdminLayout";
+    var roleAction = Model.IsAdmin ? "Gỡ Admin" : "Cấp Admin";
+    ViewData["Title"] = Model.ConfirmRole ? $"Xác nhận {roleAction.ToLowerInvariant()}" : "Xem xét tài khoản";
+    var status = Model.TemporarilyLocked ? "Tạm khoá đăng nhập" : Model.LockStatus.Label;
+}
+
+<section class="admin-grid">
+    <div class="admin-panel">
+        <div class="panel-head"><h2>Thông tin tài khoản</h2></div>
+        <dl class="detail-list">
+            <dt>Họ tên</dt><dd>@Model.Account.FullName</dd>
+            <dt>Email</dt><dd>@Model.Account.Email</dd>
+            <dt>Vai trò</dt><dd>@string.Join(", ", Model.Roles)</dd>
+            <dt>Trạng thái</dt><dd>@status</dd>
+            @if (Model.TemporarilyLocked)
+            {
+                <dt>Tạm khoá đến</dt><dd>@Model.Account.LockoutEnd?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+            }
+        </dl>
+        <a class="admin-button secondary" asp-action="Index">Danh sách người dùng</a>
+        @if (!Model.ConfirmRole && !Model.IsSelf && Model.IsAdmin)
+        {
+            <a class="admin-button secondary" asp-action="ConfirmRole" asp-route-id="@Model.Account.Id">@roleAction</a>
+        }
+    </div>
+
+    <div class="admin-panel">
+        @if (Model.IsSelf)
+        {
+            <div class="panel-head"><h2>Tài khoản đang thao tác</h2></div>
+            <p>Hệ thống bảo vệ tài khoản quản trị đang đăng nhập khỏi thao tác tự khoá hoặc tự gỡ quyền.</p>
+        }
+        else if (Model.ConfirmRole)
+        {
+            <div class="panel-head"><h2>@roleAction</h2></div>
+            @if (!Model.IsAdmin && Model.IsLocked)
+            {
+                <p>Mở khoá tài khoản trước khi cấp quyền Admin.</p>
+            }
+            else
+            {
+                @if (!Model.IsAdmin)
+                {
+                    <p>Quyền Admin cho phép quản lý người dùng, đơn hàng và cấu hình cửa hàng. Hãy kiểm tra tài khoản nhận quyền trước khi xác nhận.</p>
+                }
+                <p>Người dùng cần đăng nhập lại để áp dụng quyền mới.</p>
+                <form class="stack-form" method="post" asp-action="@(Model.IsAdmin ? "RemoveAdmin" : "MakeAdmin")" asp-route-id="@Model.Account.Id">
+                    <label for="role-reason">Lý do thay đổi quyền</label>
+                    <textarea id="role-reason" name="reason" rows="3" minlength="5" maxlength="400" required></textarea>
+                    <label for="current-password">Mật khẩu hiện tại của bạn</label>
+                    <input id="current-password" name="currentPassword" type="password" autocomplete="current-password" maxlength="1024" required />
+                    <button class="admin-button" type="submit">Xác nhận @roleAction.ToLowerInvariant()</button>
+                </form>
+            }
+        }
+        else
+        {
+            <div class="panel-head"><h2>Quyết định xử lý</h2></div>
+            <p>Xem lịch sử bên dưới trước khi khoá hoặc mở khoá thủ công.</p>
+            <form class="stack-form" method="post" asp-action="ToggleLock" asp-route-id="@Model.Account.Id">
+                <label for="lock-reason">Lý do xử lý</label>
+                <textarea id="lock-reason" name="reason" rows="3" minlength="5" maxlength="400" required></textarea>
+                @if (!Model.AdminLocked)
+                {
+                    <label for="lock-duration">Thời hạn khoá</label>
+                    <select id="lock-duration" name="duration" asp-items="Html.GetEnumSelectList<AdminLockDuration>()">
+                        <option value="">Chọn thời hạn khi khoá</option>
+                    </select>
+                    <button class="admin-button" type="submit" name="locked" value="true">Xác nhận khoá tài khoản</button>
+                }
+                @if (Model.IsLocked)
+                {
+                    <button class="admin-button secondary" type="submit" name="locked" value="false">Xác nhận mở khoá</button>
+                }
+            </form>
+        }
+    </div>
+</section>
+
+<section class="admin-panel">
+    <div class="panel-head"><h2>Lịch sử an toàn tài khoản</h2></div>
+    @if (Model.History.Count == 0)
+    {
+        <p>Chưa ghi nhận thay đổi về quyền hoặc trạng thái khoá.</p>
+    }
+    else
+    {
+        <table class="admin-table">
+            <thead><tr><th>Thời điểm</th><th>Sự kiện</th><th>Người thực hiện</th><th>Lý do</th></tr></thead>
+            <tbody>
+                @foreach (var entry in Model.History)
+                {
+                    <tr>
+                        <td>@entry.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@AccountAccessEventKinds.Label(entry.Kind)</td>
+                        <td>@(entry.ActorName ?? "Hệ thống")</td>
+                        <td>
+                            @if (entry.Kind == AccountAccessEventKinds.LoginLockout && entry.TemporaryLockUntil is { } until)
+                            {
+                                <span>Hệ thống khoá tạm đến @(until.ToLocalTime().ToString("HH:mm dd/MM/yyyy")).</span>
+                            }
+                            else
+                            {
+                                @entry.Reason
+                                @if (entry.Kind == AccountAccessEventKinds.AdminLock)
+                                {
+                                    <br />
+                                    <span>@(entry.AdminLockUntil is { } end
+                                        ? $"Khoá đến {end.ToLocalTime():HH:mm dd/MM/yyyy}"
+                                        : "Khoá không thời hạn")</span>
+                                }
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>

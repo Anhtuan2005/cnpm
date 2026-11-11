@@ -130,7 +130,9 @@
                     }
                     @if (Model.IsAuthenticated)
                     {
-                        <button class="btn-wishlist @(Model.IsWishlisted ? "active" : "")" type="button" data-product-id="@product.Id" aria-label="Yêu thích"><i data-lucide="heart" aria-hidden="true"></i></button>
+                        <button class="btn-wishlist @(Model.IsWishlisted ? "active" : "")" type="button" data-product-id="@product.Id"
+                                title="@(Model.IsWishlisted ? "Bỏ yêu thích" : "Yêu thích")" aria-label="Yêu thích"
+                                aria-pressed="@(Model.IsWishlisted ? "true" : "false")"><i data-lucide="heart" aria-hidden="true"></i></button>
                     }
                     else
                     {

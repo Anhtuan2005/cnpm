@@ -4676,6 +4676,38 @@ progress { width: 100%; height: 8px; accent-color: var(--warning); }
 .toast-error { background: var(--danger); }
 .toast-success { background: var(--success); }
 
+.toast-with-action {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  max-width: calc(100vw - 36px);
+  border: 1px solid var(--line-soft);
+  background: var(--bg-card);
+  color: var(--ink);
+}
+
+.toast-with-action a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: var(--r-sm);
+  background: var(--accent-dark);
+  color: var(--bg-card);
+  font-size: .875rem;
+  font-weight: 700;
+}
+
+.toast-with-action a:hover {
+  text-decoration: underline;
+}
+
+.toast-with-action a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .error-page {
   min-height: min(620px, 72vh);
   display: grid;
@@ -4861,6 +4893,32 @@ progress { width: 100%; height: 8px; accent-color: var(--warning); }
   .info-page { width: min(100% - 28px, 640px); margin-top: 22px; }
   .info-hero { border-radius: 18px; }
   .info-hero h1 { max-width: 100%; }
+}
+
+.recommendation-status:not(:empty) {
+  margin: -4px 0 14px;
+  color: var(--ink-muted);
+  font-size: .875rem;
+}
+
+.home-accessory-suggestions {
+  margin-bottom: 18px;
+  padding: clamp(14px, 2vw, 22px);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+  background: var(--bg-card);
+}
+
+.home-accessory-suggestions h3 {
+  margin: 0 0 4px;
+  font-size: 1.125rem;
+  scroll-margin-top: 100px;
+}
+
+.home-accessory-suggestions > p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: .875rem;
 }
 
 /* Voltix brand layer */
@@ -5801,6 +5859,68 @@ body.order-cancel-open {
 .order-panel h2 {
   margin-bottom: 14px;
   font-size: 20px;
+}
+
+.order-accessories h2 {
+  margin-bottom: 4px;
+}
+
+.order-accessories > p {
+  color: var(--ink-muted);
+  font-size: .875rem;
+}
+
+.accessory-suggestion-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 10px 16px;
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+
+.accessory-suggestion-list a {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding-block: 10px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--ink);
+}
+
+.accessory-suggestion-list a:hover strong {
+  color: var(--accent-dark);
+  text-decoration: underline;
+}
+
+.accessory-suggestion-list a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.accessory-suggestion-list img {
+  display: block;
+  width: 84px;
+  height: 84px;
+  border-radius: var(--r-sm);
+  background: var(--bg-soft);
+  object-fit: cover;
+}
+
+.accessory-suggestion-copy {
+  display: grid;
+  gap: 3px;
+  line-height: 1.4;
+}
+
+.accessory-suggestion-copy small {
+  color: var(--ink-muted);
+}
+
+.accessory-suggestion-price {
+  color: var(--accent-dark);
+  font-weight: 700;
 }
 
 .assurance-panel { display: grid; gap: 12px; }
@@ -7856,6 +7976,45 @@ body.order-cancel-open {
 .auth-subtitle {
   color: #64748b;
   margin-bottom: 28px;
+}
+
+.auth-login-alert {
+  --login-alert-accent: var(--danger);
+  --login-alert-ink: oklch(.4 .15 27);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  margin-block: 0 20px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in oklch, var(--login-alert-accent) 28%, var(--bg-card));
+  border-radius: var(--r-md);
+  background: color-mix(in oklch, var(--login-alert-accent) 10%, var(--bg-card));
+  color: var(--login-alert-ink);
+  font-size: .9375rem;
+  line-height: 1.5;
+}
+
+.auth-login-alert--warning {
+  --login-alert-accent: var(--warning);
+  --login-alert-ink: oklch(.43 .1 65);
+}
+
+.auth-login-alert__icon {
+  margin-top: 2px;
+}
+
+.auth-login-alert__title {
+  display: block;
+  font-weight: 700;
+}
+
+.auth-login-alert .auth-login-alert__message {
+  margin: 2px 0 0;
+  color: inherit;
+  font-size: inherit;
+  text-align: left;
+  text-wrap: pretty;
 }
 
 .field-group {

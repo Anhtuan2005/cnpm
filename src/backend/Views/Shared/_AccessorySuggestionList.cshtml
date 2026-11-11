@@ -1,0 +1,17 @@
+@model IReadOnlyList<AccessorySuggestion>
+
+<ul class="accessory-suggestion-list">
+    @foreach (var accessory in Model)
+    {
+        <li>
+            <a asp-controller="Product" asp-action="Detail" asp-route-id="@accessory.ProductId">
+                <img src="@accessory.ImageUrl" alt="" width="84" height="84" loading="lazy" decoding="async" />
+                <span class="accessory-suggestion-copy">
+                    <strong>@accessory.ProductName</strong>
+                    <small>Phù hợp với @accessory.PhoneName</small>
+                    <span class="accessory-suggestion-price">@accessory.RetailPrice.ToString("N0") ₫</span>
+                </span>
+            </a>
+        </li>
+    }
+</ul>

@@ -34,6 +34,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<AbandonedCartReminder> AbandonedCartReminders => Set<AbandonedCartReminder>();
     public DbSet<CrossSellOffer> CrossSellOffers => Set<CrossSellOffer>();
     public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
+    public DbSet<AccountAccessEvent> AccountAccessEvents => Set<AccountAccessEvent>();
     public DbSet<ReturnWarrantyRequest> ReturnWarrantyRequests => Set<ReturnWarrantyRequest>();
     public DbSet<ReturnWarrantyRequestItem> ReturnWarrantyRequestItems => Set<ReturnWarrantyRequestItem>();
     public DbSet<ReturnWarrantyRequestImage> ReturnWarrantyRequestImages => Set<ReturnWarrantyRequestImage>();
@@ -42,6 +43,10 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<AccountAccessEvent>().HasIndex(entry => new { entry.UserId, entry.Id });
+        builder.Entity<AccountAccessEvent>().HasIndex(entry => new { entry.UserId, entry.TemporaryLockUntil })
+            .IsUnique().HasFilter("[TemporaryLockUntil] IS NOT NULL");
 
         builder.Entity<CartItem>().ToTable(table => table.HasCheckConstraint("CK_CartItems_Quantity_Positive", "[Quantity] > 0"));
         builder.Entity<OrderItem>().ToTable(table => table.HasCheckConstraint("CK_OrderItems_Quantity_Positive", "[Quantity] > 0"));
