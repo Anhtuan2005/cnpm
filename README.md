@@ -22,6 +22,7 @@
 | Thiết kế | [Sơ đồ kiến trúc](docs/design/architecture.md) và [ảnh giao diện](docs/design/screenshots/) |
 | Hướng dẫn | [Kịch bản demo](docs/user-guide/demo.md) và [bằng chứng kiểm thử](docs/user-guide/backend-tests.md) |
 | Quản lý cấu hình | [Hồ sơ Lab 3](docs/lab3/README.md) |
+| Sprint Backlog 1–3 | [Bảng phân công và tiến độ nhóm 3](docs/backlog/T4_B3_Nhom3.xlsx) |
 | Tiến độ Sprint 1–2 | [Hồ sơ Lab 4 và phiếu thực hành](docs/lab4/README.md) |
 | Tích hợp và chuẩn bị Sprint 3 | [Báo cáo Buổi 7](docs/buoi7/README.md), [Test Report](test/TestReport.md) và [kế hoạch Sprint 3](docs/buoi7/sprint-3-plan.md) |
 | Sprint 3 đã triển khai | [Chức năng, cấu hình và kịch bản demo](docs/user-guide/sprint-3.md) |
